@@ -38,7 +38,7 @@ end
 -- Key: 172005
 -- Facebook: facebook.com/adcuong3vien/
 -- ============================================================
-local VALID_KEY   = "172005"
+local VALID_KEY   = "CuongOutLook-FreeKey-172005"
 local FACEBOOK_URL = "facebook.com/adcuong3vien/"
 local panelKeyUnlocked = false
 local function requestPanelKey()
@@ -1864,8 +1864,8 @@ end)
 if not sg.Parent then sg.Parent = plr.PlayerGui end
 -- Main window
 local window = Instance.new("Frame", sg)
-window.Size             = UDim2.new(0, 760, 0, 454)
-window.Position         = UDim2.new(0.5, -380, 0.5, -227)
+window.Size             = UDim2.new(0, 600, 0, 350)
+window.Position         = UDim2.new(0.5, -300, 0.5, -175)
 window.BackgroundColor3 = C.BG
 window.BorderSizePixel  = 0
 window.Active           = true
@@ -1905,6 +1905,27 @@ end)
 closeBtn.MouseLeave:Connect(function()
     closeBtn.BackgroundColor3 = C.RED
 end)
+-- Create collapsed button (small black square with "COL")
+local collapsedBtn = Instance.new("TextButton", sg)
+collapsedBtn.Size             = UDim2.new(0, 50, 0, 50)
+collapsedBtn.Position         = UDim2.new(0, 20, 0, 20)
+collapsedBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+collapsedBtn.BorderSizePixel  = 0
+collapsedBtn.Font             = Enum.Font.GothamBold
+collapsedBtn.TextSize         = 12
+collapsedBtn.TextColor3       = Color3.fromRGB(0, 255, 255)
+collapsedBtn.Text             = "COL"
+collapsedBtn.AutoButtonColor  = false
+collapsedBtn.Visible          = false
+collapsedBtn.Active           = true
+collapsedBtn.Draggable        = true
+Instance.new("UICorner", collapsedBtn).CornerRadius = UDim.new(0, 10)
+collapsedBtn.MouseEnter:Connect(function()
+    collapsedBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+end)
+collapsedBtn.MouseLeave:Connect(function()
+    collapsedBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+end)
 local subLbl = Instance.new("TextLabel", window)
 subLbl.Size               = UDim2.new(0, 320, 0, 18)
 subLbl.Position           = UDim2.new(0, 260, 0, 25)
@@ -1922,7 +1943,7 @@ local tabLayout = Instance.new("UIListLayout", tabBar)
 tabLayout.SortOrder       = Enum.SortOrder.LayoutOrder
 tabLayout.FillDirection   = Enum.FillDirection.Horizontal
 tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-tabLayout.Padding         = UDim.new(0, 6)
+tabLayout.Padding         = UDim.new(0, 3)
 -- Content panel
 local content = Instance.new("Frame", window)
 content.Size             = UDim2.new(1, -24, 1, -104)
@@ -1953,10 +1974,10 @@ local TABS     = {"Protect", "ESP", "Aimbot", "Movement", "Chat", "Items", "Visu
 local activeTab = TABS[1]
 local tabPages  = {}
 local tabBtns   = {}
-local TAB_BUTTON_WIDTH = 64
+local TAB_BUTTON_WIDTH = 50
 for _, t in ipairs(TABS) do tabPages[t] = {} end
 local menuHidden    = false
-local WINDOW_FULL   = UDim2.new(0, 760, 0, 454)
+local WINDOW_FULL   = UDim2.new(0, 600, 0, 350)
 local MENU_TOGGLE_KEY = Enum.KeyCode.RightControl
 window.Size = WINDOW_FULL
 subLbl.Text = "Tabs and content stay inside one aligned frame"
@@ -1965,13 +1986,17 @@ local function setMenuHidden(hidden)
         requestPanelKey()
     end
     menuHidden = hidden
-    sg.Enabled = not hidden
+    window.Visible = not hidden
+    collapsedBtn.Visible = hidden
     if hidden then
-        notify("CuongOutLook Aimbot", "Menu hidden. Press Right Ctrl to show it again.", 5)
+        notify("CuongOutLook Aimbot", "Menu collapsed. Click COL button to expand.", 5)
     end
 end
 closeBtn.MouseButton1Click:Connect(function()
     setMenuHidden(true)
+end)
+collapsedBtn.MouseButton1Click:Connect(function()
+    setMenuHidden(false)
 end)
 UserInputService.InputBegan:Connect(function(inp, gameProcessed)
     if gameProcessed then return end
@@ -2001,7 +2026,7 @@ for i, t in ipairs(TABS) do
     b.BorderSizePixel  = 0
     b.Text             = t
     b.Font             = Enum.Font.GothamSemibold
-    b.TextSize         = 12
+    b.TextSize         = 10
     b.TextColor3       = C.TXTM
     b.LayoutOrder      = i
     b.AutoButtonColor  = false
