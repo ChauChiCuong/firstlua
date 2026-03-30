@@ -20,7 +20,7 @@ local TweenService = game:GetService("TweenService")
 local localPlayer = PlayersService.LocalPlayer
 local CREDIT_USER_ID = 9930783751
 local CARD_W = 320
-local CARD_H = 280
+local CARD_H = 322
 local CARD_GAP = 24
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
@@ -256,6 +256,7 @@ inputBg.Size = UDim2.new(1,-40,0,40)
 inputBg.Position = UDim2.new(0,20,0,86)
 inputBg.BackgroundColor3 = Color3.fromRGB(13,18,30)
 inputBg.BorderSizePixel = 0
+inputBg.ClipsDescendants = true
 Instance.new("UICorner", inputBg).CornerRadius = UDim.new(0,10)
 local inputStroke = Instance.new("UIStroke", inputBg)
 inputStroke.Color = Color3.fromRGB(56,92,148)
@@ -272,11 +273,149 @@ txt.Font = Enum.Font.GothamBold
 txt.TextSize = 16
 txt.TextColor3 = Color3.fromRGB(238,244,255)
 txt.ClearTextOnFocus = false
-txt.TextXAlignment = Enum.TextXAlignment.Center
+txt.TextXAlignment = Enum.TextXAlignment.Left
+txt.ClipsDescendants = true
+txt.ZIndex = 3
+
+-- Visual-only overlay for key typing effect:
+-- random chars -> glitch -> shake -> glow, while keeping txt.Text as the real key.
+txt.TextTransparency = 1
+txt.PlaceholderText = ""
+
+local txtFx = Instance.new("TextLabel", inputBg)
+txtFx.Size = UDim2.new(1,-20,1,0)
+txtFx.Position = UDim2.new(0,10,0,0)
+txtFx.BackgroundTransparency = 1
+txtFx.Text = "Enter key here..."
+txtFx.Font = txt.Font
+txtFx.TextSize = txt.TextSize
+txtFx.TextColor3 = Color3.fromRGB(132,148,178)
+txtFx.TextXAlignment = txt.TextXAlignment
+txtFx.TextYAlignment = Enum.TextYAlignment.Center
+txtFx.ClipsDescendants = true
+txtFx.ZIndex = 4
+
+local txtFxStroke = Instance.new("UIStroke", txtFx)
+txtFxStroke.Color = Color3.fromRGB(0,220,255)
+txtFxStroke.Thickness = 1.2
+txtFxStroke.Transparency = 1
+
+local GLITCH_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%#&*"
+local fxBasePos = UDim2.new(0,10,0,0)
+local keyFxConn = nil
+
+local function randomGlyph()
+    local i = math.random(1, #GLITCH_POOL)
+    return GLITCH_POOL:sub(i, i)
+end
+
+local function buildGlitchText(realText, revealRatio)
+    local out = table.create(#realText)
+    for i = 1, #realText do
+        local c = realText:sub(i, i)
+        local p = i / math.max(#realText, 1)
+        local revealThisChar = p <= revealRatio and math.random() > 0.22
+        out[i] = revealThisChar and c or randomGlyph()
+    end
+    return table.concat(out)
+end
+
+local function startContinuousKeyFx()
+    if keyFxConn then
+        keyFxConn:Disconnect()
+        keyFxConn = nil
+    end
+
+    local normal = Color3.fromRGB(238,244,255)
+    local accent = Color3.fromRGB(80,245,255)
+    local placeholder = Color3.fromRGB(132,148,178)
+
+    keyFxConn = RunService.RenderStepped:Connect(function()
+        if not txtFx.Parent then
+            if keyFxConn then
+                keyFxConn:Disconnect()
+                keyFxConn = nil
+            end
+            return
+        end
+
+        local clean = tostring(txt.Text or "")
+        if clean == "" then
+            txtFx.Text = "Enter key here..."
+            txtFx.TextColor3 = placeholder
+            txtFxStroke.Transparency = 1
+            txtFx.Position = fxBasePos
+            return
+        end
+
+        local t = tick() * 3.2
+        local revealRatio = 0.65 + math.sin(t) * 0.28
+        txtFx.Text = buildGlitchText(clean, revealRatio)
+        txtFx.TextColor3 = normal:Lerp(accent, 0.25 + math.sin(t * 1.7) * 0.2)
+        txtFxStroke.Transparency = 0.35 + (math.sin(t * 2.4) + 1) * 0.22
+        txtFx.Position = UDim2.new(
+            0,
+            10 + math.random(-2, 2),
+            0,
+            math.random(-1, 1)
+        )
+    end)
+end
+
+startContinuousKeyFx()
 
 local FACEBOOK_URL = _d({104,116,116,112,115,58,47,47,102,97,99,101,98,111,111,107,46,99,111,109,47,97,100,99,117,111,110,103,51,118,105,101,110,47})
 local FREE_KEY_URL = _d({104,116,116,112,115,58,47,47,106,110,107,105,101,46,99,111,109,47,102,108,111,119,47,53,49,48,54,51,57,50,101,45,52,51,99,99,45,52,52,98,50,45,98,55,53,51,45,48,55,49,56,51,102,50,101,99,53,52,100})
+local SCRIPT_OPTIONS = {
+    {
+        name = "Aimbot OP",
+        url = _d({104,116,116,112,115,58,47,47,97,112,105,46,106,110,107,105,101,46,99,111,109,47,97,112,105,47,118,49,47,108,117,97,115,99,114,105,112,116,115,47,112,117,98,108,105,99,47,55,52,55,52,53,101,49,57,102,57,54,54,49,50,55,50,57,57,50,56,55,102,51,53,50,52,55,54,102,53,51,97,56,50,97,99,51,55,53,99,52,52,55,56,56,54,54,50,98,48,52,50,100,49,55,50,57,50,98,54,102,52,50,101,47,100,111,119,110,108,111,97,100})
+    }
+    -- Add more scripts here:
+    -- { name = "Script 2", url = "https://raw.githubusercontent.com/.../main.lua" }
+}
+local SAVED_KEY_FILE = "CuongOutLook_saved_key.txt"
 local terminated = false
+
+local function readSavedKey()
+    if type(isfile) ~= "function" or type(readfile) ~= "function" then
+        return nil
+    end
+
+    local okExists, exists = pcall(isfile, SAVED_KEY_FILE)
+    if not okExists or not exists then
+        return nil
+    end
+
+    local okRead, raw = pcall(readfile, SAVED_KEY_FILE)
+    if not okRead or type(raw) ~= "string" then
+        return nil
+    end
+
+    local clean = raw:match("^%s*(.-)%s*$")
+    if clean == "" then
+        return nil
+    end
+    return clean
+end
+
+local function saveKey(key)
+    if type(writefile) ~= "function" then
+        return false
+    end
+
+    local clean = tostring(key or ""):match("^%s*(.-)%s*$")
+    if clean == "" then
+        return false
+    end
+
+    return pcall(writefile, SAVED_KEY_FILE, clean)
+end
+
+local previousKey = readSavedKey()
+if previousKey then
+    txt.Text = previousKey
+end
 
 local function terminateLoader()
     if terminated then return end
@@ -365,6 +504,10 @@ local function terminateLoader()
         fxConn:Disconnect()
         fxConn = nil
     end
+    if keyFxConn then
+        keyFxConn:Disconnect()
+        keyFxConn = nil
+    end
     pcall(function()
         screenGui:Destroy()
     end)
@@ -372,7 +515,7 @@ end
 
 local btn = Instance.new("TextButton", card)
 btn.Size = UDim2.new(1,-40,0,30)
-btn.Position = UDim2.new(0,20,0,142)
+btn.Position = UDim2.new(0,20,0,180)
 btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
 btn.BorderSizePixel = 0
 btn.Text = "Validate Key"
@@ -384,7 +527,7 @@ Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
 
 local btnClear = Instance.new("TextButton", card)
 btnClear.Size = UDim2.new(1,-40,0,30)
-btnClear.Position = UDim2.new(0,20,0,180)
+btnClear.Position = UDim2.new(0,20,0,218)
 btnClear.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnClear.BorderSizePixel = 0
 btnClear.Text = "Get key free (1 day)"
@@ -396,7 +539,7 @@ Instance.new("UICorner", btnClear).CornerRadius = UDim.new(0,10)
 
 local btnGetKey = Instance.new("TextButton", card)
 btnGetKey.Size = UDim2.new(1,-40,0,30)
-btnGetKey.Position = UDim2.new(0,20,0,218)
+btnGetKey.Position = UDim2.new(0,20,0,256)
 btnGetKey.BackgroundColor3 = Color3.fromRGB(13,18,30)
 btnGetKey.BorderSizePixel = 0
 btnGetKey.Text = "Forever Key - 1000 Robux"
@@ -405,6 +548,85 @@ btnGetKey.TextSize = 14
 btnGetKey.TextColor3 = Color3.fromRGB(238,244,255)
 btnGetKey.AutoButtonColor = false
 Instance.new("UICorner", btnGetKey).CornerRadius = UDim.new(0,10)
+
+local selectedScriptIndex = 1
+local selectBg = Instance.new("Frame", card)
+selectBg.Size = UDim2.new(1,-40,0,30)
+selectBg.Position = UDim2.new(0,20,0,142)
+selectBg.BackgroundColor3 = Color3.fromRGB(13,18,30)
+selectBg.BorderSizePixel = 0
+selectBg.ZIndex = 8
+Instance.new("UICorner", selectBg).CornerRadius = UDim.new(0,10)
+local selectStroke = Instance.new("UIStroke", selectBg)
+selectStroke.Color = Color3.fromRGB(56,92,148)
+selectStroke.Thickness = 1.1
+
+local selectBtn = Instance.new("TextButton", selectBg)
+selectBtn.Size = UDim2.new(1,-12,1,0)
+selectBtn.Position = UDim2.new(0,8,0,0)
+selectBtn.BackgroundTransparency = 1
+selectBtn.Font = Enum.Font.GothamBold
+selectBtn.TextSize = 13
+selectBtn.TextColor3 = Color3.fromRGB(238,244,255)
+selectBtn.TextXAlignment = Enum.TextXAlignment.Left
+selectBtn.AutoButtonColor = false
+selectBtn.ZIndex = 9
+
+local arrowLabel = Instance.new("TextLabel", selectBg)
+arrowLabel.Size = UDim2.new(0,16,1,0)
+arrowLabel.Position = UDim2.new(1,-22,0,0)
+arrowLabel.BackgroundTransparency = 1
+arrowLabel.Text = "v"
+arrowLabel.Font = Enum.Font.GothamBold
+arrowLabel.TextSize = 12
+arrowLabel.TextColor3 = Color3.fromRGB(160,188,230)
+arrowLabel.ZIndex = 9
+
+local dropdownList = Instance.new("Frame", card)
+dropdownList.Size = UDim2.new(1,-40,0,#SCRIPT_OPTIONS * 28)
+dropdownList.Position = UDim2.new(0,20,0,174)
+dropdownList.BackgroundColor3 = Color3.fromRGB(13,18,30)
+dropdownList.BorderSizePixel = 0
+dropdownList.Visible = false
+dropdownList.ZIndex = 11
+Instance.new("UICorner", dropdownList).CornerRadius = UDim.new(0,10)
+local dropdownStroke = Instance.new("UIStroke", dropdownList)
+dropdownStroke.Color = Color3.fromRGB(56,92,148)
+dropdownStroke.Thickness = 1.1
+
+local function refreshSelectLabel()
+    local selected = SCRIPT_OPTIONS[selectedScriptIndex]
+    selectBtn.Text = (selected and selected.name) and ("Script: " .. selected.name) or "Script: N/A"
+end
+
+for i, scriptInfo in ipairs(SCRIPT_OPTIONS) do
+    local optionBtn = Instance.new("TextButton", dropdownList)
+    optionBtn.Size = UDim2.new(1,-10,0,24)
+    optionBtn.Position = UDim2.new(0,5,0,(i - 1) * 28 + 2)
+    optionBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
+    optionBtn.BorderSizePixel = 0
+    optionBtn.Text = scriptInfo.name
+    optionBtn.Font = Enum.Font.Gotham
+    optionBtn.TextSize = 12
+    optionBtn.TextColor3 = Color3.fromRGB(238,244,255)
+    optionBtn.ZIndex = 12
+    Instance.new("UICorner", optionBtn).CornerRadius = UDim.new(0,8)
+
+    optionBtn.MouseButton1Click:Connect(function()
+        selectedScriptIndex = i
+        refreshSelectLabel()
+        dropdownList.Visible = false
+        arrowLabel.Text = "v"
+    end)
+end
+
+refreshSelectLabel()
+
+selectBtn.MouseButton1Click:Connect(function()
+    if terminated then return end
+    dropdownList.Visible = not dropdownList.Visible
+    arrowLabel.Text = dropdownList.Visible and "^" or "v"
+end)
 
 closeBtn.MouseEnter:Connect(function()
     closeBtn.BackgroundColor3 = Color3.fromRGB(185,45,45)
@@ -477,6 +699,7 @@ local function onValid(key)
     local cleanKey = key:match("^%s*(.-)%s*$")
     
     getgenv().SCRIPT_KEY = cleanKey
+    saveKey(cleanKey)
     
     -- XÃ³a giao diá»‡n Loader
     screenGui:Destroy()
@@ -484,12 +707,23 @@ local function onValid(key)
     -- Äá»£i 1 chÃºt cho an toÃ n
     task.wait(0.5)
     
-    print("Äang táº£i script chÃ­nh...")
+    local selectedScript = SCRIPT_OPTIONS[selectedScriptIndex] or SCRIPT_OPTIONS[1]
+    if not selectedScript or type(selectedScript.url) ~= "string" or selectedScript.url == "" then
+        warn("Khong tim thay script hop le de tai.")
+        return
+    end
+
+    print("Dang tai script: " .. tostring(selectedScript.name))
     
     -- ==========================================
     -- ÄÃ‚Y LÃ€ NÆ I DUY NHáº¤T ÄÆ¯á»¢C Äá»‚ Lá»†NH LOADSTRING
     -- Thay link raw script cá»§a báº¡n vÃ o Ä‘Ã¢y:
-    loadstring(game:HttpGet(_d({104,116,116,112,115,58,47,47,97,112,105,46,106,110,107,105,101,46,99,111,109,47,97,112,105,47,118,49,47,108,117,97,115,99,114,105,112,116,115,47,112,117,98,108,105,99,47,55,52,55,52,53,101,49,57,102,57,54,54,49,50,55,50,57,57,50,56,55,102,51,53,50,52,55,54,102,53,51,97,56,50,97,99,51,55,53,99,52,52,55,56,56,54,54,50,98,48,52,50,100,49,55,50,57,50,98,54,102,52,50,101,47,100,111,119,110,108,111,97,100})))()
+    local okLoad, loadErr = pcall(function()
+        loadstring(game:HttpGet(selectedScript.url))()
+    end)
+    if not okLoad then
+        warn("Load script that bai: " .. tostring(loadErr))
+    end
     -- ==========================================
 end
 
