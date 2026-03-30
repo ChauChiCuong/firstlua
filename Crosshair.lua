@@ -1023,20 +1023,40 @@ local function ringEnemyColor()
 	return Color3.fromRGB(STATE.fovRingEnemyColorR, STATE.fovRingEnemyColorG, STATE.fovRingEnemyColorB)
 end
 
+local function getAimScreenPoint()
+	local viewport = Camera.ViewportSize
+	local x = viewport.X * 0.5
+	local y = viewport.Y * 0.5
+
+	if STATE.crosshairShowCross then
+		x = x + STATE.crossOffsetX
+		y = y + STATE.crossOffsetY
+	elseif STATE.crosshairShowDot then
+		x = x + STATE.dotOffsetX
+		y = y + STATE.dotOffsetY
+	elseif STATE.crosshairShowFOVRing then
+		x = x + STATE.fovRingOffsetX
+		y = y + STATE.fovRingOffsetY
+	end
+
+	return x, y
+end
+
 local function getEnemyModelAtMouse()
-	local targetPart = mouse.Target
+	local targetPart = nil
+	if not UserInputService.TouchEnabled then
+		targetPart = mouse.Target
+	end
 
-	if not targetPart then
-		local viewport = Camera.ViewportSize
-		local ray = Camera:ViewportPointToRay(viewport.X * 0.5, viewport.Y * 0.5)
-		local rayParams = RaycastParams.new()
-		rayParams.FilterType = Enum.RaycastFilterType.Exclude
-		rayParams.FilterDescendantsInstances = { plr.Character, Camera }
+	local aimX, aimY = getAimScreenPoint()
+	local ray = Camera:ViewportPointToRay(aimX, aimY)
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = { plr.Character, Camera }
 
-		local result = Workspace:Raycast(ray.Origin, ray.Direction * 1000, rayParams)
-		if result then
-			targetPart = result.Instance
-		end
+	local result = Workspace:Raycast(ray.Origin, ray.Direction * 1000, rayParams)
+	if result and result.Instance then
+		targetPart = result.Instance
 	end
 
 	if not targetPart then
