@@ -532,52 +532,9 @@ content.BackgroundColor3 = C.DARK
 content.BorderSizePixel = 0
 Instance.new("UICorner", content).CornerRadius = UDim.new(0, 14)
 
--- Reserve space for bottom credit row.
-content.Size = UDim2.new(1, -24, 1, -176)
-
 local contentStroke = Instance.new("UIStroke", content)
 contentStroke.Color = Color3.fromRGB(39, 58, 92)
 contentStroke.Thickness = 1.2
-
-local creditBar = Instance.new("Frame", window)
-creditBar.Size = UDim2.new(1, -24, 0, 52)
-creditBar.Position = UDim2.new(0, 12, 1, -64)
-creditBar.BackgroundColor3 = C.PANEL
-creditBar.BorderSizePixel = 0
-Instance.new("UICorner", creditBar).CornerRadius = UDim.new(0, 10)
-
-local creditStroke = Instance.new("UIStroke", creditBar)
-creditStroke.Color = Color3.fromRGB(35, 50, 78)
-creditStroke.Transparency = 0.35
-
-local creditAvatar = Instance.new("ImageLabel", creditBar)
-creditAvatar.Size = UDim2.new(0, 40, 0, 40)
-creditAvatar.Position = UDim2.new(0, 8, 0.5, -20)
-creditAvatar.BackgroundTransparency = 1
-creditAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=9930783751&w=180&h=180"
-creditAvatar.ScaleType = Enum.ScaleType.Crop
-Instance.new("UICorner", creditAvatar).CornerRadius = UDim.new(1, 0)
-
-local creditName = Instance.new("TextLabel", creditBar)
-creditName.Size = UDim2.new(1, -58, 0, 22)
-creditName.Position = UDim2.new(0, 54, 0, 4)
-creditName.BackgroundTransparency = 1
-creditName.Font = Enum.Font.GothamBold
-creditName.TextSize = 13
-creditName.TextColor3 = C.WHT
-creditName.TextXAlignment = Enum.TextXAlignment.Left
-creditName.Text = "Crosshair by CuongOutLook"
-
-local creditInfo = Instance.new("TextLabel", creditBar)
-creditInfo.Size = UDim2.new(1, -58, 0, 20)
-creditInfo.Position = UDim2.new(0, 54, 0, 27)
-creditInfo.BackgroundTransparency = 1
-creditInfo.Font = Enum.Font.Gotham
-creditInfo.TextSize = 10
-creditInfo.TextColor3 = C.TXTM
-creditInfo.TextXAlignment = Enum.TextXAlignment.Left
-creditInfo.TextTruncate = Enum.TextTruncate.AtEnd
-creditInfo.Text = "Facebook: AD Cuong Ba Vien | YouTube: AD McKieran"
 
 local WINDOW_EXPANDED_HEIGHT = 350
 local WINDOW_COLLAPSED_HEIGHT = 68
@@ -615,7 +572,6 @@ local function setPanelCollapsed(collapsed)
 	sub.Visible = not panelCollapsed
 	tabBar.Visible = not panelCollapsed
 	content.Visible = not panelCollapsed
-	creditBar.Visible = not panelCollapsed
 	applyPanelSize()
 	collapseBtn.Text = panelCollapsed and "+" or "-"
 end
@@ -633,9 +589,62 @@ applyPanelSize()
 local tabs = {}
 local activeTabKey = nil
 
+local function createCreditCard(parent, layoutOrder)
+	local card = Instance.new("Frame", parent)
+	card.Size = UDim2.new(1, 0, 0, 84)
+	card.BackgroundColor3 = C.PANEL
+	card.BorderSizePixel = 0
+	card.LayoutOrder = layoutOrder
+	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
+
+	local cardStroke = Instance.new("UIStroke", card)
+	cardStroke.Color = Color3.fromRGB(35, 50, 78)
+	cardStroke.Transparency = 0.35
+
+	local avatar = Instance.new("ImageLabel", card)
+	avatar.Size = UDim2.new(0, 52, 0, 52)
+	avatar.Position = UDim2.new(0, 12, 0.5, -26)
+	avatar.BackgroundTransparency = 1
+	avatar.Image = "rbxthumb://type=AvatarHeadShot&id=9930783751&w=180&h=180"
+	avatar.ScaleType = Enum.ScaleType.Crop
+	Instance.new("UICorner", avatar).CornerRadius = UDim.new(1, 0)
+
+	local name = Instance.new("TextLabel", card)
+	name.Size = UDim2.new(1, -78, 0, 20)
+	name.Position = UDim2.new(0, 74, 0, 12)
+	name.BackgroundTransparency = 1
+	name.Font = Enum.Font.GothamBold
+	name.TextSize = 14
+	name.TextColor3 = C.WHT
+	name.TextXAlignment = Enum.TextXAlignment.Left
+	name.Text = "Crosshair by CuongOutLook"
+
+	local robloxInfo = Instance.new("TextLabel", card)
+	robloxInfo.Size = UDim2.new(1, -78, 0, 16)
+	robloxInfo.Position = UDim2.new(0, 74, 0, 34)
+	robloxInfo.BackgroundTransparency = 1
+	robloxInfo.Font = Enum.Font.Gotham
+	robloxInfo.TextSize = 11
+	robloxInfo.TextColor3 = C.TXT
+	robloxInfo.TextXAlignment = Enum.TextXAlignment.Left
+	robloxInfo.Text = "Roblox: CuongOutLook"
+
+	local socialInfo = Instance.new("TextLabel", card)
+	socialInfo.Size = UDim2.new(1, -78, 0, 28)
+	socialInfo.Position = UDim2.new(0, 74, 0, 50)
+	socialInfo.BackgroundTransparency = 1
+	socialInfo.Font = Enum.Font.Gotham
+	socialInfo.TextSize = 10
+	socialInfo.TextColor3 = C.TXTM
+	socialInfo.TextXAlignment = Enum.TextXAlignment.Left
+	socialInfo.TextYAlignment = Enum.TextYAlignment.Top
+	socialInfo.TextWrapped = true
+	socialInfo.Text = "Facebook: AD Cuong Ba Vien\nYouTube: AD McKieran"
+end
+
 local function createTab(key, label)
 	local btn = Instance.new("TextButton", tabBar)
-	btn.Size = UDim2.new(0, 122, 1, 0)
+	btn.Size = UDim2.new(0, 96, 1, 0)
 	btn.BackgroundColor3 = C.PANEL
 	btn.BorderSizePixel = 0
 	btn.Font = Enum.Font.GothamBold
@@ -693,6 +702,7 @@ createTab("crosshair", "Crosshair")
 createTab("layer", "Layer")
 createTab("thickness", "Thickness")
 createTab("xmark", "X Mark")
+createTab("credit", "Credit")
 
 for key, data in pairs(tabs) do
 	data.button.MouseButton1Click:Connect(function()
@@ -1271,6 +1281,11 @@ Sli("X Mark Duration", function()
 end, function(v)
 	STATE.xMarkDuration = math.clamp(v, 1, 20) / 10
 end, 1, 20)
+
+setTab("credit")
+Sec("Credit")
+Info("Author and social links")
+createCreditCard(currentTab().sf, nxt())
 
 setTab("crosshair")
 -- ============================================================
