@@ -552,20 +552,23 @@ local WINDOW_EXPANDED_HEIGHT = 350
 local WINDOW_COLLAPSED_HEIGHT = 68
 local WINDOW_EXPANDED_WIDTH = 560
 local panelCollapsed = false
+local tabs = {}
+local activeTabKey = nil
 
 local currentPanelWidth = WINDOW_EXPANDED_WIDTH
 local currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
 local currentCollapsedHeight = WINDOW_COLLAPSED_HEIGHT
+local currentTabButtonWidth = 96
 
 local function recalcPanelSize()
 	local viewport = Camera and Camera.ViewportSize or Vector2.new(1920, 1080)
 	local useMobileLayout = UserInputService.TouchEnabled or viewport.X <= 900
 
 	if useMobileLayout then
-		local widthScale = (viewport.X * 0.96) / WINDOW_EXPANDED_WIDTH
-		local heightScale = (viewport.Y * 0.72) / WINDOW_EXPANDED_HEIGHT
+		local widthScale = (viewport.X * 0.985) / WINDOW_EXPANDED_WIDTH
+		local heightScale = (viewport.Y * 0.82) / WINDOW_EXPANDED_HEIGHT
 		local scale = math.min(widthScale, heightScale, 1)
-		scale = math.max(scale, 0.72)
+		scale = math.max(scale, 0.82)
 
 		currentPanelWidth = math.floor(WINDOW_EXPANDED_WIDTH * scale + 0.5)
 		currentExpandedHeight = math.floor(WINDOW_EXPANDED_HEIGHT * scale + 0.5)
@@ -577,6 +580,26 @@ local function recalcPanelSize()
 	end
 end
 
+local function updateTabButtonSizes()
+	local tabCount = 5
+	local totalPadding = 8 * (tabCount - 1)
+	local availableWidth = math.max(currentPanelWidth - 24 - totalPadding, 320)
+	currentTabButtonWidth = math.floor(availableWidth / tabCount)
+	currentTabButtonWidth = math.clamp(currentTabButtonWidth, 72, 96)
+
+	for _, data in pairs(tabs or {}) do
+		if data.button then
+			data.button.Size = UDim2.new(0, currentTabButtonWidth, 1, 0)
+		end
+	end
+	if tabBar then
+		tabBar.Size = UDim2.new(1, -24, 0, 32)
+	end
+	if title then
+		title.Size = UDim2.new(1, -(currentTabButtonWidth <= 80 and 84 or 70), 1, 0)
+	end
+end
+
 local function applyPanelSize()
 	recalcPanelSize()
 	window.Size = UDim2.new(
@@ -585,6 +608,7 @@ local function applyPanelSize()
 		0,
 		panelCollapsed and currentCollapsedHeight or currentExpandedHeight
 	)
+	updateTabButtonSizes()
 end
 
 local function setPanelCollapsed(collapsed)
@@ -605,9 +629,6 @@ Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 end)
 
 applyPanelSize()
-
-local tabs = {}
-local activeTabKey = nil
 
 local function createCreditCard(parent, layoutOrder)
 	local card = Instance.new("Frame", parent)
@@ -664,7 +685,7 @@ end
 
 local function createTab(key, label)
 	local btn = Instance.new("TextButton", tabBar)
-	btn.Size = UDim2.new(0, 96, 1, 0)
+	btn.Size = UDim2.new(0, currentTabButtonWidth, 1, 0)
 	btn.BackgroundColor3 = C.PANEL
 	btn.BorderSizePixel = 0
 	btn.Font = Enum.Font.GothamBold
@@ -729,6 +750,8 @@ for key, data in pairs(tabs) do
 		setTab(key)
 	end)
 end
+
+updateTabButtonSizes()
 
 setTab("crosshair")
 
