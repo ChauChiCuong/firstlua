@@ -41,12 +41,14 @@ fxLayer.Size = UDim2.new(1,0,1,0)
 fxLayer.BackgroundTransparency = 1
 fxLayer.ZIndex = 0
 
-local FX_COUNT = 120
+local FX_COUNT = 80
 local fxDigits = {}
 local fxState = {}
 local fxConn = nil
 local fxSpeedMul = 1
 local fxTerminating = false
+local fxAccum = 0
+local fxUpdateInterval = 1 / 30
 
 local function respawnDigit(lbl, fromTop)
     local s = math.random(9, 13)
@@ -81,6 +83,12 @@ for _ = 1, FX_COUNT do
 end
 
 fxConn = RunService.RenderStepped:Connect(function(dt)
+    fxAccum = fxAccum + dt
+    if fxAccum < fxUpdateInterval then
+        return
+    end
+    dt = fxAccum
+    fxAccum = 0
     for _, lbl in ipairs(fxDigits) do
         local st = fxState[lbl]
         if st then
@@ -303,6 +311,8 @@ txtFxStroke.Transparency = 1
 local GLITCH_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%#&*"
 local fxBasePos = UDim2.new(0,10,0,0)
 local keyFxConn = nil
+local keyFxAccum = 0
+local keyFxUpdateInterval = 1 / 30
 
 local function randomGlyph()
     local i = math.random(1, #GLITCH_POOL)
@@ -330,7 +340,12 @@ local function startContinuousKeyFx()
     local accent = Color3.fromRGB(80,245,255)
     local placeholder = Color3.fromRGB(132,148,178)
 
-    keyFxConn = RunService.RenderStepped:Connect(function()
+    keyFxConn = RunService.RenderStepped:Connect(function(dt)
+        keyFxAccum = keyFxAccum + dt
+        if keyFxAccum < keyFxUpdateInterval then
+            return
+        end
+        keyFxAccum = 0
         if not txtFx.Parent then
             if keyFxConn then
                 keyFxConn:Disconnect()
@@ -370,6 +385,18 @@ local SCRIPT_OPTIONS = {
     {
         name = "Aimbot OP",
         url = _d({104,116,116,112,115,58,47,47,97,112,105,46,106,110,107,105,101,46,99,111,109,47,97,112,105,47,118,49,47,108,117,97,115,99,114,105,112,116,115,47,112,117,98,108,105,99,47,55,52,55,52,53,101,49,57,102,57,54,54,49,50,55,50,57,57,50,56,55,102,51,53,50,52,55,54,102,53,51,97,56,50,97,99,51,55,53,99,52,52,55,56,56,54,54,50,98,48,52,50,100,49,55,50,57,50,98,54,102,52,50,101,47,100,111,119,110,108,111,97,100})
+    },
+    {
+        name = "Auto HeadShot",
+        run = function()
+            loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/c84e771dedb26d5e9e841a4bc62ee7a6cb5c3b73cc2b330cbc7adf97ab5b5f7f/download"))()
+        end
+    },
+    {
+        name = "CrossHair OP",
+        run = function()
+            loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/976c11e7a5e09eb81662e3b26e0b6b310913943ed1ba4bc6f80e753dd9fc101f/download"))()
+        end
     }
     -- Add more scripts here:
     -- { name = "Script 2", url = "https://raw.githubusercontent.com/.../main.lua" }
@@ -708,7 +735,9 @@ local function onValid(key)
     task.wait(0.5)
     
     local selectedScript = SCRIPT_OPTIONS[selectedScriptIndex] or SCRIPT_OPTIONS[1]
-    if not selectedScript or type(selectedScript.url) ~= "string" or selectedScript.url == "" then
+    local hasUrl = selectedScript and type(selectedScript.url) == "string" and selectedScript.url ~= ""
+    local hasRun = selectedScript and type(selectedScript.run) == "function"
+    if not selectedScript or (not hasUrl and not hasRun) then
         warn("Khong tim thay script hop le de tai.")
         return
     end
@@ -719,7 +748,11 @@ local function onValid(key)
     -- ÄÃ‚Y LÃ€ NÆ I DUY NHáº¤T ÄÆ¯á»¢C Äá»‚ Lá»†NH LOADSTRING
     -- Thay link raw script cá»§a báº¡n vÃ o Ä‘Ã¢y:
     local okLoad, loadErr = pcall(function()
-        loadstring(game:HttpGet(selectedScript.url))()
+        if hasRun then
+            selectedScript.run()
+        else
+            loadstring(game:HttpGet(selectedScript.url))()
+        end
     end)
     if not okLoad then
         warn("Load script that bai: " .. tostring(loadErr))
