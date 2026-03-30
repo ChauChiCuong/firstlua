@@ -367,18 +367,21 @@ do
 	local dragging = false
 	local dragStart = Vector2.new(0, 0)
 	local startPos = window.Position
+	local dragInput = nil
 
 	titleBar.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
 			startPos = window.Position
+			dragInput = input
 		end
 	end)
 
 	titleBar.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		if input == dragInput or input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = false
+			dragInput = nil
 		end
 	end)
 
@@ -386,7 +389,9 @@ do
 		if not dragging then
 			return
 		end
-		if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+		local isMouseMove = input.UserInputType == Enum.UserInputType.MouseMovement
+		local isTouchMove = input.UserInputType == Enum.UserInputType.Touch and input == dragInput
+		if not isMouseMove and not isTouchMove then
 			return
 		end
 		local delta = input.Position - dragStart
@@ -396,6 +401,13 @@ do
 			startPos.Y.Scale,
 			startPos.Y.Offset + delta.Y
 		)
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input == dragInput then
+			dragging = false
+			dragInput = nil
+		end
 	end)
 end
 
@@ -543,17 +555,25 @@ local panelCollapsed = false
 
 local currentPanelWidth = WINDOW_EXPANDED_WIDTH
 local currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
+local currentCollapsedHeight = WINDOW_COLLAPSED_HEIGHT
 
 local function recalcPanelSize()
 	local viewport = Camera and Camera.ViewportSize or Vector2.new(1920, 1080)
 	local useMobileLayout = UserInputService.TouchEnabled or viewport.X <= 900
 
 	if useMobileLayout then
-		currentPanelWidth = math.floor(math.clamp(viewport.X * 0.9, 320, WINDOW_EXPANDED_WIDTH) + 0.5)
-		currentExpandedHeight = math.floor(math.clamp(viewport.Y * 0.56, 260, WINDOW_EXPANDED_HEIGHT) + 0.5)
+		local widthScale = (viewport.X * 0.9) / WINDOW_EXPANDED_WIDTH
+		local heightScale = (viewport.Y * 0.56) / WINDOW_EXPANDED_HEIGHT
+		local scale = math.min(widthScale, heightScale, 1)
+		scale = math.max(scale, 0.55)
+
+		currentPanelWidth = math.floor(WINDOW_EXPANDED_WIDTH * scale + 0.5)
+		currentExpandedHeight = math.floor(WINDOW_EXPANDED_HEIGHT * scale + 0.5)
+		currentCollapsedHeight = math.floor(WINDOW_COLLAPSED_HEIGHT * scale + 0.5)
 	else
 		currentPanelWidth = WINDOW_EXPANDED_WIDTH
 		currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
+		currentCollapsedHeight = WINDOW_COLLAPSED_HEIGHT
 	end
 end
 
@@ -563,7 +583,7 @@ local function applyPanelSize()
 		0,
 		currentPanelWidth,
 		0,
-		panelCollapsed and WINDOW_COLLAPSED_HEIGHT or currentExpandedHeight
+		panelCollapsed and currentCollapsedHeight or currentExpandedHeight
 	)
 end
 
