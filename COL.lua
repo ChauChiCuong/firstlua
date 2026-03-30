@@ -385,18 +385,6 @@ local SCRIPT_OPTIONS = {
     {
         name = "Aimbot OP",
         url = _d({104,116,116,112,115,58,47,47,97,112,105,46,106,110,107,105,101,46,99,111,109,47,97,112,105,47,118,49,47,108,117,97,115,99,114,105,112,116,115,47,112,117,98,108,105,99,47,55,52,55,52,53,101,49,57,102,57,54,54,49,50,55,50,57,57,50,56,55,102,51,53,50,52,55,54,102,53,51,97,56,50,97,99,51,55,53,99,52,52,55,56,56,54,54,50,98,48,52,50,100,49,55,50,57,50,98,54,102,52,50,101,47,100,111,119,110,108,111,97,100})
-    },
-    {
-        name = "Auto HeadShot",
-        run = function()
-            loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/c84e771dedb26d5e9e841a4bc62ee7a6cb5c3b73cc2b330cbc7adf97ab5b5f7f/download"))()
-        end
-    },
-    {
-        name = "CrossHair OP",
-        run = function()
-            loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/976c11e7a5e09eb81662e3b26e0b6b310913943ed1ba4bc6f80e753dd9fc101f/download"))()
-        end
     }
     -- Add more scripts here:
     -- { name = "Script 2", url = "https://raw.githubusercontent.com/.../main.lua" }
@@ -542,7 +530,7 @@ end
 
 local btn = Instance.new("TextButton", card)
 btn.Size = UDim2.new(1,-40,0,30)
-btn.Position = UDim2.new(0,20,0,180)
+btn.Position = UDim2.new(0,20,0,142)
 btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
 btn.BorderSizePixel = 0
 btn.Text = "Validate Key"
@@ -554,7 +542,7 @@ Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
 
 local btnClear = Instance.new("TextButton", card)
 btnClear.Size = UDim2.new(1,-40,0,30)
-btnClear.Position = UDim2.new(0,20,0,218)
+btnClear.Position = UDim2.new(0,20,0,180)
 btnClear.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnClear.BorderSizePixel = 0
 btnClear.Text = "Get key free (1 day)"
@@ -566,7 +554,7 @@ Instance.new("UICorner", btnClear).CornerRadius = UDim.new(0,10)
 
 local btnGetKey = Instance.new("TextButton", card)
 btnGetKey.Size = UDim2.new(1,-40,0,30)
-btnGetKey.Position = UDim2.new(0,20,0,256)
+btnGetKey.Position = UDim2.new(0,20,0,218)
 btnGetKey.BackgroundColor3 = Color3.fromRGB(13,18,30)
 btnGetKey.BorderSizePixel = 0
 btnGetKey.Text = "Forever Key - 1000 Robux"
@@ -576,84 +564,155 @@ btnGetKey.TextColor3 = Color3.fromRGB(238,244,255)
 btnGetKey.AutoButtonColor = false
 Instance.new("UICorner", btnGetKey).CornerRadius = UDim.new(0,10)
 
-local selectedScriptIndex = 1
-local selectBg = Instance.new("Frame", card)
-selectBg.Size = UDim2.new(1,-40,0,30)
-selectBg.Position = UDim2.new(0,20,0,142)
-selectBg.BackgroundColor3 = Color3.fromRGB(13,18,30)
-selectBg.BorderSizePixel = 0
-selectBg.ZIndex = 8
-Instance.new("UICorner", selectBg).CornerRadius = UDim.new(0,10)
-local selectStroke = Instance.new("UIStroke", selectBg)
-selectStroke.Color = Color3.fromRGB(56,92,148)
-selectStroke.Thickness = 1.1
+local btnHowTo = Instance.new("TextButton", card)
+btnHowTo.Size = UDim2.new(1,-40,0,30)
+btnHowTo.Position = UDim2.new(0,20,0,256)
+btnHowTo.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnHowTo.BorderSizePixel = 0
+btnHowTo.Text = "How to get 1 Week Key?"
+btnHowTo.Font = Enum.Font.GothamBold
+btnHowTo.TextSize = 12
+btnHowTo.TextColor3 = Color3.fromRGB(238,244,255)
+btnHowTo.AutoButtonColor = false
+Instance.new("UICorner", btnHowTo).CornerRadius = UDim.new(0,10)
 
-local selectBtn = Instance.new("TextButton", selectBg)
-selectBtn.Size = UDim2.new(1,-12,1,0)
-selectBtn.Position = UDim2.new(0,8,0,0)
-selectBtn.BackgroundTransparency = 1
-selectBtn.Font = Enum.Font.GothamBold
-selectBtn.TextSize = 13
-selectBtn.TextColor3 = Color3.fromRGB(238,244,255)
-selectBtn.TextXAlignment = Enum.TextXAlignment.Left
-selectBtn.AutoButtonColor = false
-selectBtn.ZIndex = 9
+local helpOverlay = Instance.new("Frame", bg)
+helpOverlay.Size = UDim2.new(1,0,1,0)
+helpOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+helpOverlay.BackgroundTransparency = 0.35
+helpOverlay.BorderSizePixel = 0
+helpOverlay.Visible = false
+helpOverlay.ZIndex = 20
 
-local arrowLabel = Instance.new("TextLabel", selectBg)
-arrowLabel.Size = UDim2.new(0,16,1,0)
-arrowLabel.Position = UDim2.new(1,-22,0,0)
-arrowLabel.BackgroundTransparency = 1
-arrowLabel.Text = "v"
-arrowLabel.Font = Enum.Font.GothamBold
-arrowLabel.TextSize = 12
-arrowLabel.TextColor3 = Color3.fromRGB(160,188,230)
-arrowLabel.ZIndex = 9
+local helpPanel = Instance.new("Frame", helpOverlay)
+helpPanel.Size = UDim2.new(0,500,0,320)
+helpPanel.Position = UDim2.new(0.5,-250,0.5,-160)
+helpPanel.BackgroundColor3 = Color3.fromRGB(18,24,38)
+helpPanel.BorderSizePixel = 0
+helpPanel.ZIndex = 21
+Instance.new("UICorner", helpPanel).CornerRadius = UDim.new(0,12)
+local helpPanelStroke = Instance.new("UIStroke", helpPanel)
+helpPanelStroke.Color = Color3.fromRGB(56,92,148)
+helpPanelStroke.Thickness = 1.3
 
-local dropdownList = Instance.new("Frame", card)
-dropdownList.Size = UDim2.new(1,-40,0,#SCRIPT_OPTIONS * 28)
-dropdownList.Position = UDim2.new(0,20,0,174)
-dropdownList.BackgroundColor3 = Color3.fromRGB(13,18,30)
-dropdownList.BorderSizePixel = 0
-dropdownList.Visible = false
-dropdownList.ZIndex = 11
-Instance.new("UICorner", dropdownList).CornerRadius = UDim.new(0,10)
-local dropdownStroke = Instance.new("UIStroke", dropdownList)
-dropdownStroke.Color = Color3.fromRGB(56,92,148)
-dropdownStroke.Thickness = 1.1
+local helpTitle = Instance.new("TextLabel", helpPanel)
+helpTitle.Size = UDim2.new(1,-120,0,30)
+helpTitle.Position = UDim2.new(0,14,0,10)
+helpTitle.BackgroundTransparency = 1
+helpTitle.Font = Enum.Font.GothamBold
+helpTitle.TextSize = 18
+helpTitle.TextColor3 = Color3.fromRGB(238,244,255)
+helpTitle.TextXAlignment = Enum.TextXAlignment.Left
+helpTitle.ZIndex = 22
 
-local function refreshSelectLabel()
-    local selected = SCRIPT_OPTIONS[selectedScriptIndex]
-    selectBtn.Text = (selected and selected.name) and ("Script: " .. selected.name) or "Script: N/A"
+local btnLangEN = Instance.new("TextButton", helpPanel)
+btnLangEN.Size = UDim2.new(0,82,0,24)
+btnLangEN.Position = UDim2.new(1,-178,0,12)
+btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnLangEN.BorderSizePixel = 0
+btnLangEN.Text = "English"
+btnLangEN.Font = Enum.Font.GothamBold
+btnLangEN.TextSize = 11
+btnLangEN.TextColor3 = Color3.new(1,1,1)
+btnLangEN.AutoButtonColor = false
+btnLangEN.ZIndex = 22
+Instance.new("UICorner", btnLangEN).CornerRadius = UDim.new(0,8)
+
+local btnLangVI = Instance.new("TextButton", helpPanel)
+btnLangVI.Size = UDim2.new(0,82,0,24)
+btnLangVI.Position = UDim2.new(1,-90,0,12)
+btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnLangVI.BorderSizePixel = 0
+btnLangVI.Text = "Tiếng Việt"
+btnLangVI.Font = Enum.Font.GothamBold
+btnLangVI.TextSize = 11
+btnLangVI.TextColor3 = Color3.new(1,1,1)
+btnLangVI.AutoButtonColor = false
+btnLangVI.ZIndex = 22
+Instance.new("UICorner", btnLangVI).CornerRadius = UDim.new(0,8)
+
+local helpText = Instance.new("TextLabel", helpPanel)
+helpText.Size = UDim2.new(1,-28,1,-96)
+helpText.Position = UDim2.new(0,14,0,48)
+helpText.BackgroundTransparency = 1
+helpText.Font = Enum.Font.Gotham
+helpText.TextSize = 14
+helpText.TextColor3 = Color3.fromRGB(210,224,246)
+helpText.TextWrapped = false
+helpText.TextXAlignment = Enum.TextXAlignment.Left
+helpText.TextYAlignment = Enum.TextYAlignment.Top
+helpText.LineHeight = 1.2
+helpText.ZIndex = 22
+
+local btnCopyLink = Instance.new("TextButton", helpPanel)
+btnCopyLink.Size = UDim2.new(0,100,0,26)
+btnCopyLink.Position = UDim2.new(0,14,1,-36)
+btnCopyLink.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnCopyLink.BorderSizePixel = 0
+btnCopyLink.Text = "Copy Link"
+btnCopyLink.Font = Enum.Font.GothamBold
+btnCopyLink.TextSize = 12
+btnCopyLink.TextColor3 = Color3.fromRGB(238,244,255)
+btnCopyLink.AutoButtonColor = false
+btnCopyLink.ZIndex = 22
+Instance.new("UICorner", btnCopyLink).CornerRadius = UDim.new(0,8)
+
+local btnHelpClose = Instance.new("TextButton", helpPanel)
+btnHelpClose.Size = UDim2.new(0,26,0,26)
+btnHelpClose.Position = UDim2.new(1,-34,1,-36)
+btnHelpClose.BackgroundColor3 = Color3.fromRGB(150,35,35)
+btnHelpClose.BorderSizePixel = 0
+btnHelpClose.Text = "X"
+btnHelpClose.Font = Enum.Font.GothamBold
+btnHelpClose.TextSize = 12
+btnHelpClose.TextColor3 = Color3.new(1,1,1)
+btnHelpClose.AutoButtonColor = false
+btnHelpClose.ZIndex = 22
+Instance.new("UICorner", btnHelpClose).CornerRadius = UDim.new(0,8)
+
+local helpLang = "en"
+local HELP_TEXT_EN = [[How to get 1 Week Key?
+
+1) Share this script on social media:
+    Facebook, YouTube, X, TikTok, etc.
+
+2) Send your post link to Facebook AD Cuong Ba Vien
+    (use the Copy Link button below).
+
+3) After verification, send your Roblox UserID.
+    You can get it from your Profile URL on Roblox website.
+
+4) CuongOutLook will send your key.
+    Enjoy your reward.]]
+local HELP_TEXT_VI = [[How to get 1 Week Key?
+
+1) Chia sẻ script này lên mạng xã hội:
+    Facebook, YouTube, X, TikTok, ...
+
+2) Gửi link bài đăng vào Facebook AD Cuong Ba Vien
+    (dùng nút Copy Link bên dưới) để CuongOutLook kiểm tra.
+
+3) Sau khi xác minh xong, gửi Roblox UserID của bạn.
+    Bạn có thể lấy ID trong đường dẫn Profile trên web Roblox.
+
+4) CuongOutLook sẽ gửi key cho bạn.
+    Chúc bạn chơi vui.]]
+
+local function updateHelpContent()
+    if helpLang == "vi" then
+        helpTitle.Text = "Cách lấy key 1 tuần"
+        helpText.Text = HELP_TEXT_VI
+        btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+    else
+        helpTitle.Text = "How to get 1 Week Key?"
+        helpText.Text = HELP_TEXT_EN
+        btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+    end
 end
 
-for i, scriptInfo in ipairs(SCRIPT_OPTIONS) do
-    local optionBtn = Instance.new("TextButton", dropdownList)
-    optionBtn.Size = UDim2.new(1,-10,0,24)
-    optionBtn.Position = UDim2.new(0,5,0,(i - 1) * 28 + 2)
-    optionBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
-    optionBtn.BorderSizePixel = 0
-    optionBtn.Text = scriptInfo.name
-    optionBtn.Font = Enum.Font.Gotham
-    optionBtn.TextSize = 12
-    optionBtn.TextColor3 = Color3.fromRGB(238,244,255)
-    optionBtn.ZIndex = 12
-    Instance.new("UICorner", optionBtn).CornerRadius = UDim.new(0,8)
-
-    optionBtn.MouseButton1Click:Connect(function()
-        selectedScriptIndex = i
-        refreshSelectLabel()
-        dropdownList.Visible = false
-        arrowLabel.Text = "v"
-    end)
-end
-
-refreshSelectLabel()
-
-selectBtn.MouseButton1Click:Connect(function()
-    if terminated then return end
-    dropdownList.Visible = not dropdownList.Visible
-    arrowLabel.Text = dropdownList.Visible and "^" or "v"
-end)
+updateHelpContent()
 
 closeBtn.MouseEnter:Connect(function()
     closeBtn.BackgroundColor3 = Color3.fromRGB(185,45,45)
@@ -720,6 +779,44 @@ btnGetKey.MouseButton1Click:Connect(function()
         end
     end)
 end)
+
+btnHowTo.MouseEnter:Connect(function()
+    if terminated then return end
+    btnHowTo.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+btnHowTo.MouseLeave:Connect(function()
+    if terminated then return end
+    btnHowTo.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+btnHowTo.MouseButton1Click:Connect(function()
+    if terminated then return end
+    helpLang = "en"
+    updateHelpContent()
+    helpOverlay.Visible = true
+end)
+
+btnLangEN.MouseButton1Click:Connect(function()
+    helpLang = "en"
+    updateHelpContent()
+end)
+btnLangVI.MouseButton1Click:Connect(function()
+    helpLang = "vi"
+    updateHelpContent()
+end)
+
+btnCopyLink.MouseButton1Click:Connect(function()
+    pcall(function() setclipboard(FACEBOOK_URL) end)
+    btnCopyLink.Text = "Copied!"
+    task.delay(1, function()
+        if btnCopyLink and btnCopyLink.Parent then
+            btnCopyLink.Text = "Copy Link"
+        end
+    end)
+end)
+
+btnHelpClose.MouseButton1Click:Connect(function()
+    helpOverlay.Visible = false
+end)
 local function onValid(key)
     if terminated then return end
     -- XÃ³a khoáº£ng tráº¯ng thá»«a náº¿u copy nháº§m
@@ -734,7 +831,7 @@ local function onValid(key)
     -- Äá»£i 1 chÃºt cho an toÃ n
     task.wait(0.5)
     
-    local selectedScript = SCRIPT_OPTIONS[selectedScriptIndex] or SCRIPT_OPTIONS[1]
+    local selectedScript = SCRIPT_OPTIONS[1]
     local hasUrl = selectedScript and type(selectedScript.url) == "string" and selectedScript.url ~= ""
     local hasRun = selectedScript and type(selectedScript.run) == "function"
     if not selectedScript or (not hasUrl and not hasRun) then
