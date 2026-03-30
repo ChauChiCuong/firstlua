@@ -267,14 +267,87 @@ if not sg.Parent then
 end
 
 local window = Instance.new("Frame", sg)
-window.Size = UDim2.new(0, 430, 0, 520)
-window.Position = UDim2.new(0.5, -215, 0.5, -260)
+window.Size = UDim2.new(0, 620, 0, 390)
+window.Position = UDim2.new(0.5, -310, 0.5, -195)
 window.BackgroundColor3 = C.BG
 window.BorderSizePixel = 0
 window.Active = true
 window.Draggable = false
 window.ClipsDescendants = true
 Instance.new("UICorner", window).CornerRadius = UDim.new(0, 16)
+
+-- Cyan glitch-fall digits background effect (adapted from Loader Hub).
+local fxLayer = Instance.new("Frame", window)
+fxLayer.Size = UDim2.new(1, 0, 1, 0)
+fxLayer.BackgroundTransparency = 1
+fxLayer.ZIndex = 0
+
+local FX_COUNT = 56
+local fxDigits = {}
+local fxState = {}
+
+local function respawnDigit(lbl, fromTop)
+	local s = math.random(8, 12)
+	lbl.Text = tostring(math.random(0, 9))
+	lbl.Font = Enum.Font.Code
+	lbl.TextSize = s
+	lbl.TextColor3 = Color3.fromRGB(0, math.random(190, 255), 255)
+	lbl.TextTransparency = math.random(35, 70) / 100
+	lbl.TextStrokeTransparency = 0.9
+	lbl.TextStrokeColor3 = Color3.fromRGB(0, 255, 255)
+	lbl.Size = UDim2.new(0, s + 8, 0, s + 8)
+	lbl.Position = UDim2.fromScale(
+		math.random() * 1.15 - 0.075,
+		fromTop and (-0.15 - math.random() * 0.55) or math.random()
+	)
+	fxState[lbl] = {
+		vx = (math.random() - 0.5) * 0.035,
+		vy = 0.08 + math.random() * 0.16,
+		glitch = 0,
+	}
+end
+
+for _ = 1, FX_COUNT do
+	local d = Instance.new("TextLabel", fxLayer)
+	d.BackgroundTransparency = 1
+	d.TextXAlignment = Enum.TextXAlignment.Center
+	d.TextYAlignment = Enum.TextYAlignment.Center
+	d.ZIndex = 0
+	table.insert(fxDigits, d)
+	respawnDigit(d, false)
+end
+
+RunService.RenderStepped:Connect(function(dt)
+	if not window.Visible then
+		return
+	end
+
+	for _, lbl in ipairs(fxDigits) do
+		local st = fxState[lbl]
+		if st then
+			local x = lbl.Position.X.Scale + st.vx * dt
+			local y = lbl.Position.Y.Scale + st.vy * dt
+			st.glitch = st.glitch - dt
+
+			if st.glitch <= 0 then
+				lbl.Text = tostring(math.random(0, 9))
+				lbl.Rotation = math.random(-7, 7)
+				lbl.TextTransparency = math.random(35, 75) / 100
+				st.glitch = 0.05 + math.random() * 0.16
+			end
+
+			if math.random() < 0.02 then
+				st.vx = math.clamp(st.vx + (math.random() - 0.5) * 0.014, -0.045, 0.045)
+			end
+
+			if y > 1.1 or x < -0.15 or x > 1.15 then
+				respawnDigit(lbl, true)
+			else
+				lbl.Position = UDim2.fromScale(x, y)
+			end
+		end
+	end
+end)
 
 local stroke = Instance.new("UIStroke", window)
 stroke.Color = Color3.fromRGB(56, 92, 148)
@@ -346,6 +419,18 @@ closeBtn.TextColor3 = C.WHT
 closeBtn.Text = "X"
 closeBtn.AutoButtonColor = false
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+
+local collapseBtn = Instance.new("TextButton", titleBar)
+collapseBtn.Size = UDim2.new(0, 30, 0, 24)
+collapseBtn.Position = UDim2.new(1, -70, 0.5, -12)
+collapseBtn.BackgroundColor3 = Color3.fromRGB(24, 44, 72)
+collapseBtn.BorderSizePixel = 0
+collapseBtn.Font = Enum.Font.GothamBold
+collapseBtn.TextSize = 14
+collapseBtn.TextColor3 = C.WHT
+collapseBtn.Text = "-"
+collapseBtn.AutoButtonColor = false
+Instance.new("UICorner", collapseBtn).CornerRadius = UDim.new(0, 8)
 
 local collapsedBtn = Instance.new("ImageButton", sg)
 collapsedBtn.Size = UDim2.new(0, 50, 0, 50)
@@ -422,50 +507,179 @@ local sub = Instance.new("TextLabel", window)
 sub.Size = UDim2.new(1, -24, 0, 18)
 sub.Position = UDim2.new(0, 12, 0, 62)
 sub.BackgroundTransparency = 1
-sub.Text = "Visual crosshair only"
+sub.Text = "Visual crosshair only - compact horizontal layout"
 sub.Font = Enum.Font.Gotham
 sub.TextSize = 11
 sub.TextColor3 = C.TXTM
 sub.TextXAlignment = Enum.TextXAlignment.Left
 
+local tabBar = Instance.new("Frame", window)
+tabBar.Size = UDim2.new(1, -24, 0, 32)
+tabBar.Position = UDim2.new(0, 12, 0, 82)
+tabBar.BackgroundTransparency = 1
+
+local tabBarList = Instance.new("UIListLayout", tabBar)
+tabBarList.FillDirection = Enum.FillDirection.Horizontal
+tabBarList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+tabBarList.SortOrder = Enum.SortOrder.LayoutOrder
+tabBarList.Padding = UDim.new(0, 8)
+
 local content = Instance.new("Frame", window)
-content.Size = UDim2.new(1, -24, 1, -90)
-content.Position = UDim2.new(0, 12, 0, 82)
+content.Size = UDim2.new(1, -24, 1, -122)
+content.Position = UDim2.new(0, 12, 0, 114)
 content.BackgroundColor3 = C.DARK
 content.BorderSizePixel = 0
 Instance.new("UICorner", content).CornerRadius = UDim.new(0, 14)
+
+-- Reserve space for bottom credit row.
+content.Size = UDim2.new(1, -24, 1, -176)
 
 local contentStroke = Instance.new("UIStroke", content)
 contentStroke.Color = Color3.fromRGB(39, 58, 92)
 contentStroke.Thickness = 1.2
 
-local sf = Instance.new("ScrollingFrame", content)
-sf.Size = UDim2.new(1, -16, 1, -16)
-sf.Position = UDim2.new(0, 8, 0, 8)
-sf.BackgroundTransparency = 1
-sf.BorderSizePixel = 0
-sf.ScrollBarThickness = 5
-sf.ScrollBarImageColor3 = C.ACC
-sf.AutomaticCanvasSize = Enum.AutomaticSize.Y
-sf.CanvasSize = UDim2.new(0, 0, 0, 0)
+local creditBar = Instance.new("Frame", window)
+creditBar.Size = UDim2.new(1, -24, 0, 52)
+creditBar.Position = UDim2.new(0, 12, 1, -64)
+creditBar.BackgroundColor3 = C.PANEL
+creditBar.BorderSizePixel = 0
+Instance.new("UICorner", creditBar).CornerRadius = UDim.new(0, 10)
 
-local list = Instance.new("UIListLayout", sf)
-list.Padding = UDim.new(0, 8)
-list.SortOrder = Enum.SortOrder.LayoutOrder
+local creditStroke = Instance.new("UIStroke", creditBar)
+creditStroke.Color = Color3.fromRGB(35, 50, 78)
+creditStroke.Transparency = 0.35
 
-local pad = Instance.new("UIPadding", sf)
-pad.PaddingLeft = UDim.new(0, 8)
-pad.PaddingRight = UDim.new(0, 8)
-pad.PaddingTop = UDim.new(0, 8)
+local creditAvatar = Instance.new("ImageLabel", creditBar)
+creditAvatar.Size = UDim2.new(0, 40, 0, 40)
+creditAvatar.Position = UDim2.new(0, 8, 0.5, -20)
+creditAvatar.BackgroundTransparency = 1
+creditAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=9930783751&w=180&h=180"
+creditAvatar.ScaleType = Enum.ScaleType.Crop
+Instance.new("UICorner", creditAvatar).CornerRadius = UDim.new(1, 0)
 
-local order = 0
+local creditName = Instance.new("TextLabel", creditBar)
+creditName.Size = UDim2.new(1, -58, 0, 22)
+creditName.Position = UDim2.new(0, 54, 0, 4)
+creditName.BackgroundTransparency = 1
+creditName.Font = Enum.Font.GothamBold
+creditName.TextSize = 13
+creditName.TextColor3 = C.WHT
+creditName.TextXAlignment = Enum.TextXAlignment.Left
+creditName.Text = "Crosshair by CuongOutLook"
+
+local creditInfo = Instance.new("TextLabel", creditBar)
+creditInfo.Size = UDim2.new(1, -58, 0, 20)
+creditInfo.Position = UDim2.new(0, 54, 0, 27)
+creditInfo.BackgroundTransparency = 1
+creditInfo.Font = Enum.Font.Gotham
+creditInfo.TextSize = 10
+creditInfo.TextColor3 = C.TXTM
+creditInfo.TextXAlignment = Enum.TextXAlignment.Left
+creditInfo.TextTruncate = Enum.TextTruncate.AtEnd
+creditInfo.Text = "Facebook: AD Cuong Ba Vien | YouTube: AD McKieran"
+
+local WINDOW_EXPANDED_HEIGHT = 390
+local WINDOW_COLLAPSED_HEIGHT = 72
+local panelCollapsed = false
+
+local function setPanelCollapsed(collapsed)
+	panelCollapsed = collapsed == true
+	sub.Visible = not panelCollapsed
+	tabBar.Visible = not panelCollapsed
+	content.Visible = not panelCollapsed
+	creditBar.Visible = not panelCollapsed
+	window.Size = UDim2.new(0, 620, 0, panelCollapsed and WINDOW_COLLAPSED_HEIGHT or WINDOW_EXPANDED_HEIGHT)
+	collapseBtn.Text = panelCollapsed and "+" or "-"
+end
+
+collapseBtn.MouseButton1Click:Connect(function()
+	setPanelCollapsed(not panelCollapsed)
+end)
+
+local tabs = {}
+local activeTabKey = nil
+
+local function createTab(key, label)
+	local btn = Instance.new("TextButton", tabBar)
+	btn.Size = UDim2.new(0, 138, 1, 0)
+	btn.BackgroundColor3 = C.PANEL
+	btn.BorderSizePixel = 0
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 11
+	btn.TextColor3 = C.TXTM
+	btn.Text = label
+	btn.AutoButtonColor = false
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+
+	local btnStroke = Instance.new("UIStroke", btn)
+	btnStroke.Color = Color3.fromRGB(35, 50, 78)
+	btnStroke.Transparency = 0.35
+
+	local sf = Instance.new("ScrollingFrame", content)
+	sf.Size = UDim2.new(1, -16, 1, -16)
+	sf.Position = UDim2.new(0, 8, 0, 8)
+	sf.BackgroundTransparency = 1
+	sf.BorderSizePixel = 0
+	sf.ScrollBarThickness = 5
+	sf.ScrollBarImageColor3 = C.ACC
+	sf.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	sf.CanvasSize = UDim2.new(0, 0, 0, 0)
+	sf.Visible = false
+
+	local list = Instance.new("UIListLayout", sf)
+	list.Padding = UDim.new(0, 8)
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+
+	local pad = Instance.new("UIPadding", sf)
+	pad.PaddingLeft = UDim.new(0, 8)
+	pad.PaddingRight = UDim.new(0, 8)
+	pad.PaddingTop = UDim.new(0, 8)
+
+	tabs[key] = {
+		button = btn,
+		buttonStroke = btnStroke,
+		sf = sf,
+		order = 0,
+	}
+end
+
+local function setTab(key)
+	activeTabKey = key
+	for name, data in pairs(tabs) do
+		local selected = (name == key)
+		data.sf.Visible = selected
+		data.button.BackgroundColor3 = selected and Color3.fromRGB(24, 44, 72) or C.PANEL
+		data.button.TextColor3 = selected and C.TXT or C.TXTM
+		data.buttonStroke.Color = selected and C.ACC or Color3.fromRGB(35, 50, 78)
+		data.buttonStroke.Transparency = selected and 0.1 or 0.35
+	end
+end
+
+createTab("crosshair", "Crosshair")
+createTab("layer", "Layer")
+createTab("thickness", "Thickness")
+createTab("xmark", "X Mark")
+
+for key, data in pairs(tabs) do
+	data.button.MouseButton1Click:Connect(function()
+		setTab(key)
+	end)
+end
+
+setTab("crosshair")
+
+local function currentTab()
+	return tabs[activeTabKey]
+end
+
 local function nxt()
-	order = order + 1
-	return order
+	local tab = currentTab()
+	tab.order = tab.order + 1
+	return tab.order
 end
 
 local function Sec(txt)
-	local f = Instance.new("Frame", sf)
+	local f = Instance.new("Frame", currentTab().sf)
 	f.Size = UDim2.new(1, 0, 0, 24)
 	f.BackgroundTransparency = 1
 	f.LayoutOrder = nxt()
@@ -481,7 +695,7 @@ local function Sec(txt)
 end
 
 local function Info(txt)
-	local f = Instance.new("Frame", sf)
+	local f = Instance.new("Frame", currentTab().sf)
 	f.Size = UDim2.new(1, 0, 0, 20)
 	f.BackgroundTransparency = 1
 	f.LayoutOrder = nxt()
@@ -498,7 +712,7 @@ local function Info(txt)
 end
 
 local function Tog(label, getS, setS)
-	local row = Instance.new("Frame", sf)
+	local row = Instance.new("Frame", currentTab().sf)
 	row.Size = UDim2.new(1, 0, 0, 42)
 	row.BackgroundColor3 = C.PANEL
 	row.BorderSizePixel = 0
@@ -543,7 +757,7 @@ local function Tog(label, getS, setS)
 end
 
 local function Sli(label, getV, setV, mn, mx)
-	local row = Instance.new("Frame", sf)
+	local row = Instance.new("Frame", currentTab().sf)
 	row.Size = UDim2.new(1, 0, 0, 54)
 	row.BackgroundColor3 = C.PANEL
 	row.BorderSizePixel = 0
@@ -616,7 +830,7 @@ local function clampRGB(v)
 end
 
 local function RGB(label, getR, setR, getG, setG, getB, setB)
-	local row = Instance.new("Frame", sf)
+	local row = Instance.new("Frame", currentTab().sf)
 	row.Size = UDim2.new(1, 0, 0, 46)
 	row.BackgroundColor3 = C.PANEL
 	row.BorderSizePixel = 0
@@ -692,35 +906,22 @@ local function ringEnemyColor()
 	return Color3.fromRGB(STATE.fovRingEnemyColorR, STATE.fovRingEnemyColorG, STATE.fovRingEnemyColorB)
 end
 
-local function isEnemyTargeted()
+local function getEnemyModelAtMouse()
 	local targetPart = mouse.Target
+
 	if not targetPart then
-		return false
-	end
+		local viewport = Camera.ViewportSize
+		local ray = Camera:ViewportPointToRay(viewport.X * 0.5, viewport.Y * 0.5)
+		local rayParams = RaycastParams.new()
+		rayParams.FilterType = Enum.RaycastFilterType.Exclude
+		rayParams.FilterDescendantsInstances = { plr.Character, Camera }
 
-	local cur = targetPart
-	while cur and cur ~= Workspace do
-		if cur:IsA("Model") then
-			local hum = cur:FindFirstChildOfClass("Humanoid")
-			if hum and hum.Health > 0 then
-				local targetPlayer = Players:GetPlayerFromCharacter(cur)
-				if targetPlayer and targetPlayer ~= plr then
-					if targetPlayer.Team and plr.Team and targetPlayer.Team == plr.Team then
-						return false
-					end
-					return true
-				end
-				return false
-			end
+		local result = Workspace:Raycast(ray.Origin, ray.Direction * 1000, rayParams)
+		if result then
+			targetPart = result.Instance
 		end
-		cur = cur.Parent
 	end
 
-	return false
-end
-
-getEnemyAtMouse = function()
-	local targetPart = mouse.Target
 	if not targetPart then
 		return nil
 	end
@@ -731,12 +932,18 @@ getEnemyAtMouse = function()
 			local hum = cur:FindFirstChildOfClass("Humanoid")
 			if hum and hum.Health > 0 then
 				local targetPlayer = Players:GetPlayerFromCharacter(cur)
-				if targetPlayer and targetPlayer ~= plr then
+				if targetPlayer then
+					if targetPlayer == plr then
+						return nil
+					end
 					if targetPlayer.Team and plr.Team and targetPlayer.Team == plr.Team then
 						return nil
 					end
 					return cur
 				end
+
+				-- Treat NPC models with Humanoid as valid enemy targets.
+				return cur
 			end
 		end
 		cur = cur.Parent
@@ -745,11 +952,20 @@ getEnemyAtMouse = function()
 	return nil
 end
 
+local function isEnemyTargeted()
+	return getEnemyModelAtMouse() ~= nil
+end
+
+getEnemyAtMouse = function()
+	return getEnemyModelAtMouse()
+end
+
 local function xMarkColor()
 	return Color3.fromRGB(STATE.xMarkColorR, STATE.xMarkColorG, STATE.xMarkColorB)
 end
 
-Sec("Crosshair")
+setTab("crosshair")
+Sec("Main")
 Tog("Enable Crosshair", function()
 	return STATE.crosshairEnabled
 end, function(v)
@@ -757,6 +973,7 @@ end, function(v)
 end)
 Info("Toggle all crosshair drawing elements")
 
+Sec("Dot")
 Tog("Dot", function()
 	return STATE.crosshairShowDot
 end, function(v)
@@ -809,6 +1026,7 @@ end, function(v)
 	STATE.dotEnemyColorB = v
 end)
 
+Sec("FOV Ring")
 Tog("FOV Ring", function()
 	return STATE.crosshairShowFOVRing
 end, function(v)
@@ -861,6 +1079,7 @@ end, function(v)
 	STATE.fovRingEnemyColorB = v
 end)
 
+Sec("Cross Lines")
 Tog("Cross Lines", function()
 	return STATE.crosshairShowCross
 end, function(v)
@@ -913,6 +1132,7 @@ end, function(v)
 	STATE.crossEnemyColorB = v
 end)
 
+setTab("layer")
 Sec("Layer")
 Info("Higher layer draws on top")
 Sli("Dot Layer", function()
@@ -931,6 +1151,7 @@ end, function(v)
 	STATE.fovRingLayer = v
 end, 1, 30)
 
+setTab("thickness")
 Sec("Thickness")
 Info("Set thickness for each crosshair element")
 Sli("Dot Thickness", function()
@@ -949,7 +1170,7 @@ end, function(v)
 	STATE.fovRingThickness = v
 end, 1, 10)
 
-
+setTab("xmark")
 Sec("X Mark Effect")
 Tog("X Mark On Click", function()
 return STATE.xMarkEnabled
@@ -986,6 +1207,8 @@ Sli("X Mark Duration", function()
 end, function(v)
 	STATE.xMarkDuration = math.clamp(v, 1, 20) / 10
 end, 1, 20)
+
+setTab("crosshair")
 -- ============================================================
 -- Crosshair drawings
 -- ============================================================
