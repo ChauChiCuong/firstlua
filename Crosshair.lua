@@ -562,10 +562,10 @@ local function recalcPanelSize()
 	local useMobileLayout = UserInputService.TouchEnabled or viewport.X <= 900
 
 	if useMobileLayout then
-		local widthScale = (viewport.X * 0.9) / WINDOW_EXPANDED_WIDTH
-		local heightScale = (viewport.Y * 0.56) / WINDOW_EXPANDED_HEIGHT
+		local widthScale = (viewport.X * 0.96) / WINDOW_EXPANDED_WIDTH
+		local heightScale = (viewport.Y * 0.72) / WINDOW_EXPANDED_HEIGHT
 		local scale = math.min(widthScale, heightScale, 1)
-		scale = math.max(scale, 0.55)
+		scale = math.max(scale, 0.72)
 
 		currentPanelWidth = math.floor(WINDOW_EXPANDED_WIDTH * scale + 0.5)
 		currentExpandedHeight = math.floor(WINDOW_EXPANDED_HEIGHT * scale + 0.5)
