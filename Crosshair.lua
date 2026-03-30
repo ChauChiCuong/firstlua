@@ -267,7 +267,7 @@ if not sg.Parent then
 end
 
 local window = Instance.new("Frame", sg)
-window.Size = UDim2.new(0, 620, 0, 390)
+window.Size = UDim2.new(0, 560, 0, 350)
 window.AnchorPoint = Vector2.new(0.5, 0.5)
 window.Position = UDim2.new(0.5, 0, 0.5, 0)
 window.BackgroundColor3 = C.BG
@@ -579,9 +579,9 @@ creditInfo.TextXAlignment = Enum.TextXAlignment.Left
 creditInfo.TextTruncate = Enum.TextTruncate.AtEnd
 creditInfo.Text = "Facebook: AD Cuong Ba Vien | YouTube: AD McKieran"
 
-local WINDOW_EXPANDED_HEIGHT = 390
-local WINDOW_COLLAPSED_HEIGHT = 72
-local WINDOW_EXPANDED_WIDTH = 620
+local WINDOW_EXPANDED_HEIGHT = 350
+local WINDOW_COLLAPSED_HEIGHT = 68
+local WINDOW_EXPANDED_WIDTH = 560
 local panelCollapsed = false
 
 local currentPanelWidth = WINDOW_EXPANDED_WIDTH
@@ -592,8 +592,8 @@ local function recalcPanelSize()
 	local useMobileLayout = UserInputService.TouchEnabled or viewport.X <= 900
 
 	if useMobileLayout then
-		currentPanelWidth = math.floor(math.clamp(viewport.X * 0.94, 320, WINDOW_EXPANDED_WIDTH) + 0.5)
-		currentExpandedHeight = math.floor(math.clamp(viewport.Y * 0.62, 280, WINDOW_EXPANDED_HEIGHT) + 0.5)
+		currentPanelWidth = math.floor(math.clamp(viewport.X * 0.9, 320, WINDOW_EXPANDED_WIDTH) + 0.5)
+		currentExpandedHeight = math.floor(math.clamp(viewport.Y * 0.56, 260, WINDOW_EXPANDED_HEIGHT) + 0.5)
 	else
 		currentPanelWidth = WINDOW_EXPANDED_WIDTH
 		currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
@@ -635,7 +635,7 @@ local activeTabKey = nil
 
 local function createTab(key, label)
 	local btn = Instance.new("TextButton", tabBar)
-	btn.Size = UDim2.new(0, 138, 1, 0)
+	btn.Size = UDim2.new(0, 122, 1, 0)
 	btn.BackgroundColor3 = C.PANEL
 	btn.BorderSizePixel = 0
 	btn.Font = Enum.Font.GothamBold
@@ -811,11 +811,14 @@ local function Sli(label, getV, setV, mn, mx)
 	lb.TextColor3 = C.TXTM
 	lb.TextXAlignment = Enum.TextXAlignment.Left
 
-	local track = Instance.new("Frame", row)
+	local track = Instance.new("TextButton", row)
 	track.Size = UDim2.new(1, -24, 0, 8)
 	track.Position = UDim2.new(0, 12, 0, 34)
 	track.BackgroundColor3 = Color3.fromRGB(29, 40, 62)
 	track.BorderSizePixel = 0
+	track.Text = ""
+	track.AutoButtonColor = false
+	track.Active = true
 	Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
 
 	local fill = Instance.new("Frame", track)
@@ -871,6 +874,12 @@ local function Sli(label, getV, setV, mn, mx)
 		local isMouseMove = i.UserInputType == Enum.UserInputType.MouseMovement
 		local isTouchMove = i.UserInputType == Enum.UserInputType.Touch and i == dragInput
 		if isMouseMove or isTouchMove then
+			applyFromX(i.Position.X)
+		end
+	end)
+
+	UserInputService.TouchMoved:Connect(function(i)
+		if drag and dragInput and i == dragInput then
 			applyFromX(i.Position.X)
 		end
 	end)
