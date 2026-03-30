@@ -268,7 +268,8 @@ end
 
 local window = Instance.new("Frame", sg)
 window.Size = UDim2.new(0, 620, 0, 390)
-window.Position = UDim2.new(0.5, -310, 0.5, -195)
+window.AnchorPoint = Vector2.new(0.5, 0.5)
+window.Position = UDim2.new(0.5, 0, 0.5, 0)
 window.BackgroundColor3 = C.BG
 window.BorderSizePixel = 0
 window.Active = true
@@ -580,7 +581,34 @@ creditInfo.Text = "Facebook: AD Cuong Ba Vien | YouTube: AD McKieran"
 
 local WINDOW_EXPANDED_HEIGHT = 390
 local WINDOW_COLLAPSED_HEIGHT = 72
+local WINDOW_EXPANDED_WIDTH = 620
 local panelCollapsed = false
+
+local currentPanelWidth = WINDOW_EXPANDED_WIDTH
+local currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
+
+local function recalcPanelSize()
+	local viewport = Camera and Camera.ViewportSize or Vector2.new(1920, 1080)
+	local useMobileLayout = UserInputService.TouchEnabled or viewport.X <= 900
+
+	if useMobileLayout then
+		currentPanelWidth = math.floor(math.clamp(viewport.X * 0.94, 320, WINDOW_EXPANDED_WIDTH) + 0.5)
+		currentExpandedHeight = math.floor(math.clamp(viewport.Y * 0.62, 280, WINDOW_EXPANDED_HEIGHT) + 0.5)
+	else
+		currentPanelWidth = WINDOW_EXPANDED_WIDTH
+		currentExpandedHeight = WINDOW_EXPANDED_HEIGHT
+	end
+end
+
+local function applyPanelSize()
+	recalcPanelSize()
+	window.Size = UDim2.new(
+		0,
+		currentPanelWidth,
+		0,
+		panelCollapsed and WINDOW_COLLAPSED_HEIGHT or currentExpandedHeight
+	)
+end
 
 local function setPanelCollapsed(collapsed)
 	panelCollapsed = collapsed == true
@@ -588,13 +616,19 @@ local function setPanelCollapsed(collapsed)
 	tabBar.Visible = not panelCollapsed
 	content.Visible = not panelCollapsed
 	creditBar.Visible = not panelCollapsed
-	window.Size = UDim2.new(0, 620, 0, panelCollapsed and WINDOW_COLLAPSED_HEIGHT or WINDOW_EXPANDED_HEIGHT)
+	applyPanelSize()
 	collapseBtn.Text = panelCollapsed and "+" or "-"
 end
 
 collapseBtn.MouseButton1Click:Connect(function()
 	setPanelCollapsed(not panelCollapsed)
 end)
+
+Camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+	applyPanelSize()
+end)
+
+applyPanelSize()
 
 local tabs = {}
 local activeTabKey = nil
@@ -799,24 +833,45 @@ local function Sli(label, getV, setV, mn, mx)
 	rf()
 
 	local drag = false
+	local dragInput = nil
+
+	local function applyFromX(posX)
+		local pct = math.clamp((posX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+		setV(math.floor(mn + pct * (mx - mn) + 0.5))
+		queueSaveState()
+		rf()
+	end
+
 	track.InputBegan:Connect(function(i)
-		if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
 			drag = true
+			dragInput = i
+			applyFromX(i.Position.X)
+		end
+	end)
+
+	track.InputChanged:Connect(function(i)
+		if drag and i.UserInputType == Enum.UserInputType.Touch and i == dragInput then
+			applyFromX(i.Position.X)
 		end
 	end)
 
 	UserInputService.InputEnded:Connect(function(i)
-		if i.UserInputType == Enum.UserInputType.MouseButton1 then
+		if i == dragInput or i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
 			drag = false
+			dragInput = nil
 		end
 	end)
 
 	UserInputService.InputChanged:Connect(function(i)
-		if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-			local pct = math.clamp((i.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-			setV(math.floor(mn + pct * (mx - mn) + 0.5))
-			queueSaveState()
-			rf()
+		if not drag then
+			return
+		end
+
+		local isMouseMove = i.UserInputType == Enum.UserInputType.MouseMovement
+		local isTouchMove = i.UserInputType == Enum.UserInputType.Touch and i == dragInput
+		if isMouseMove or isTouchMove then
+			applyFromX(i.Position.X)
 		end
 	end)
 end
