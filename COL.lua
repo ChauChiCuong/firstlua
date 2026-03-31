@@ -17,12 +17,15 @@ Junkie.identifier = "1056706"
 local PlayersService = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local localPlayer = PlayersService.LocalPlayer
 local CREDIT_USER_ID = 9930783751
-local CARD_W = 320
-local CARD_H = 322
-local CARD_GAP = 24
+local LOADER_SCALE = 0.88
+local CARD_W = 300
+local CARD_H = 338
+local CARD_GAP = 8
+local CARD_EFFECTIVE_W = CARD_W * LOADER_SCALE
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JunkieLoaderUI"
@@ -167,9 +170,10 @@ end
 
 local card = Instance.new("Frame", bg)
 card.Size = UDim2.new(0,CARD_W,0,CARD_H)
-card.Position = UDim2.new(0.5,-(CARD_W + CARD_GAP/2),0.5,-CARD_H/2)
+card.Position = UDim2.new(0.5,-(CARD_EFFECTIVE_W + CARD_GAP/2),0.5,-CARD_H/2)
 card.BackgroundColor3 = Color3.fromRGB(18,24,38)
 card.BorderSizePixel = 0
+Instance.new("UIScale", card).Scale = LOADER_SCALE
 Instance.new("UICorner", card).CornerRadius = UDim.new(0,14)
 local cardStroke = Instance.new("UIStroke", card)
 cardStroke.Color = Color3.fromRGB(56,92,148)
@@ -180,6 +184,7 @@ creditCard.Size = UDim2.new(0,CARD_W,0,CARD_H)
 creditCard.Position = UDim2.new(0.5,CARD_GAP/2,0.5,-CARD_H/2)
 creditCard.BackgroundColor3 = Color3.fromRGB(18,24,38)
 creditCard.BorderSizePixel = 0
+Instance.new("UIScale", creditCard).Scale = LOADER_SCALE
 Instance.new("UICorner", creditCard).CornerRadius = UDim.new(0,14)
 local creditStroke = Instance.new("UIStroke", creditCard)
 creditStroke.Color = Color3.fromRGB(56,92,148)
@@ -206,8 +211,8 @@ creditSub.TextColor3 = Color3.fromRGB(132,148,178)
 creditSub.TextXAlignment = Enum.TextXAlignment.Center
 
 local avatarHolder = Instance.new("Frame", creditCard)
-avatarHolder.Size = UDim2.new(0,98,0,98)
-avatarHolder.Position = UDim2.new(0.5,-49,0,76)
+avatarHolder.Size = UDim2.new(0,122,0,122)
+avatarHolder.Position = UDim2.new(0.5,-61,0,68)
 avatarHolder.BackgroundColor3 = Color3.fromRGB(13,18,30)
 avatarHolder.BorderSizePixel = 0
 Instance.new("UICorner", avatarHolder).CornerRadius = UDim.new(1,0)
@@ -216,8 +221,8 @@ avatarStroke.Color = Color3.fromRGB(56,92,148)
 avatarStroke.Thickness = 1.2
 
 local avatar = Instance.new("ImageLabel", avatarHolder)
-avatar.Size = UDim2.new(1,-10,1,-10)
-avatar.Position = UDim2.new(0,5,0,5)
+avatar.Size = UDim2.new(1,-12,1,-12)
+avatar.Position = UDim2.new(0,6,0,6)
 avatar.BackgroundTransparency = 1
 avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
 avatar.ScaleType = Enum.ScaleType.Crop
@@ -230,8 +235,8 @@ pcall(function()
 end)
 
 local creditUser = Instance.new("TextLabel", creditCard)
-creditUser.Size = UDim2.new(1,-28,0,22)
-creditUser.Position = UDim2.new(0,14,0,188)
+creditUser.Size = UDim2.new(1,-36,0,22)
+creditUser.Position = UDim2.new(0,18,0,196)
 creditUser.BackgroundTransparency = 1
 creditUser.Text = "RobloxUser: CuongOutLook"
 creditUser.Font = Enum.Font.GothamBold
@@ -240,14 +245,26 @@ creditUser.TextColor3 = Color3.fromRGB(238,244,255)
 creditUser.TextXAlignment = Enum.TextXAlignment.Center
 
 local creditFacebook = Instance.new("TextLabel", creditCard)
-creditFacebook.Size = UDim2.new(1,-28,0,22)
-creditFacebook.Position = UDim2.new(0,14,0,216)
+creditFacebook.Size = UDim2.new(1,-36,0,20)
+creditFacebook.Position = UDim2.new(0,18,0,222)
 creditFacebook.BackgroundTransparency = 1
 creditFacebook.Text = "Facebook: AD Cường Ba Viên"
 creditFacebook.Font = Enum.Font.Gotham
-creditFacebook.TextSize = 13
+creditFacebook.TextSize = 12
 creditFacebook.TextColor3 = Color3.fromRGB(184,200,228)
 creditFacebook.TextXAlignment = Enum.TextXAlignment.Center
+
+local creditFacebookBtn = Instance.new("TextButton", creditCard)
+creditFacebookBtn.Size = UDim2.new(1,-36,0,30)
+creditFacebookBtn.Position = UDim2.new(0,18,0,252)
+creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
+creditFacebookBtn.BorderSizePixel = 0
+creditFacebookBtn.Text = "Facebook Link"
+creditFacebookBtn.Font = Enum.Font.GothamBold
+creditFacebookBtn.TextSize = 12
+creditFacebookBtn.TextColor3 = Color3.fromRGB(238,244,255)
+creditFacebookBtn.AutoButtonColor = false
+Instance.new("UICorner", creditFacebookBtn).CornerRadius = UDim.new(0,10)
 
 local closeBtn = Instance.new("TextButton", card)
 closeBtn.Size = UDim2.new(0,26,0,26)
@@ -598,6 +615,186 @@ btnHowTo.TextColor3 = Color3.fromRGB(238,244,255)
 btnHowTo.AutoButtonColor = false
 Instance.new("UICorner", btnHowTo).CornerRadius = UDim.new(0,10)
 
+local btnUpdateHistory = Instance.new("TextButton", card)
+btnUpdateHistory.Size = UDim2.new(1,-40,0,30)
+btnUpdateHistory.Position = UDim2.new(0,20,0,294)
+btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnUpdateHistory.BorderSizePixel = 0
+btnUpdateHistory.Text = "Update History"
+btnUpdateHistory.Font = Enum.Font.GothamBold
+btnUpdateHistory.TextSize = 12
+btnUpdateHistory.TextColor3 = Color3.fromRGB(238,244,255)
+btnUpdateHistory.AutoButtonColor = false
+Instance.new("UICorner", btnUpdateHistory).CornerRadius = UDim.new(0,10)
+
+local updateOverlay = Instance.new("Frame", bg)
+updateOverlay.Size = UDim2.new(1,0,1,0)
+updateOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+updateOverlay.BackgroundTransparency = 0.35
+updateOverlay.BorderSizePixel = 0
+updateOverlay.Visible = true
+updateOverlay.ZIndex = 30
+
+local updatePanel = Instance.new("Frame", updateOverlay)
+updatePanel.AnchorPoint = Vector2.new(0.5, 0.5)
+if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+    updatePanel.Size = UDim2.new(0.82, 0, 0.68, 0)
+else
+    updatePanel.Size = UDim2.new(0,460,0,300)
+end
+updatePanel.Position = UDim2.new(0.5,0,0.5,0)
+updatePanel.BackgroundColor3 = Color3.fromRGB(18,24,38)
+updatePanel.BorderSizePixel = 0
+updatePanel.ZIndex = 31
+Instance.new("UICorner", updatePanel).CornerRadius = UDim.new(0,12)
+local updatePanelStroke = Instance.new("UIStroke", updatePanel)
+updatePanelStroke.Color = Color3.fromRGB(56,92,148)
+updatePanelStroke.Thickness = 1.3
+
+local updateTitle = Instance.new("TextLabel", updatePanel)
+updateTitle.Size = UDim2.new(1,-248,0,32)
+updateTitle.Position = UDim2.new(0,14,0,10)
+updateTitle.BackgroundTransparency = 1
+updateTitle.Font = Enum.Font.GothamBold
+updateTitle.TextSize = 18
+updateTitle.Text = "Update History"
+updateTitle.TextColor3 = Color3.fromRGB(238,244,255)
+updateTitle.TextXAlignment = Enum.TextXAlignment.Left
+updateTitle.ZIndex = 32
+
+local btnUpdateLangEN = Instance.new("TextButton", updatePanel)
+btnUpdateLangEN.Size = UDim2.new(0,82,0,24)
+btnUpdateLangEN.Position = UDim2.new(1,-214,0,12)
+btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnUpdateLangEN.BorderSizePixel = 0
+btnUpdateLangEN.Text = "English"
+btnUpdateLangEN.Font = Enum.Font.GothamBold
+btnUpdateLangEN.TextSize = 11
+btnUpdateLangEN.TextColor3 = Color3.new(1,1,1)
+btnUpdateLangEN.AutoButtonColor = false
+btnUpdateLangEN.ZIndex = 32
+Instance.new("UICorner", btnUpdateLangEN).CornerRadius = UDim.new(0,8)
+
+local btnUpdateLangVI = Instance.new("TextButton", updatePanel)
+btnUpdateLangVI.Size = UDim2.new(0,82,0,24)
+btnUpdateLangVI.Position = UDim2.new(1,-126,0,12)
+btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnUpdateLangVI.BorderSizePixel = 0
+btnUpdateLangVI.Text = "Tiếng Việt"
+btnUpdateLangVI.Font = Enum.Font.GothamBold
+btnUpdateLangVI.TextSize = 11
+btnUpdateLangVI.TextColor3 = Color3.new(1,1,1)
+btnUpdateLangVI.AutoButtonColor = false
+btnUpdateLangVI.ZIndex = 32
+Instance.new("UICorner", btnUpdateLangVI).CornerRadius = UDim.new(0,8)
+
+local updateScroll = Instance.new("ScrollingFrame", updatePanel)
+updateScroll.Size = UDim2.new(1,-28,1,-96)
+updateScroll.Position = UDim2.new(0,14,0,48)
+updateScroll.BackgroundTransparency = 1
+updateScroll.BorderSizePixel = 0
+updateScroll.CanvasSize = UDim2.new(0,0,0,0)
+updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+updateScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+updateScroll.ScrollBarThickness = 6
+updateScroll.ScrollBarImageColor3 = Color3.fromRGB(90,130,188)
+updateScroll.ZIndex = 32
+
+local updateBody = Instance.new("TextLabel", updateScroll)
+updateBody.Size = UDim2.new(1,-8,0,0)
+updateBody.Position = UDim2.new(0,0,0,0)
+updateBody.AutomaticSize = Enum.AutomaticSize.Y
+updateBody.BackgroundTransparency = 1
+updateBody.Font = Enum.Font.Gotham
+updateBody.TextSize = 14
+updateBody.TextColor3 = Color3.fromRGB(210,224,246)
+updateBody.TextWrapped = true
+updateBody.TextXAlignment = Enum.TextXAlignment.Left
+updateBody.TextYAlignment = Enum.TextYAlignment.Top
+updateBody.LineHeight = 1.2
+updateBody.ZIndex = 32
+
+local btnUpdateClose
+local updateLang = "vi"
+local UPDATE_TEXT_VI = [[v1.9.0
+
+- Thêm Event Cách lấy Key 1 Tuần.
+- Thêm Hiệu ứng nền.
+
+v2.0.0
+
+- Thêm AimBot Mobile OP.
+- Thêm CrossHair OP.
+- Thêm Auto HeadShot OP.
+- Fix lỗi Aimbot PC bị giựt lên trời.
+- Tối ưu hóa ESP tăng hiệu năng thiết bị.]]
+
+local UPDATE_TEXT_EN = [[v1.9.0
+
+- Added event: How to get 1 Week Key.
+- Added background effects.
+
+v2.0.0
+
+- Added AimBot Mobile OP.
+- Added CrossHair OP.
+- Added Auto HeadShot OP.
+- Fixed PC Aimbot jitter launching upward.
+- Optimized ESP for better device performance.]]
+
+local function updateHistoryContent()
+    if updateLang == "vi" then
+        updateTitle.Text = "Lịch sử cập nhật"
+        updateBody.Text = UPDATE_TEXT_VI
+        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateClose.Text = "Đã hiểu"
+    else
+        updateTitle.Text = "Update History"
+        updateBody.Text = UPDATE_TEXT_EN
+        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateClose.Text = "Got it"
+    end
+end
+
+btnUpdateClose = Instance.new("TextButton", updatePanel)
+btnUpdateClose.Size = UDim2.new(0,110,0,28)
+btnUpdateClose.Position = UDim2.new(0,14,1,-40)
+btnUpdateClose.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnUpdateClose.BorderSizePixel = 0
+btnUpdateClose.Text = "Got it"
+btnUpdateClose.Font = Enum.Font.GothamBold
+btnUpdateClose.TextSize = 12
+btnUpdateClose.TextColor3 = Color3.new(1,1,1)
+btnUpdateClose.AutoButtonColor = false
+btnUpdateClose.ZIndex = 32
+Instance.new("UICorner", btnUpdateClose).CornerRadius = UDim.new(0,8)
+
+local btnUpdateX = Instance.new("TextButton", updatePanel)
+btnUpdateX.Size = UDim2.new(0,26,0,26)
+btnUpdateX.Position = UDim2.new(1,-34,0,10)
+btnUpdateX.BackgroundColor3 = Color3.fromRGB(150,35,35)
+btnUpdateX.BorderSizePixel = 0
+btnUpdateX.Text = "X"
+btnUpdateX.Font = Enum.Font.GothamBold
+btnUpdateX.TextSize = 12
+btnUpdateX.TextColor3 = Color3.new(1,1,1)
+btnUpdateX.AutoButtonColor = false
+btnUpdateX.ZIndex = 32
+Instance.new("UICorner", btnUpdateX).CornerRadius = UDim.new(0,8)
+
+local function openUpdateHistory()
+    if terminated then return end
+    updateOverlay.Visible = true
+end
+
+local function closeUpdateHistory()
+    updateOverlay.Visible = false
+end
+
+updateHistoryContent()
+
 local helpOverlay = Instance.new("Frame", bg)
 helpOverlay.Size = UDim2.new(1,0,1,0)
 helpOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
@@ -802,6 +999,30 @@ btnGetKey.MouseButton1Click:Connect(function()
     end)
 end)
 
+creditFacebookBtn.MouseEnter:Connect(function()
+    if terminated then return end
+    creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+creditFacebookBtn.MouseLeave:Connect(function()
+    if terminated then return end
+    creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+creditFacebookBtn.MouseButton1Click:Connect(function()
+    if terminated then return end
+    local opened = pcall(function()
+        game:GetService("GuiService"):OpenBrowserWindow(FACEBOOK_URL)
+    end)
+    if not opened then
+        pcall(function() setclipboard(FACEBOOK_URL) end)
+    end
+    creditFacebookBtn.Text = opened and "Opening..." or "Copied link!"
+    task.delay(1.2, function()
+        if creditFacebookBtn and creditFacebookBtn.Parent then
+            creditFacebookBtn.Text = "Facebook Link"
+        end
+    end)
+end)
+
 btnHowTo.MouseEnter:Connect(function()
     if terminated then return end
     btnHowTo.BackgroundColor3 = Color3.fromRGB(35,45,67)
@@ -815,6 +1036,36 @@ btnHowTo.MouseButton1Click:Connect(function()
     helpLang = "en"
     updateHelpContent()
     helpOverlay.Visible = true
+end)
+
+btnUpdateHistory.MouseEnter:Connect(function()
+    if terminated then return end
+    btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+btnUpdateHistory.MouseLeave:Connect(function()
+    if terminated then return end
+    btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+btnUpdateHistory.MouseButton1Click:Connect(function()
+    openUpdateHistory()
+end)
+
+btnUpdateClose.MouseButton1Click:Connect(function()
+    closeUpdateHistory()
+end)
+
+btnUpdateX.MouseButton1Click:Connect(function()
+    closeUpdateHistory()
+end)
+
+btnUpdateLangEN.MouseButton1Click:Connect(function()
+    updateLang = "en"
+    updateHistoryContent()
+end)
+
+btnUpdateLangVI.MouseButton1Click:Connect(function()
+    updateLang = "vi"
+    updateHistoryContent()
 end)
 
 btnLangEN.MouseButton1Click:Connect(function()
