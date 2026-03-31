@@ -17,6 +17,7 @@ Junkie.identifier = "1056706"
 local PlayersService = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 local localPlayer = PlayersService.LocalPlayer
 local CREDIT_USER_ID = 9930783751
 local CARD_W = 320
@@ -28,7 +29,28 @@ screenGui.Name = "JunkieLoaderUI"
 screenGui.IgnoreGuiInset = true
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
+screenGui.DisplayOrder = 2147483647
+pcall(function()
+    screenGui.OnTopOfCoreBlur = true
+end)
+
+local guiParent = nil
+if type(gethui) == "function" then
+    local ok, hui = pcall(gethui)
+    if ok and hui then
+        guiParent = hui
+    end
+end
+
+if not guiParent then
+    guiParent = CoreGui
+end
+
+if not guiParent then
+    guiParent = playerGui
+end
+
+screenGui.Parent = guiParent
 
 local bg = Instance.new("Frame", screenGui)
 bg.Size = UDim2.new(1,0,1,0)
