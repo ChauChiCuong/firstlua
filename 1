@@ -227,6 +227,12 @@ local STATE = {
     triggerbot     = false,
     aimAuto        = false,
     aimTouch       = false,
+    camlockMobile  = false,
+    camlockMobileTeamCheck = true,
+    camlockMobileTeamOnly = false,
+    camlockMobileTarget = "Head",
+    camlockMobileHardness = 20,
+    camlockMobileFov = 40,
     -- Anti extras
     antiAim        = false,
     antiScreen     = false,
@@ -322,7 +328,7 @@ local STATE = {
 -- ============================================================
 local STATE_FILE = "cuongoutlook_state.json"
 -- Keys that are safe to save (no runtime objects / positions)
-local SAVE_KEYS = {"antiFling","antiRubberBand","antiTP","antiItemOrbit","fly","flySpeed","clickTP","noclip","speedBoost","speedValue","reach","reachValue","antiMusic","lowPoly","esp","espTeamCheck","espBox","espChams","camlock","aimKey","aimBone","aimSmooth","aimFOV","aimShowFOV","aimTeamCheck","aimPrediction","aimWallCheck","bigheadLabel","bigheadSize","triggerbot","aimAuto","aimTouch","antiAim","antiScreen","antiExploit","antiGravity","spinToggle","jumpPower","jumpBoost","infinite","bhop","fullbright","noFog","timeFreeze","frozenTime","antiAFK","noScreenFX","rainbowSky","removeWalls","removeAnchored","removeUnanchored","crosshairEnabled","crosshairShowDot","crosshairShowFOVRing","crosshairShowCross","dotScale","dotOffsetX","dotOffsetY","fovRingScale","fovRingOffsetX","fovRingOffsetY","crossScale","crossOffsetX","crossOffsetY","lowMenuGraphic","saveConfig","language"}
+local SAVE_KEYS = {"antiFling","antiRubberBand","antiTP","antiItemOrbit","fly","flySpeed","clickTP","noclip","speedBoost","speedValue","reach","reachValue","antiMusic","lowPoly","esp","espTeamCheck","espBox","espChams","camlock","aimKey","aimBone","aimSmooth","aimFOV","aimShowFOV","aimTeamCheck","aimPrediction","aimWallCheck","bigheadLabel","bigheadSize","triggerbot","aimAuto","aimTouch","camlockMobile","camlockMobileTeamCheck","camlockMobileTeamOnly","camlockMobileTarget","camlockMobileHardness","camlockMobileFov","antiAim","antiScreen","antiExploit","antiGravity","spinToggle","jumpPower","jumpBoost","infinite","bhop","fullbright","noFog","timeFreeze","frozenTime","antiAFK","noScreenFX","rainbowSky","removeWalls","removeAnchored","removeUnanchored","crosshairEnabled","crosshairShowDot","crosshairShowFOVRing","crosshairShowCross","dotScale","dotOffsetX","dotOffsetY","fovRingScale","fovRingOffsetX","fovRingOffsetY","crossScale","crossOffsetX","crossOffsetY","lowMenuGraphic","saveConfig","language"}
 -- Tiny JSON serialiser (only needs bool, number, string)
 local function toJSON(tbl)
     local parts = {}
@@ -1181,17 +1187,14 @@ elseif AIM_KEY ~= "RMB" and AIM_KEY ~= "LMB" and AIM_KEY ~= "NONE" and not Enum.
     AIM_KEY = "RMB"
 end
 STATE.aimKey = AIM_KEY
+if STATE.camlockMobileTarget ~= "Head" and STATE.camlockMobileTarget ~= "Torso" then
+    STATE.camlockMobileTarget = "Head"
+end
 local CAMLOCK_RADIUS = 120
 local CAMLOCK_SMOOTH = 8
 STATE._abTarget = nil   -- current locked character model (player or bot)
 STATE._triggerHeld = false
-STATE._camlockTouchCount = STATE._camlockTouchCount or 0
-STATE._camlockTouchPos = STATE._camlockTouchPos or nil
-STATE._camlockTouchTarget = STATE._camlockTouchTarget or nil
 local function abKeyHeld()
-    if STATE.aimTouch and UserInputService.TouchEnabled then
-        return true
-    end
     local key = (type(STATE.aimKey) == "string" and STATE.aimKey:upper():gsub("%s+",""):gsub("_","")) or AIM_KEY
     if key == "MOUSEBUTTON2" or key == "MOUSERIGHT" or key == "RIGHTMOUSE" then
         key = "RMB"
@@ -1211,27 +1214,7 @@ local function abKeyHeld()
         return ok and UserInputService:IsKeyDown(k)
     end
 end
-UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
-    if gameProcessed then return end
-    STATE._camlockTouchCount = (STATE._camlockTouchCount or 0) + 1
-    STATE._camlockTouchPos = touch and touch.Position or nil
-end)
-UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
-    if gameProcessed then return end
-    STATE._camlockTouchPos = touch and touch.Position or STATE._camlockTouchPos
-end)
-UserInputService.TouchEnded:Connect(function()
-    STATE._camlockTouchCount = math.max((STATE._camlockTouchCount or 1) - 1, 0)
-    if STATE._camlockTouchCount <= 0 then
-        STATE._camlockTouchPos = nil
-        STATE._camlockTouchTarget = nil
-    end
-end)
 local function getCamlockPointer()
-    if STATE.aimTouch and UserInputService.TouchEnabled then
-        local vp = Camera.ViewportSize
-        return vp.X * 0.5, vp.Y * 0.5
-    end
     local mousePos = UserInputService:GetMouseLocation()
     return mousePos.X, mousePos.Y
 end
@@ -1250,6 +1233,29 @@ end
 local function abIsTeammate(p)
     if STATE.aimTeamCheck == false then return false end
     return p.Team and plr.Team and p.Team == plr.Team
+end
+local function mobileGetTargetPart(c)
+    if not c then return nil end
+    if STATE.camlockMobileTarget == "Head" then
+        return c:FindFirstChild("Head") or c:FindFirstChild("head")
+    end
+    return c:FindFirstChild("Torso")
+        or c:FindFirstChild("UpperTorso")
+        or c:FindFirstChild("LowerTorso")
+        or c:FindFirstChild("HumanoidRootPart")
+end
+local function mobileTeamPass(targetPlayer)
+    if not targetPlayer then
+        return not STATE.camlockMobileTeamOnly
+    end
+    local sameTeam = targetPlayer.Team and plr.Team and targetPlayer.Team == plr.Team
+    if STATE.camlockMobileTeamOnly then
+        return sameTeam == true
+    end
+    if STATE.camlockMobileTeamCheck then
+        return not sameTeam
+    end
+    return true
 end
 local function tbGetTargetHumanoid(target)
     if not target then return nil, nil end
@@ -1363,35 +1369,56 @@ local function camlockFindTarget()
     end
     return best
 end
-local function camlockBoneInCurrentFov(bone)
-    if not bone then return false end
-    local aimPos = STATE._abPredictPos(bone) or bone.Position
-    local sc, vis = Camera:WorldToViewportPoint(aimPos)
-    if not vis then return false end
-    local mx, my = getCamlockPointer()
-    local dx = sc.X - mx
-    local dy = sc.Y - my
-    return (dx * dx + dy * dy) <= (CAMLOCK_RADIUS * CAMLOCK_RADIUS)
-end
-local function camlockFindMobileLockedBone()
-    local targetModel = STATE._camlockTouchTarget
-    if targetModel and targetModel.Parent then
-        local hum = targetModel:FindFirstChildOfClass("Humanoid")
-        local bone = abGetBone(targetModel)
-        if hum and hum.Health > 0 and bone then
-            if (not STATE.aimWallCheck or STATE._abCanSee(targetModel, bone.Position))
-                and camlockBoneInCurrentFov(bone) then
-                return bone
+local function camlockFindMobileTargetPart()
+    local cam = Camera
+    local center = Vector2.new(cam.ViewportSize.X * 0.5, cam.ViewportSize.Y * 0.5)
+    local maxFov = math.max(5, tonumber(STATE.camlockMobileFov) or 40)
+    local bestPlayer, bestPart, bestDist = nil, nil, math.huge
+
+    for _, targetPlayer in ipairs(Players:GetPlayers()) do
+        if targetPlayer ~= plr and mobileTeamPass(targetPlayer) then
+            local character = targetPlayer.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            local targetPart = mobileGetTargetPart(character)
+            if humanoid and humanoid.Health > 0 and targetPart and STATE._abCanSee(character, targetPart.Position) then
+                local screenPos = cam:WorldToViewportPoint(targetPart.Position)
+                if screenPos.Z > 0 then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                    if dist <= maxFov and dist < bestDist then
+                        bestDist = dist
+                        bestPlayer = targetPlayer
+                        bestPart = targetPart
+                    end
+                end
             end
         end
     end
-    STATE._camlockTouchTarget = nil
-    local freshBone = camlockFindTarget()
-    STATE._camlockTouchTarget = freshBone and freshBone.Parent or nil
-    return freshBone
+
+    if not bestPart and not STATE.camlockMobileTeamOnly then
+        for _, model in ipairs(STATE._abNpcModels or {}) do
+            if model and model ~= getChar() then
+                local humanoid = model:FindFirstChildOfClass("Humanoid")
+                local targetPart = mobileGetTargetPart(model)
+                if humanoid and humanoid.Health > 0 and targetPart and STATE._abCanSee(model, targetPart.Position) then
+                    local screenPos = cam:WorldToViewportPoint(targetPart.Position)
+                    if screenPos.Z > 0 then
+                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+                        if dist <= maxFov and dist < bestDist then
+                            bestDist = dist
+                            bestPlayer = nil
+                            bestPart = targetPart
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    STATE._camlockMobilePlayer = bestPlayer
+    return bestPart
 end
 RunService.RenderStepped:Connect(function(dt)
-    if not STATE.camlock then return end
+    if not STATE.camlock and not STATE.camlockMobile then return end
     STATE._camNpcScanAccum = (STATE._camNpcScanAccum or 0) + (dt or 0)
     if STATE._camNpcScanAccum >= 0.6 or #(STATE._abNpcModels or {}) == 0 then
         STATE._camNpcScanAccum = 0
@@ -1399,14 +1426,19 @@ RunService.RenderStepped:Connect(function(dt)
             STATE._abRefreshNpcCache()
         end
     end
-    if not abKeyHeld() then return end
-    if not STATE.aimTouch and not isFirstPersonView() then return end
-    local bone
-    if STATE.aimTouch and UserInputService.TouchEnabled then
-        bone = camlockFindMobileLockedBone()
-    else
-        bone = camlockFindTarget()
+    if STATE.camlockMobile then
+        local targetPart = camlockFindMobileTargetPart()
+        if not targetPart then return end
+        local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
+        local camPos = Camera.CFrame.Position
+        local desired = CFrame.new(camPos, targetPart.Position)
+        local smoothAlpha = math.clamp(1 - math.exp(-math.max(0, smoothValue) * (dt or 0.016)), 0, 1)
+        Camera.CFrame = Camera.CFrame:Lerp(desired, smoothAlpha)
+        return
     end
+    if not abKeyHeld() then return end
+    if not isFirstPersonView() then return end
+    local bone = camlockFindTarget()
     if not bone then return end
     local aimPos = STATE._abPredictPos(bone) or bone.Position
     local sc, vis = Camera:WorldToViewportPoint(aimPos)
@@ -1418,18 +1450,6 @@ RunService.RenderStepped:Connect(function(dt)
     if smoothValue == nil then smoothValue = CAMLOCK_SMOOTH end
     local deadzone = (smoothValue <= 0) and 0.05 or 0.5
     if math.abs(rawX) <= deadzone and math.abs(rawY) <= deadzone then return end
-    if STATE.aimTouch and UserInputService.TouchEnabled then
-        local camPos = Camera.CFrame.Position
-        local desired = CFrame.lookAt(camPos, aimPos)
-        local smoothAlpha
-        if smoothValue <= 0 then
-            smoothAlpha = 1
-        else
-            smoothAlpha = math.clamp((dt or 0.016) * math.max(6, 30 / math.max(smoothValue, 1)), 0.08, 0.35)
-        end
-        Camera.CFrame = Camera.CFrame:Lerp(desired, smoothAlpha)
-        return
-    end
     local moveX, moveY
     if smoothValue <= 0 then
         moveX = rawX
@@ -1605,6 +1625,8 @@ end)
 RunService.RenderStepped:Connect(function()
     STATE._aimFOVCircle = STATE._aimFOVCircle or Drawing.new("Circle")
     local c = STATE._aimFOVCircle
+    STATE._camlockMobileFOVCircle = STATE._camlockMobileFOVCircle or Drawing.new("Circle")
+    local mc = STATE._camlockMobileFOVCircle
     pcall(function()
         c.Filled = false
         c.NumSides = 64
@@ -1616,6 +1638,17 @@ RunService.RenderStepped:Connect(function()
         local r = tonumber(STATE.aimFOV) or 120
         c.Radius = math.clamp(r, 20, 500)
         c.Visible = (STATE.aimShowFOV == true)
+
+        mc.Filled = false
+        mc.NumSides = 80
+        mc.Color = Color3.fromHSV((tick() * 0.35) % 1, 1, 1)
+        mc.Transparency = 1
+        mc.Thickness = 2
+        mc.ZIndex = 101
+        mc.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local mobileRadius = tonumber(STATE.camlockMobileFov) or 40
+        mc.Radius = math.clamp(mobileRadius, 5, 250)
+        mc.Visible = (STATE.camlockMobile == true)
     end)
 end)
 RunService.RenderStepped:Connect(function(dt)
@@ -2229,6 +2262,7 @@ end)
 -- render with the correct ON/OFF state from the start)
 -- ============================================================
 local _hadSave = loadState()
+STATE.aimTouch = false
 if _hadSave then
     task.defer(function()
         applyRestoredState()
@@ -2301,6 +2335,7 @@ STATE._LANG_TEXT_EN = {
     ["Bật Aimbot (PC)"] = "Enable Aimbot (PC)",
     ["Bật Camlock (PC)"] = "Enable Camlock (PC)",
     ["Bật Triggerbot (PC)"] = "Enable Triggerbot (PC)",
+    ["Bật Camlock Mobile"] = "Enable Mobile Camlock",
     ["Triệu hồi - Summon it"] = "Summon",
     ["Triệu Hồi"] = "Summon",
     ["Triệu hồi"] = "Summon",
@@ -2311,6 +2346,10 @@ STATE._LANG_TEXT_EN = {
     ["Cài đặt khác"] = "Other Settings",
     ["Dự đoán vị trí mục tiêu"] = "Target Prediction",
     ["Kiểm tra đồng đội"] = "Team Check",
+    ["Kiểm tra đội Mobile"] = "Mobile Team Check",
+    ["Chỉ khóa đồng đội Mobile"] = "Mobile Team Only",
+    ["Độ cứng aim Mobile"] = "Mobile Aim Hardness",
+    ["Kích thước FOV Mobile"] = "Mobile FOV Size",
     ["Hiển thị FOV"] = "Show FOV",
     ["Bay vô hạn (risk)"] = "Infinite Fly (risk)",
     ["Tốc độ bay"] = "Fly Speed",
@@ -2371,6 +2410,10 @@ STATE._LANG_TEXT_EN = {
     ["  Click Give to add to your Backpack."] = "  Click Give to add to your Backpack.",
     ["  Closes the UI completely."] = "  Closes the UI completely.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso",
+    ["  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình."] = "  Auto camlock for touch devices using the center of the screen.",
+    ["  ON sẽ bỏ qua người cùng đội."] = "  ON ignores players on your team.",
+    ["  ON chỉ khóa người cùng đội."] = "  ON only locks players on your team.",
+    ["  Luân phiên: Head / Torso"] = "  Cycle: Head / Torso",
     ["  Cycles Lighting Ambient through rainbow colors"] = "  Cycles Lighting Ambient through rainbow colors",
     ["  Default is 70. Higher = wider view."] = "  Default is 70. Higher = wider view.",
     ["  depth of field. Cleaner visuals + FPS boost."] = "  depth of field. Cleaner visuals + FPS boost.",
@@ -2480,6 +2523,10 @@ STATE._LANG_TEXT_VI = {
     ["  Click anywhere to teleport."] = "  Bấm vào vị trí bất kỳ để dịch chuyển.",
     ["  Closes the UI completely."] = "  Đóng hoàn toàn giao diện.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Luân phiên: Head / HumanoidRootPart / UpperTorso / LowerTorso",
+    ["  Auto camlock for touch devices using the center of the screen."] = "  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.",
+    ["  ON ignores players on your team."] = "  ON sẽ bỏ qua người cùng đội.",
+    ["  ON only locks players on your team."] = "  ON chỉ khóa người cùng đội.",
+    ["  Cycle: Head / Torso"] = "  Luân phiên: Head / Torso",
     ["  Cycles Lighting Ambient through rainbow colors"] = "  Đổi màu ánh sáng môi trường theo cầu vồng.",
     ["  Default is 70. Higher = wider view."] = "  Mặc định là 70. Cao hơn = góc nhìn rộng hơn.",
     ["  depth of field. Cleaner visuals + FPS boost."] = "  xóa chiều sâu trường ảnh. Hình ảnh sạch hơn và tăng FPS.",
@@ -2524,6 +2571,7 @@ STATE._LANG_TEXT_VI = {
     ["Aimbot"] = "Aimbot",
     ["Aimbot FOV"] = "Vùng aim Aimbot",
     ["Aimbot Mobile?"] = "Aimbot cho Mobile?",
+    ["Enable Mobile Camlock"] = "Bật Camlock Mobile",
     ["Anti Aim"] = "Chống khóa tâm",
     ["Anti Extras"] = "Chống nâng cao",
     ["Anti-AFK"] = "Chống AFK",
@@ -2552,6 +2600,10 @@ STATE._LANG_TEXT_VI = {
     ["Low- Menu Graphic"] = "Đồ họa menu thấp",
     ["Menu"] = "Menu",
     ["Movement"] = "Di chuyển",
+    ["Mobile Team Check"] = "Kiểm tra đội Mobile",
+    ["Mobile Team Only"] = "Chỉ khóa đồng đội Mobile",
+    ["Mobile Aim Hardness"] = "Độ cứng aim Mobile",
+    ["Mobile FOV Size"] = "Kích thước FOV Mobile",
     ["No tools found in this game"] = "Không tìm thấy tool nào trong game",
     ["Options"] = "Tùy chọn",
     ["Performance"] = "Hiệu năng",
@@ -3346,18 +3398,6 @@ Sec("Aimbot", "Aimbot")
 STATE._camlockRow = Tog("Aimbot", "Bật Camlock (PC)",
     function() return STATE.camlock end,
     function(v) STATE.camlock = v end)
-local function summonMobileAimbot()
-    local okLoad, err = pcall(function()
-        loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/12f570a25f4a5d3d391392119d055f232031f0c91807fa14272f1f6d686fc636/download"))()
-    end)
-
-    if okLoad then
-        notify("Triệu hồi", "Đã tải COL-Mobile Aimbot", 3)
-    else
-        notify("Triệu hồi", "Load script thất bại", 3)
-        warn("[CuongOutLook] Failed to load secondary script:", err)
-    end
-end
 pcall(function()
     local camlockRow = STATE._camlockRow
     if not camlockRow then return end
@@ -3439,22 +3479,32 @@ pcall(function()
     mobileBtn.AutoButtonColor = false
     Instance.new("UICorner", mobileBtn).CornerRadius = UDim.new(0, 8)
     local function refreshMobileBtn()
-        mobileBtn.Text = STATE.aimTouch and "Mobile ON" or "Mobile"
-        mobileBtn.BackgroundColor3 = STATE.aimTouch and C.ON or Color3.fromRGB(0, 170, 255)
+        mobileBtn.Text = STATE.camlockMobile and "Mobile ON" or "Mobile"
+        mobileBtn.BackgroundColor3 = STATE.camlockMobile and C.ON or Color3.fromRGB(0, 170, 255)
     end
+    local function setCamlockMobile(on, skipNotify)
+        local nextValue = (on == true)
+        if STATE.camlockMobile == nextValue then
+            refreshMobileBtn()
+            return
+        end
+        STATE.camlockMobile = nextValue
+        refreshMobileBtn()
+        if STATE._camlockMobileRf then STATE._camlockMobileRf() end
+        if not skipNotify then
+            notify("Camlock", STATE.camlockMobile and "Đã bật Camlock Mobile" or "Đã tắt Camlock Mobile", 2)
+        end
+        pcall(saveStateIfEnabled)
+    end
+    STATE._setCamlockMobile = setCamlockMobile
+    STATE._refreshCamlockMobileBtn = refreshMobileBtn
     refreshMobileBtn()
     _bindLangRefresh(refreshMobileBtn)
     mobileBtn.MouseButton1Click:Connect(function()
-        STATE.aimTouch = not STATE.aimTouch
-        STATE._camlockTouchTarget = nil
-        STATE._camlockTouchPos = nil
-        STATE._camlockTouchCount = 0
-        refreshMobileBtn()
-        notify("Camlock", STATE.aimTouch and "Đã bật camlock tự động cho mobile" or "Đã tắt camlock tự động cho mobile", 2)
-        pcall(saveStateIfEnabled)
+        setCamlockMobile(not STATE.camlockMobile)
     end)
     mobileBtn.MouseEnter:Connect(function()
-        if not STATE.aimTouch then
+        if not STATE.camlockMobile then
             mobileBtn.BackgroundColor3 = Color3.fromRGB(35, 190, 255)
         end
     end)
@@ -3566,9 +3616,40 @@ Tog("Aimbot", "Bật Triggerbot (PC)",
         end
     end)
 Info("Aimbot", "  Auto-fire on enemy under crosshair | Hotkey: H")
-Sec("Aimbot", "Aimbot Mobile?")
-Act("Aimbot", "Triệu hồi - Summon it", Color3.fromRGB(0, 180, 255), summonMobileAimbot)
-Info("Aimbot", "  Before summon the script, pls Turn Off Bật Aimbot")
+Sec("Aimbot", "Camlock Mobile")
+STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Camlock Mobile",
+    function() return STATE.camlockMobile end,
+    function(v)
+        if STATE._setCamlockMobile then
+            STATE._setCamlockMobile(v, true)
+        else
+            STATE.camlockMobile = v
+        end
+    end)
+Info("Aimbot", "  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.")
+Tog("Aimbot", "Kiểm tra đội Mobile",
+    function() return STATE.camlockMobileTeamCheck end,
+    function(v) STATE.camlockMobileTeamCheck = v end)
+Info("Aimbot", "  ON sẽ bỏ qua người cùng đội.")
+Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
+    function() return STATE.camlockMobileTeamOnly end,
+    function(v) STATE.camlockMobileTeamOnly = v end)
+Info("Aimbot", "  ON chỉ khóa người cùng đội.")
+STATE._camlockMobileTargetBtn = Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
+    STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
+    if STATE._camlockMobileTargetBtn then
+        STATE._camlockMobileTargetBtn.Text = "Mobile Target: " .. STATE.camlockMobileTarget
+    end
+    notify("Camlock", "Mobile Target: " .. STATE.camlockMobileTarget, 2)
+    pcall(saveStateIfEnabled)
+end)
+Info("Aimbot", "  Luân phiên: Head / Torso")
+Sli("Aimbot", "Độ cứng aim Mobile",
+    function() return STATE.camlockMobileHardness end,
+    function(v) STATE.camlockMobileHardness = v end, 0, 60)
+Sli("Aimbot", "Kích thước FOV Mobile",
+    function() return STATE.camlockMobileFov end,
+    function(v) STATE.camlockMobileFov = v end, 5, 250)
 Sec("Aimbot", "BigHead OP")
 Tog("Aimbot", "Bighead",
     function() return STATE.bigheadLabel end,
