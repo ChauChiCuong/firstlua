@@ -1188,7 +1188,6 @@ STATE._triggerHeld = false
 STATE._camlockTouchCount = STATE._camlockTouchCount or 0
 STATE._camlockTouchPos = STATE._camlockTouchPos or nil
 STATE._camlockTouchTarget = STATE._camlockTouchTarget or nil
-STATE._camlockMobileAimPos = STATE._camlockMobileAimPos or nil
 local function abKeyHeld()
     if STATE.aimTouch and UserInputService.TouchEnabled then
         return true
@@ -1364,28 +1363,34 @@ local function camlockFindTarget()
     end
     return best
 end
+local function camlockBoneInCurrentFov(bone)
+    if not bone then return false end
+    local aimPos = STATE._abPredictPos(bone) or bone.Position
+    local sc, vis = Camera:WorldToViewportPoint(aimPos)
+    if not vis then return false end
+    local mx, my = getCamlockPointer()
+    local dx = sc.X - mx
+    local dy = sc.Y - my
+    return (dx * dx + dy * dy) <= (CAMLOCK_RADIUS * CAMLOCK_RADIUS)
+end
 local function camlockFindMobileLockedBone()
     local targetModel = STATE._camlockTouchTarget
     if targetModel and targetModel.Parent then
         local hum = targetModel:FindFirstChildOfClass("Humanoid")
         local bone = abGetBone(targetModel)
         if hum and hum.Health > 0 and bone then
-            if not STATE.aimWallCheck or STATE._abCanSee(targetModel, bone.Position) then
+            if (not STATE.aimWallCheck or STATE._abCanSee(targetModel, bone.Position))
+                and camlockBoneInCurrentFov(bone) then
                 return bone
             end
         end
     end
+    STATE._camlockTouchTarget = nil
     local freshBone = camlockFindTarget()
     STATE._camlockTouchTarget = freshBone and freshBone.Parent or nil
-    if not freshBone then
-        STATE._camlockMobileAimPos = nil
-    end
     return freshBone
 end
-pcall(function()
-    RunService:UnbindFromRenderStep("CuongOutLookCamlockStep")
-end)
-local function camlockStep(dt)
+RunService.RenderStepped:Connect(function(dt)
     if not STATE.camlock then return end
     STATE._camNpcScanAccum = (STATE._camNpcScanAccum or 0) + (dt or 0)
     if STATE._camNpcScanAccum >= 0.6 or #(STATE._abNpcModels or {}) == 0 then
@@ -1402,10 +1407,7 @@ local function camlockStep(dt)
     else
         bone = camlockFindTarget()
     end
-    if not bone then
-        STATE._camlockMobileAimPos = nil
-        return
-    end
+    if not bone then return end
     local aimPos = STATE._abPredictPos(bone) or bone.Position
     local sc, vis = Camera:WorldToViewportPoint(aimPos)
     if not vis then return end
@@ -1417,22 +1419,13 @@ local function camlockStep(dt)
     local deadzone = (smoothValue <= 0) and 0.05 or 0.5
     if math.abs(rawX) <= deadzone and math.abs(rawY) <= deadzone then return end
     if STATE.aimTouch and UserInputService.TouchEnabled then
-        local targetAimPos = bone.Position
-        if STATE.aimPrediction then
-            targetAimPos = aimPos
-        end
-        if STATE._camlockMobileAimPos then
-            STATE._camlockMobileAimPos = STATE._camlockMobileAimPos:Lerp(targetAimPos, 0.18)
-        else
-            STATE._camlockMobileAimPos = targetAimPos
-        end
         local camPos = Camera.CFrame.Position
-        local desired = CFrame.lookAt(camPos, STATE._camlockMobileAimPos)
+        local desired = CFrame.lookAt(camPos, aimPos)
         local smoothAlpha
         if smoothValue <= 0 then
             smoothAlpha = 1
         else
-            smoothAlpha = math.clamp((dt or 0.016) * math.max(10, 42 / math.max(smoothValue, 1)), 0.16, 0.5)
+            smoothAlpha = math.clamp((dt or 0.016) * math.max(6, 30 / math.max(smoothValue, 1)), 0.08, 0.35)
         end
         Camera.CFrame = Camera.CFrame:Lerp(desired, smoothAlpha)
         return
@@ -1447,8 +1440,7 @@ local function camlockStep(dt)
         moveY = math.clamp(rawY / smooth, -math.abs(rawY), math.abs(rawY))
     end
     mousemoverel(moveX, moveY)
-end
-RunService:BindToRenderStep("CuongOutLookCamlockStep", Enum.RenderPriority.Camera.Value + 1, camlockStep)
+end)
 local function abRefreshNpcCache()
     local npc = {}
     for _, obj in ipairs(Workspace:GetDescendants()) do
