@@ -1187,6 +1187,7 @@ STATE._abTarget = nil   -- current locked character model (player or bot)
 STATE._triggerHeld = false
 STATE._camlockTouchCount = STATE._camlockTouchCount or 0
 STATE._camlockTouchPos = STATE._camlockTouchPos or nil
+STATE._camlockTouchTarget = STATE._camlockTouchTarget or nil
 local function abKeyHeld()
     if STATE.aimTouch and UserInputService.TouchEnabled then
         return (STATE._camlockTouchCount or 0) > 0
@@ -1223,14 +1224,11 @@ UserInputService.TouchEnded:Connect(function()
     STATE._camlockTouchCount = math.max((STATE._camlockTouchCount or 1) - 1, 0)
     if STATE._camlockTouchCount <= 0 then
         STATE._camlockTouchPos = nil
+        STATE._camlockTouchTarget = nil
     end
 end)
 local function getCamlockPointer()
     if STATE.aimTouch and UserInputService.TouchEnabled then
-        local touchPos = STATE._camlockTouchPos
-        if touchPos then
-            return touchPos.X, touchPos.Y
-        end
         local vp = Camera.ViewportSize
         return vp.X * 0.5, vp.Y * 0.5
     end
@@ -1365,6 +1363,21 @@ local function camlockFindTarget()
     end
     return best
 end
+local function camlockFindMobileLockedBone()
+    local targetModel = STATE._camlockTouchTarget
+    if targetModel and targetModel.Parent then
+        local hum = targetModel:FindFirstChildOfClass("Humanoid")
+        local bone = abGetBone(targetModel)
+        if hum and hum.Health > 0 and bone then
+            if not STATE.aimWallCheck or STATE._abCanSee(targetModel, bone.Position) then
+                return bone
+            end
+        end
+    end
+    local freshBone = camlockFindTarget()
+    STATE._camlockTouchTarget = freshBone and freshBone.Parent or nil
+    return freshBone
+end
 RunService.RenderStepped:Connect(function(dt)
     if not STATE.camlock then return end
     STATE._camNpcScanAccum = (STATE._camNpcScanAccum or 0) + (dt or 0)
@@ -1376,7 +1389,12 @@ RunService.RenderStepped:Connect(function(dt)
     end
     if not abKeyHeld() then return end
     if not STATE.aimTouch and not isFirstPersonView() then return end
-    local bone = camlockFindTarget()
+    local bone
+    if STATE.aimTouch and UserInputService.TouchEnabled then
+        bone = camlockFindMobileLockedBone()
+    else
+        bone = camlockFindTarget()
+    end
     if not bone then return end
     local aimPos = STATE._abPredictPos(bone) or bone.Position
     local sc, vis = Camera:WorldToViewportPoint(aimPos)
