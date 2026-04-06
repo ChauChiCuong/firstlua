@@ -1186,6 +1186,7 @@ local CAMLOCK_SMOOTH = 8
 STATE._abTarget = nil   -- current locked character model (player or bot)
 STATE._triggerHeld = false
 STATE._camlockTouchCount = STATE._camlockTouchCount or 0
+STATE._camlockTouchPos = STATE._camlockTouchPos or nil
 local function abKeyHeld()
     if STATE.aimTouch and UserInputService.TouchEnabled then
         return (STATE._camlockTouchCount or 0) > 0
@@ -1209,13 +1210,33 @@ local function abKeyHeld()
         return ok and UserInputService:IsKeyDown(k)
     end
 end
-UserInputService.TouchStarted:Connect(function(_, gameProcessed)
+UserInputService.TouchStarted:Connect(function(touch, gameProcessed)
     if gameProcessed then return end
     STATE._camlockTouchCount = (STATE._camlockTouchCount or 0) + 1
+    STATE._camlockTouchPos = touch and touch.Position or nil
+end)
+UserInputService.TouchMoved:Connect(function(touch, gameProcessed)
+    if gameProcessed then return end
+    STATE._camlockTouchPos = touch and touch.Position or STATE._camlockTouchPos
 end)
 UserInputService.TouchEnded:Connect(function()
     STATE._camlockTouchCount = math.max((STATE._camlockTouchCount or 1) - 1, 0)
+    if STATE._camlockTouchCount <= 0 then
+        STATE._camlockTouchPos = nil
+    end
 end)
+local function getCamlockPointer()
+    if STATE.aimTouch and UserInputService.TouchEnabled then
+        local touchPos = STATE._camlockTouchPos
+        if touchPos then
+            return touchPos.X, touchPos.Y
+        end
+        local vp = Camera.ViewportSize
+        return vp.X * 0.5, vp.Y * 0.5
+    end
+    local mousePos = UserInputService:GetMouseLocation()
+    return mousePos.X, mousePos.Y
+end
 local function abGetBone(c)
     if not c then return nil end
     local bone = STATE.aimBone
@@ -1291,8 +1312,7 @@ function STATE._abPredictPos(bone)
     return bone.Position + v * 0.12
 end
 local function camlockFindTarget()
-    local mousePos = UserInputService:GetMouseLocation()
-    local mx, my = mousePos.X, mousePos.Y
+    local mx, my = getCamlockPointer()
     local cam = Camera
     local best, bestDistSq = nil, CAMLOCK_RADIUS * CAMLOCK_RADIUS
     for _, p in ipairs(Players:GetPlayers()) do
@@ -1355,17 +1375,31 @@ RunService.RenderStepped:Connect(function(dt)
         end
     end
     if not abKeyHeld() then return end
-    if not isFirstPersonView() then return end
+    if not STATE.aimTouch and not isFirstPersonView() then return end
     local bone = camlockFindTarget()
     if not bone then return end
     local aimPos = STATE._abPredictPos(bone) or bone.Position
     local sc, vis = Camera:WorldToViewportPoint(aimPos)
     if not vis then return end
-    local mousePos = UserInputService:GetMouseLocation()
-    local rawX = sc.X - mousePos.X
-    local rawY = sc.Y - mousePos.Y
+    local pointerX, pointerY = getCamlockPointer()
+    local rawX = sc.X - pointerX
+    local rawY = sc.Y - pointerY
     local smoothValue = tonumber(STATE.aimSmooth)
     if smoothValue == nil then smoothValue = CAMLOCK_SMOOTH end
+    local deadzone = (smoothValue <= 0) and 0.05 or 0.5
+    if math.abs(rawX) <= deadzone and math.abs(rawY) <= deadzone then return end
+    if STATE.aimTouch and UserInputService.TouchEnabled then
+        local camPos = Camera.CFrame.Position
+        local desired = CFrame.lookAt(camPos, aimPos)
+        local smoothAlpha
+        if smoothValue <= 0 then
+            smoothAlpha = 1
+        else
+            smoothAlpha = math.clamp((dt or 0.016) * math.max(6, 30 / math.max(smoothValue, 1)), 0.08, 0.35)
+        end
+        Camera.CFrame = Camera.CFrame:Lerp(desired, smoothAlpha)
+        return
+    end
     local moveX, moveY
     if smoothValue <= 0 then
         moveX = rawX
@@ -1375,8 +1409,6 @@ RunService.RenderStepped:Connect(function(dt)
         moveX = math.clamp(rawX / smooth, -math.abs(rawX), math.abs(rawX))
         moveY = math.clamp(rawY / smooth, -math.abs(rawY), math.abs(rawY))
     end
-    local deadzone = (smoothValue <= 0) and 0.05 or 0.5
-    if math.abs(rawX) <= deadzone and math.abs(rawY) <= deadzone then return end
     mousemoverel(moveX, moveY)
 end)
 local function abRefreshNpcCache()
@@ -3093,6 +3125,7 @@ local function Sli(tab, label, getV, setV, mn, mx)
     track.Position         = UDim2.new(0, 12, 0, 34)
     track.BackgroundColor3 = Color3.fromRGB(29, 40, 62)
     track.BorderSizePixel  = 0
+    track.Active           = true
     Instance.new("UICorner", track).CornerRadius = UDim.new(1, 0)
     local fill = Instance.new("Frame", track)
     fill.BackgroundColor3 = C.ACC
@@ -3107,19 +3140,28 @@ local function Sli(tab, label, getV, setV, mn, mx)
     rf()
     _bindLangRefresh(rf)
     local drag = false
+    local function updateSliderFromX(x)
+        local pct = math.clamp(
+            (x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1
+        )
+        setV(math.floor(mn + pct * (mx - mn) + 0.5))
+        rf()
+        pcall(saveStateIfEnabled)
+    end
     track.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            drag = true
+            updateSliderFromX(i.Position.X)
+        end
     end)
     UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            drag = false
+        end
     end)
     UserInputService.InputChanged:Connect(function(i)
-        if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local pct = math.clamp(
-                (i.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1
-            )
-            setV(math.floor(mn + pct * (mx - mn) + 0.5)); rf()
-            pcall(saveStateIfEnabled)
+        if drag and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+            updateSliderFromX(i.Position.X)
         end
     end)
     table.insert(tabPages[tab], row)
