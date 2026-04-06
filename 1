@@ -1190,7 +1190,7 @@ STATE._camlockTouchPos = STATE._camlockTouchPos or nil
 STATE._camlockTouchTarget = STATE._camlockTouchTarget or nil
 local function abKeyHeld()
     if STATE.aimTouch and UserInputService.TouchEnabled then
-        return (STATE._camlockTouchCount or 0) > 0
+        return true
     end
     local key = (type(STATE.aimKey) == "string" and STATE.aimKey:upper():gsub("%s+",""):gsub("_","")) or AIM_KEY
     if key == "MOUSEBUTTON2" or key == "MOUSERIGHT" or key == "RIGHTMOUSE" then
@@ -3434,8 +3434,11 @@ pcall(function()
     _bindLangRefresh(refreshMobileBtn)
     mobileBtn.MouseButton1Click:Connect(function()
         STATE.aimTouch = not STATE.aimTouch
+        STATE._camlockTouchTarget = nil
+        STATE._camlockTouchPos = nil
+        STATE._camlockTouchCount = 0
         refreshMobileBtn()
-        notify("Camlock", STATE.aimTouch and "Đã bật aim khi chạm màn hình" or "Đã tắt aim khi chạm màn hình", 2)
+        notify("Camlock", STATE.aimTouch and "Đã bật camlock tự động cho mobile" or "Đã tắt camlock tự động cho mobile", 2)
         pcall(saveStateIfEnabled)
     end)
     mobileBtn.MouseEnter:Connect(function()
