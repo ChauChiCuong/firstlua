@@ -19,6 +19,40 @@ local function getHum()
     local c = getChar()
     return c and c:FindFirstChildOfClass("Humanoid")
 end
+local mobileTouchCount = 0
+local mobileTouchMoveAt = 0
+local mobileTouchMoveMag = 0
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Touch then
+        mobileTouchCount = mobileTouchCount + 1
+        mobileTouchMoveAt = tick()
+        mobileTouchMoveMag = 0
+    end
+end)
+UserInputService.InputChanged:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Touch then
+        mobileTouchMoveAt = tick()
+        local delta = input.Delta
+        if typeof(delta) == "Vector3" then
+            mobileTouchMoveMag = Vector2.new(delta.X, delta.Y).Magnitude
+        elseif typeof(delta) == "Vector2" then
+            mobileTouchMoveMag = delta.Magnitude
+        else
+            mobileTouchMoveMag = 0
+        end
+    end
+end)
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        mobileTouchCount = math.max(0, mobileTouchCount - 1)
+        mobileTouchMoveAt = tick()
+        if mobileTouchCount == 0 then
+            mobileTouchMoveMag = 0
+        end
+    end
+end)
 local NOTIFY_STYLE = {
     BG   = Color3.fromRGB(10, 14, 24),
     PANEL= Color3.fromRGB(18, 24, 38),
@@ -1268,7 +1302,15 @@ local function mobileApplyCharacterTurn(lookVector, dt)
     else
         currentFlat = flatLook
     end
-    local yawSharpness = math.max(8, (tonumber(STATE.camlockMobileHardness) or 20) * 1.25)
+    local rawHardness = tonumber(STATE.camlockMobileHardness) or 20
+    local yawSharpness
+    if rawHardness <= 0 then
+        yawSharpness = 28
+    elseif rawHardness < 5 then
+        yawSharpness = 12 + (rawHardness * 3.2)
+    else
+        yawSharpness = math.max(10, rawHardness * 1.25)
+    end
     local yawAlpha = math.clamp(1 - math.exp(-yawSharpness * (dt or 0.016)), 0.08, 0.35)
     local smoothFlat = currentFlat:Lerp(flatLook, yawAlpha)
     if smoothFlat.Magnitude <= 0.001 then
@@ -1277,6 +1319,20 @@ local function mobileApplyCharacterTurn(lookVector, dt)
         smoothFlat = smoothFlat.Unit
     end
     hrp.CFrame = CFrame.lookAt(hrp.Position, hrp.Position + smoothFlat)
+end
+local function mobileGetTouchAssistFactor()
+    if mobileTouchCount <= 0 then
+        return 1.18, false
+    end
+    local moveAge = tick() - mobileTouchMoveAt
+    local moveMag = math.clamp(mobileTouchMoveMag, 0, 45)
+    if moveAge <= 0.14 then
+        return math.clamp(0.18 + ((45 - moveMag) / 45) * 0.20, 0.18, 0.38), true
+    end
+    if moveAge <= 0.28 then
+        return 0.62, true
+    end
+    return 0.94, false
 end
 local function mobileClearLockState()
     STATE._camlockMobileTargetModel = nil
@@ -1502,7 +1558,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         end
         local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
         local desiredAimPos = aimPos or (STATE._abPredictPos(targetPart) or targetPart.Position)
-        local aimBlend = math.clamp((dt or 0.016) * 8, 0.08, 0.22)
+        local aimBlend = math.clamp((dt or 0.016) * 6, 0.06, 0.18)
         local smoothAimPos = STATE._camlockMobileAimPos and STATE._camlockMobileAimPos:Lerp(desiredAimPos, aimBlend) or desiredAimPos
         STATE._camlockMobileAimPos = smoothAimPos
         local camFrame = Camera.CFrame
@@ -1510,19 +1566,49 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         local desiredLook = smoothAimPos - camPos
         if desiredLook.Magnitude <= 0.001 then return end
         desiredLook = desiredLook.Unit
+        local currentLook = camFrame.LookVector
+        local touchAssist, touchTurning = mobileGetTouchAssistFactor()
+        local lookBase = STATE._camlockMobileLookVector and STATE._camlockMobileLookVector:Lerp(currentLook, touchTurning and 0.58 or 0.28) or currentLook
+        if lookBase.Magnitude <= 0.001 then
+            lookBase = currentLook
+        else
+            lookBase = lookBase.Unit
+        end
+        local dot = math.clamp(lookBase:Dot(desiredLook), -1, 1)
+        local angleError = math.acos(dot)
+        local targetScreenPos = Camera:WorldToViewportPoint(smoothAimPos)
+        local targetScreenDist = (Vector2.new(targetScreenPos.X, targetScreenPos.Y) - Vector2.new(Camera.ViewportSize.X * 0.5, Camera.ViewportSize.Y * 0.5)).Magnitude
+        local fov = math.max(1, tonumber(STATE.camlockMobileFov) or 40)
+        local centerAssist = math.clamp(1.08 - (targetScreenDist / fov) * 0.58, 0.42, 1.08)
         local smoothAlpha
         if smoothValue <= 0 then
             smoothAlpha = 1
         else
-            smoothAlpha = math.clamp(1 - math.exp(-math.max(0, smoothValue) * (dt or 0.016)), 0.04, 0.16)
+            local effectiveHardness
+            if smoothValue < 5 then
+                effectiveHardness = 4.5 + (smoothValue * 2.4)
+            else
+                effectiveHardness = smoothValue * 1.12
+            end
+            smoothAlpha = math.clamp(1 - math.exp(-effectiveHardness * (dt or 0.016)), 0.055, 0.18)
         end
-        local currentLook = STATE._camlockMobileLookVector or camFrame.LookVector
-        local smoothLook = currentLook:Lerp(desiredLook, smoothAlpha)
+        local desiredLookWeight = math.clamp((0.34 + centerAssist * 0.88) * math.max(0.55, touchAssist), 0.18, 1)
+        if touchTurning then
+            desiredLookWeight = desiredLookWeight * 0.78
+        end
+        desiredLook = lookBase:Lerp(desiredLook, desiredLookWeight)
+        if desiredLook.Magnitude <= 0.001 then return end
+        desiredLook = desiredLook.Unit
+        smoothAlpha = math.clamp(smoothAlpha * math.max(0.70, touchAssist) * math.max(0.80, centerAssist), 0.035, 0.24)
+        if angleError >= math.rad(7) then
+            smoothAlpha = math.max(smoothAlpha, touchTurning and 0.055 or 0.085)
+        end
+        local smoothLook = lookBase:Lerp(desiredLook, smoothAlpha)
         if smoothLook.Magnitude <= 0.001 then return end
         smoothLook = smoothLook.Unit
         STATE._camlockMobileLookVector = smoothLook
         Camera.CFrame = CFrame.new(camPos, camPos + smoothLook)
-        mobileApplyCharacterTurn(smoothLook, dt)
+        mobileApplyCharacterTurn(smoothLook, (dt or 0.016) * (touchTurning and 0.82 or 1))
         return
     end
     mobileRestoreCharacterTurn()
@@ -2353,7 +2439,9 @@ STATE._hadSave = loadState()
 STATE.aimTouch = false
 if STATE._hadSave then
     task.defer(function()
-        applyRestoredState()
+        if STATE._applyRestoredState then
+            STATE._applyRestoredState()
+        end
         notify("CuongOutLook", (STATE.language == "en") and "Settings restored" or "Đã khôi phục cài đặt", 3)
     end)
 end
@@ -4330,15 +4418,36 @@ STATE._itemsScanned = STATE._itemsScanned or false
 -- VISUAL TAB
 -- ============================
 Sec("Visual", "Camera")
-local function setFOV(v)
-    Camera.FieldOfView = v
+STATE._fovPendingValue = STATE._fovPendingValue or nil
+STATE._fovLastAppliedAt = STATE._fovLastAppliedAt or 0
+STATE._fovApplyInterval = STATE._fovApplyInterval or 0.05
+function STATE._setFOV(v, force)
+    local nextFov = math.clamp(math.floor((tonumber(v) or 70) + 0.5), 30, 120)
+    if force or (tick() - (STATE._fovLastAppliedAt or 0)) >= (STATE._fovApplyInterval or 0.05) then
+        STATE._fovPendingValue = nil
+        if math.abs((Camera.FieldOfView or 70) - nextFov) >= 0.01 then
+            Camera.FieldOfView = nextFov
+        end
+        STATE._fovLastAppliedAt = tick()
+        return
+    end
+    STATE._fovPendingValue = nextFov
 end
+if STATE._fovFlushConn then
+    STATE._fovFlushConn:Disconnect()
+    STATE._fovFlushConn = nil
+end
+STATE._fovFlushConn = RunService.Heartbeat:Connect(function()
+    if STATE._fovPendingValue == nil then return end
+    if (tick() - (STATE._fovLastAppliedAt or 0)) < (STATE._fovApplyInterval or 0.05) then return end
+    STATE._setFOV(STATE._fovPendingValue, true)
+end)
 Sli("Visual", "Field of View",
     function() return math.floor(Camera.FieldOfView) end,
-    function(v) setFOV(v) end, 30, 120)
+    function(v) STATE._setFOV(v) end, 30, 120)
 Info("Visual", "  Default is 70. Higher = wider view.")
 Act("Visual", "Reset FOV", C.ACC, function()
-    Camera.FieldOfView = 70
+    STATE._setFOV(70, true)
     notify("Visual","FOV reset to 70", 2)
 end)
 Sec("Visual", "Third Person")
@@ -4357,7 +4466,7 @@ Act("Visual", "Reset Camera", C.ACC, function()
         Players.LocalPlayer.CameraMaxZoomDistance = 128
         Players.LocalPlayer.CameraMinZoomDistance = 0.5
     end)
-    Camera.FieldOfView = 70
+    STATE._setFOV(70, true)
     Camera.CameraType  = Enum.CameraType.Custom
     notify("Visual","Camera reset", 2)
 end)
@@ -4980,7 +5089,7 @@ end
 -- Load persisted settings and re-enable any features that
 -- were ON when the script was last closed.
 -- ============================================================
-local function applyRestoredState()
+function STATE._applyRestoredState()
     -- Fly
     if STATE.fly then
         pcall(startFly)
@@ -5032,6 +5141,3 @@ showTab("Protect")
 notify("CuongOutLook", (STATE.language == "en")
     and ("Loaded" .. (STATE._hadSave and " - settings restored" or " - all features start OFF"))
     or ("Đã tải" .. (STATE._hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF")), 4)
-
-
-
