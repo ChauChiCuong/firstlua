@@ -1244,11 +1244,47 @@ local function mobileTeamPass(targetPlayer)
     end
     return true
 end
+local function mobileRestoreCharacterTurn()
+    local hum = getHum()
+    if hum and STATE._camlockMobileAutoRotateSaved ~= nil then
+        hum.AutoRotate = STATE._camlockMobileAutoRotateSaved
+    end
+    STATE._camlockMobileAutoRotateSaved = nil
+end
+local function mobileApplyCharacterTurn(lookVector, dt)
+    local hum = getHum()
+    local hrp = getHRP()
+    if not hum or hum.Health <= 0 or not hrp or not lookVector then return end
+    if STATE._camlockMobileAutoRotateSaved == nil then
+        STATE._camlockMobileAutoRotateSaved = hum.AutoRotate
+    end
+    hum.AutoRotate = false
+    local flatLook = Vector3.new(lookVector.X, 0, lookVector.Z)
+    if flatLook.Magnitude <= 0.001 then return end
+    flatLook = flatLook.Unit
+    local currentFlat = Vector3.new(hrp.CFrame.LookVector.X, 0, hrp.CFrame.LookVector.Z)
+    if currentFlat.Magnitude > 0.001 then
+        currentFlat = currentFlat.Unit
+    else
+        currentFlat = flatLook
+    end
+    local yawSharpness = math.max(8, (tonumber(STATE.camlockMobileHardness) or 20) * 1.25)
+    local yawAlpha = math.clamp(1 - math.exp(-yawSharpness * (dt or 0.016)), 0.08, 0.35)
+    local smoothFlat = currentFlat:Lerp(flatLook, yawAlpha)
+    if smoothFlat.Magnitude <= 0.001 then
+        smoothFlat = flatLook
+    else
+        smoothFlat = smoothFlat.Unit
+    end
+    hrp.CFrame = CFrame.lookAt(hrp.Position, hrp.Position + smoothFlat)
+end
 local function mobileClearLockState()
     STATE._camlockMobileTargetModel = nil
     STATE._camlockMobilePlayer = nil
     STATE._camlockMobileAimPos = nil
     STATE._camlockMobileLookVector = nil
+    STATE._camlockMobileLostAt = nil
+    mobileRestoreCharacterTurn()
 end
 local function tbGetTargetHumanoid(target)
     if not target then return nil, nil end
@@ -1366,6 +1402,8 @@ local function camlockFindMobileTargetPart()
     local cam = Camera
     local center = Vector2.new(cam.ViewportSize.X * 0.5, cam.ViewportSize.Y * 0.5)
     local maxFov = math.max(5, tonumber(STATE.camlockMobileFov) or 40)
+    local lockReleaseFov = math.max(maxFov * 2.25, maxFov + 70)
+    local lockGraceTime = 0.18
     local bestPlayer, bestPart, bestDist = nil, nil, math.huge
     local function getCandidate(model, targetPlayer, allowedFov)
         if not model or not model.Parent then return nil, nil, nil end
@@ -1378,16 +1416,28 @@ local function camlockFindMobileTargetPart()
         local screenPos = cam:WorldToViewportPoint(aimPos)
         if screenPos.Z <= 0 then return nil, nil, nil end
         local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-        if dist > allowedFov then return nil, nil, nil end
+        if allowedFov and dist > allowedFov then return nil, nil, nil end
         return targetPart, aimPos, dist
     end
 
     local lockedModel = STATE._camlockMobileTargetModel
     local lockedPlayer = STATE._camlockMobilePlayer
     if lockedModel then
-        local lockedPart, lockedAimPos = getCandidate(lockedModel, lockedPlayer, maxFov * 1.45)
+        local lockedPart, lockedAimPos, lockedDist = getCandidate(lockedModel, lockedPlayer, nil)
         if lockedPart then
-            return lockedPart, lockedAimPos
+            if lockedDist <= lockReleaseFov then
+                STATE._camlockMobileLostAt = nil
+                return lockedPart, lockedAimPos
+            end
+            local now = tick()
+            local lostAt = STATE._camlockMobileLostAt
+            if not lostAt then
+                STATE._camlockMobileLostAt = now
+                return lockedPart, lockedAimPos
+            end
+            if (now - lostAt) <= lockGraceTime then
+                return lockedPart, lockedAimPos
+            end
         end
         mobileClearLockState()
     end
@@ -1420,6 +1470,7 @@ local function camlockFindMobileTargetPart()
     if bestPart then
         STATE._camlockMobileTargetModel = bestPart.Parent
         STATE._camlockMobilePlayer = bestPlayer
+        STATE._camlockMobileLostAt = nil
         return bestPart, STATE._abPredictPos(bestPart) or bestPart.Position
     end
 
@@ -1431,7 +1482,10 @@ if STATE._camlockStepConn then
     STATE._camlockStepConn = nil
 end
 STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
-    if not STATE.camlock and not STATE.camlockMobile then return end
+    if not STATE.camlock and not STATE.camlockMobile then
+        mobileRestoreCharacterTurn()
+        return
+    end
     STATE._camNpcScanAccum = (STATE._camNpcScanAccum or 0) + (dt or 0)
     if STATE._camNpcScanAccum >= 0.6 or #(STATE._abNpcModels or {}) == 0 then
         STATE._camNpcScanAccum = 0
@@ -1443,6 +1497,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         local targetPart, aimPos = camlockFindMobileTargetPart()
         if not targetPart then
             STATE._camlockMobileLookVector = nil
+            mobileRestoreCharacterTurn()
             return
         end
         local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
@@ -1467,8 +1522,10 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         smoothLook = smoothLook.Unit
         STATE._camlockMobileLookVector = smoothLook
         Camera.CFrame = CFrame.new(camPos, camPos + smoothLook)
+        mobileApplyCharacterTurn(smoothLook, dt)
         return
     end
+    mobileRestoreCharacterTurn()
     if not abKeyHeld() then return end
     if not isFirstPersonView() then return end
     local bone = camlockFindTarget()
@@ -3521,10 +3578,7 @@ pcall(function()
         end
         STATE.camlockMobile = nextValue
         if STATE.camlockMobile ~= true then
-            STATE._camlockMobileTargetModel = nil
-            STATE._camlockMobilePlayer = nil
-            STATE._camlockMobileAimPos = nil
-            STATE._camlockMobileLookVector = nil
+            mobileClearLockState()
         end
         refreshMobileBtn()
         if STATE._camlockMobileRf then STATE._camlockMobileRf() end
@@ -3674,10 +3728,7 @@ Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
 Info("Aimbot", "  ON chỉ khóa người cùng đội.")
 STATE._camlockMobileTargetBtn = Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
-    STATE._camlockMobileTargetModel = nil
-    STATE._camlockMobilePlayer = nil
-    STATE._camlockMobileAimPos = nil
-    STATE._camlockMobileLookVector = nil
+    mobileClearLockState()
     if STATE._camlockMobileTargetBtn then
         STATE._camlockMobileTargetBtn.Text = "Mobile Target: " .. STATE.camlockMobileTarget
     end
