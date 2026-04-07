@@ -611,13 +611,11 @@ Players.PlayerRemoving:Connect(removeCheaterESP)
 --   - Only flags clear combinations that no normal game would produce
 --   - Scores are based on how impossible the combo is without an executor
 -- ============================================================
-local cdData           = {}  -- kept for PlayerRemoving cleanup
 local detectionLog     = {}
-local onDetectionAdded = nil
 local function logDetection(name, reason)
     table.insert(detectionLog, 1, {name = name, reason = reason, time = os.date("%H:%M:%S")})
     while #detectionLog > 20 do table.remove(detectionLog) end
-    if onDetectionAdded then onDetectionAdded() end
+    if STATE._onDetectionAdded then STATE._onDetectionAdded() end
 end
 local function flagCheater(p, reason)
     local key = tostring(p.UserId) .. "_" .. reason
@@ -626,13 +624,6 @@ local function flagCheater(p, reason)
     notify("Cheater", p.Name .. " | " .. reason, 6)
     logDetection(p.Name, reason)
     addCheaterESP(p)
-end
-local function playerHasTool(c)
-    if not c then return false end
-    for _, obj in ipairs(c:GetChildren()) do
-        if obj:IsA("Tool") then return true end
-    end
-    return false
 end
 -- ============================================================
 -- INJECTION DETECTION  v4  -  Cheat presence, not behavior
@@ -789,7 +780,6 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 Players.PlayerRemoving:Connect(function(p)
-    cdData[p.UserId] = nil
     removeCheaterESP(p)
 end)
 -- ============================================================
@@ -1072,9 +1062,6 @@ end
 local function clearAllESP()
     for p in pairs(espData) do destroyESP(p) end
 end
-local function hideEntry(e)
-    for _,l in ipairs(e.box) do l.Visible=false end
-end
 STATE._espFrame = 0
 STATE._espAccum = 0
 STATE._espNpcScanAccum = 0
@@ -1257,6 +1244,12 @@ local function mobileTeamPass(targetPlayer)
     end
     return true
 end
+local function mobileClearLockState()
+    STATE._camlockMobileTargetModel = nil
+    STATE._camlockMobilePlayer = nil
+    STATE._camlockMobileAimPos = nil
+    STATE._camlockMobileLookVector = nil
+end
 local function tbGetTargetHumanoid(target)
     if not target then return nil, nil end
     local parent = target.Parent
@@ -1374,22 +1367,39 @@ local function camlockFindMobileTargetPart()
     local center = Vector2.new(cam.ViewportSize.X * 0.5, cam.ViewportSize.Y * 0.5)
     local maxFov = math.max(5, tonumber(STATE.camlockMobileFov) or 40)
     local bestPlayer, bestPart, bestDist = nil, nil, math.huge
+    local function getCandidate(model, targetPlayer, allowedFov)
+        if not model or not model.Parent then return nil, nil, nil end
+        local humanoid = model:FindFirstChildOfClass("Humanoid")
+        local targetPart = mobileGetTargetPart(model)
+        if not humanoid or humanoid.Health <= 0 or not targetPart then return nil, nil, nil end
+        if targetPlayer and not mobileTeamPass(targetPlayer) then return nil, nil, nil end
+        local aimPos = STATE._abPredictPos(targetPart) or targetPart.Position
+        if not STATE._abCanSee(model, aimPos) then return nil, nil, nil end
+        local screenPos = cam:WorldToViewportPoint(aimPos)
+        if screenPos.Z <= 0 then return nil, nil, nil end
+        local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
+        if dist > allowedFov then return nil, nil, nil end
+        return targetPart, aimPos, dist
+    end
+
+    local lockedModel = STATE._camlockMobileTargetModel
+    local lockedPlayer = STATE._camlockMobilePlayer
+    if lockedModel then
+        local lockedPart, lockedAimPos = getCandidate(lockedModel, lockedPlayer, maxFov * 1.45)
+        if lockedPart then
+            return lockedPart, lockedAimPos
+        end
+        mobileClearLockState()
+    end
 
     for _, targetPlayer in ipairs(Players:GetPlayers()) do
         if targetPlayer ~= plr and mobileTeamPass(targetPlayer) then
             local character = targetPlayer.Character
-            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-            local targetPart = mobileGetTargetPart(character)
-            if humanoid and humanoid.Health > 0 and targetPart and STATE._abCanSee(character, targetPart.Position) then
-                local screenPos = cam:WorldToViewportPoint(targetPart.Position)
-                if screenPos.Z > 0 then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                    if dist <= maxFov and dist < bestDist then
-                        bestDist = dist
-                        bestPlayer = targetPlayer
-                        bestPart = targetPart
-                    end
-                end
+            local targetPart, _, dist = getCandidate(character, targetPlayer, maxFov)
+            if targetPart and dist < bestDist then
+                bestDist = dist
+                bestPlayer = targetPlayer
+                bestPart = targetPart
             end
         end
     end
@@ -1397,27 +1407,30 @@ local function camlockFindMobileTargetPart()
     if not bestPart and not STATE.camlockMobileTeamOnly then
         for _, model in ipairs(STATE._abNpcModels or {}) do
             if model and model ~= getChar() then
-                local humanoid = model:FindFirstChildOfClass("Humanoid")
-                local targetPart = mobileGetTargetPart(model)
-                if humanoid and humanoid.Health > 0 and targetPart and STATE._abCanSee(model, targetPart.Position) then
-                    local screenPos = cam:WorldToViewportPoint(targetPart.Position)
-                    if screenPos.Z > 0 then
-                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                        if dist <= maxFov and dist < bestDist then
-                            bestDist = dist
-                            bestPlayer = nil
-                            bestPart = targetPart
-                        end
-                    end
+                local targetPart, _, dist = getCandidate(model, nil, maxFov)
+                if targetPart and dist < bestDist then
+                    bestDist = dist
+                    bestPlayer = nil
+                    bestPart = targetPart
                 end
             end
         end
     end
 
-    STATE._camlockMobilePlayer = bestPlayer
-    return bestPart
+    if bestPart then
+        STATE._camlockMobileTargetModel = bestPart.Parent
+        STATE._camlockMobilePlayer = bestPlayer
+        return bestPart, STATE._abPredictPos(bestPart) or bestPart.Position
+    end
+
+    mobileClearLockState()
+    return nil, nil
 end
-RunService.RenderStepped:Connect(function(dt)
+if STATE._camlockStepConn then
+    STATE._camlockStepConn:Disconnect()
+    STATE._camlockStepConn = nil
+end
+STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
     if not STATE.camlock and not STATE.camlockMobile then return end
     STATE._camNpcScanAccum = (STATE._camNpcScanAccum or 0) + (dt or 0)
     if STATE._camNpcScanAccum >= 0.6 or #(STATE._abNpcModels or {}) == 0 then
@@ -1427,13 +1440,33 @@ RunService.RenderStepped:Connect(function(dt)
         end
     end
     if STATE.camlockMobile then
-        local targetPart = camlockFindMobileTargetPart()
-        if not targetPart then return end
+        local targetPart, aimPos = camlockFindMobileTargetPart()
+        if not targetPart then
+            STATE._camlockMobileLookVector = nil
+            return
+        end
         local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
-        local camPos = Camera.CFrame.Position
-        local desired = CFrame.new(camPos, targetPart.Position)
-        local smoothAlpha = math.clamp(1 - math.exp(-math.max(0, smoothValue) * (dt or 0.016)), 0, 1)
-        Camera.CFrame = Camera.CFrame:Lerp(desired, smoothAlpha)
+        local desiredAimPos = aimPos or (STATE._abPredictPos(targetPart) or targetPart.Position)
+        local aimBlend = math.clamp((dt or 0.016) * 8, 0.08, 0.22)
+        local smoothAimPos = STATE._camlockMobileAimPos and STATE._camlockMobileAimPos:Lerp(desiredAimPos, aimBlend) or desiredAimPos
+        STATE._camlockMobileAimPos = smoothAimPos
+        local camFrame = Camera.CFrame
+        local camPos = camFrame.Position
+        local desiredLook = smoothAimPos - camPos
+        if desiredLook.Magnitude <= 0.001 then return end
+        desiredLook = desiredLook.Unit
+        local smoothAlpha
+        if smoothValue <= 0 then
+            smoothAlpha = 1
+        else
+            smoothAlpha = math.clamp(1 - math.exp(-math.max(0, smoothValue) * (dt or 0.016)), 0.04, 0.16)
+        end
+        local currentLook = STATE._camlockMobileLookVector or camFrame.LookVector
+        local smoothLook = currentLook:Lerp(desiredLook, smoothAlpha)
+        if smoothLook.Magnitude <= 0.001 then return end
+        smoothLook = smoothLook.Unit
+        STATE._camlockMobileLookVector = smoothLook
+        Camera.CFrame = CFrame.new(camPos, camPos + smoothLook)
         return
     end
     if not abKeyHeld() then return end
@@ -1780,13 +1813,12 @@ end)
 -- ============================================================
 -- ANTI-GRAVITY  (zero workspace gravity for local player)
 -- ============================================================
-local origGravity = nil
 local function applyAntiGrav(on)
     if on then
-        origGravity = Workspace.Gravity
+        STATE._origGravity = Workspace.Gravity
         Workspace.Gravity = 0
     else
-        if origGravity then Workspace.Gravity = origGravity; origGravity = nil end
+        if STATE._origGravity then Workspace.Gravity = STATE._origGravity; STATE._origGravity = nil end
     end
 end
 -- ============================================================
@@ -2052,7 +2084,6 @@ local function stopSpin()
 end
 -- Chain fling state
 local chainFlingActive = false
-local chainFlingConn   = nil
 local function getNearestPlayer(excludeList)
     local hrp = getHRP()
     if not hrp then return nil end
@@ -2261,9 +2292,9 @@ end)
 -- LOAD SAVED STATE (must happen BEFORE GUI builds so toggles
 -- render with the correct ON/OFF state from the start)
 -- ============================================================
-local _hadSave = loadState()
+STATE._hadSave = loadState()
 STATE.aimTouch = false
-if _hadSave then
+if STATE._hadSave then
     task.defer(function()
         applyRestoredState()
         notify("CuongOutLook", (STATE.language == "en") and "Settings restored" or "Đã khôi phục cài đặt", 3)
@@ -3489,6 +3520,12 @@ pcall(function()
             return
         end
         STATE.camlockMobile = nextValue
+        if STATE.camlockMobile ~= true then
+            STATE._camlockMobileTargetModel = nil
+            STATE._camlockMobilePlayer = nil
+            STATE._camlockMobileAimPos = nil
+            STATE._camlockMobileLookVector = nil
+        end
         refreshMobileBtn()
         if STATE._camlockMobileRf then STATE._camlockMobileRf() end
         if not skipNotify then
@@ -3637,6 +3674,10 @@ Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
 Info("Aimbot", "  ON chỉ khóa người cùng đội.")
 STATE._camlockMobileTargetBtn = Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
+    STATE._camlockMobileTargetModel = nil
+    STATE._camlockMobilePlayer = nil
+    STATE._camlockMobileAimPos = nil
+    STATE._camlockMobileLookVector = nil
     if STATE._camlockMobileTargetBtn then
         STATE._camlockMobileTargetBtn.Text = "Mobile Target: " .. STATE.camlockMobileTarget
     end
@@ -4007,7 +4048,7 @@ chatBox.FocusLost:Connect(function(enter)
 end)
 -- Refresh chat when switching to tab
 -- (hook into showTab defined at bottom of file)
-STATE._origOnDetect = onDetectionAdded
+STATE._origOnDetect = STATE._onDetectionAdded
 -- ============================
 -- ITEMS TAB
 -- ============================
@@ -4938,8 +4979,8 @@ local function applyRestoredState()
 end
 showTab("Protect")
 notify("CuongOutLook", (STATE.language == "en")
-    and ("Loaded" .. (_hadSave and " - settings restored" or " - all features start OFF"))
-    or ("Đã tải" .. (_hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF")), 4)
+    and ("Loaded" .. (STATE._hadSave and " - settings restored" or " - all features start OFF"))
+    or ("Đã tải" .. (STATE._hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF")), 4)
 
 
 
