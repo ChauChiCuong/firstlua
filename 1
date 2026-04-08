@@ -822,7 +822,7 @@ updateTitle.ZIndex = 32
 
 local updateScroll = Instance.new("ScrollingFrame", updatePanel)
 if isMobileUpdateLayout then
-    updateScroll.Size = UDim2.new(1,-28,1,-104)
+    updateScroll.Size = UDim2.new(1,-28,1,-98)
     updateScroll.Position = UDim2.new(0,14,0,48)
 else
     updateScroll.Size = UDim2.new(1,-28,1,-92)
@@ -832,7 +832,7 @@ updateScroll.BackgroundTransparency = 1
 updateScroll.BorderSizePixel = 0
 updateScroll.Active = true
 updateScroll.CanvasSize = UDim2.new(0,0,0,0)
-updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.None
+updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 updateScroll.ScrollingEnabled = true
 updateScroll.ScrollingDirection = Enum.ScrollingDirection.Y
 updateScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
@@ -845,7 +845,7 @@ local updateBody = Instance.new("TextLabel", updateScroll)
 updateBody.Size = UDim2.new(1,-12,0,0)
 updateBody.Position = UDim2.new(0,0,0,0)
 updateBody.Active = false
-updateBody.AutomaticSize = Enum.AutomaticSize.None
+updateBody.AutomaticSize = Enum.AutomaticSize.Y
 updateBody.BackgroundTransparency = 1
 updateBody.Font = Enum.Font.Gotham
 updateBody.TextSize = isMobileUpdateLayout and 13 or 14
@@ -941,45 +941,15 @@ v1.9.0
 - 1週間キーの取得イベントを追加。
 - 背景エフェクトを追加。]]
 
-local updateHistoryLayoutToken = 0
-
 local function refreshUpdateHistoryLayout()
-    updateHistoryLayoutToken = updateHistoryLayoutToken + 1
-    local layoutToken = updateHistoryLayoutToken
-    local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 10
+    local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 8
     if contentWidth <= 0 then
         task.defer(refreshUpdateHistoryLayout)
         return
     end
 
-    local bounds = TextService:GetTextSize(
-        updateBody.Text,
-        updateBody.TextSize,
-        updateBody.Font,
-        Vector2.new(contentWidth, 10000)
-    )
-    local bottomPadding = isMobileUpdateLayout and 36 or 24
-    local measured = math.max(bounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
-    updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
-    updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + bottomPadding)
+    updateBody.Size = UDim2.new(0, contentWidth, 0, 0)
     updateScroll.CanvasPosition = Vector2.new(0, 0)
-
-    task.spawn(function()
-        RunService.Heartbeat:Wait()
-        RunService.Heartbeat:Wait()
-        if layoutToken ~= updateHistoryLayoutToken then
-            return
-        end
-        if not updateBody.Parent or not updateScroll.Parent then
-            return
-        end
-
-        local renderedHeight = math.max(updateBody.TextBounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
-        if renderedHeight > measured then
-            updateBody.Size = UDim2.new(0, contentWidth, 0, renderedHeight)
-            updateScroll.CanvasSize = UDim2.new(0, 0, 0, renderedHeight + bottomPadding)
-        end
-    end)
 end
 
 local function updateHistoryContent()
