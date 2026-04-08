@@ -1321,6 +1321,29 @@ local function mobileApplyCharacterTurn(lookVector, dt)
     end
     hrp.CFrame = CFrame.lookAt(hrp.Position, hrp.Position + smoothFlat)
 end
+local function mobileApplyCameraAndCharacter(lookVector, dt)
+    local cam = Camera
+    local hrp = getHRP()
+    local camPos = cam.CFrame.Position
+    local rootOffset = nil
+    if hrp then
+        rootOffset = hrp.CFrame:PointToObjectSpace(camPos)
+    end
+
+    mobileApplyCharacterTurn(lookVector, dt)
+
+    hrp = getHRP()
+    if not hrp or not lookVector then
+        cam.CFrame = CFrame.new(camPos, camPos + lookVector)
+        return
+    end
+
+    local nextCamPos = camPos
+    if rootOffset then
+        nextCamPos = hrp.CFrame:PointToWorldSpace(rootOffset)
+    end
+    cam.CFrame = CFrame.new(nextCamPos, nextCamPos + lookVector)
+end
 local function mobileGetTouchAssistFactor()
     if mobileTouchCount <= 0 then
         return 1.18, false
@@ -1573,9 +1596,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
             local holdUntil = STATE._camlockMobileHoldUntil
             local heldLook = STATE._camlockMobileLookVector
             if holdUntil and heldLook and tick() <= holdUntil then
-                local camPos = Camera.CFrame.Position
-                Camera.CFrame = CFrame.new(camPos, camPos + heldLook)
-                mobileApplyCharacterTurn(heldLook, (dt or 0.016))
+                mobileApplyCameraAndCharacter(heldLook, (dt or 0.016))
                 return
             end
             STATE._camlockMobileLookVector = nil
@@ -1635,8 +1656,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         if smoothLook.Magnitude <= 0.001 then return end
         smoothLook = smoothLook.Unit
         STATE._camlockMobileLookVector = smoothLook
-        Camera.CFrame = CFrame.new(camPos, camPos + smoothLook)
-        mobileApplyCharacterTurn(smoothLook, (dt or 0.016) * (touchTurning and 0.82 or 1))
+        mobileApplyCameraAndCharacter(smoothLook, (dt or 0.016) * (touchTurning and 0.82 or 1))
         return
     end
     mobileRestoreCharacterTurn()
@@ -4439,7 +4459,7 @@ function STATE._giveItem(toolObj)
     notify("Items","Could not give: "..name.." (server-locked)", 3)
 end
 -- Item slot builder - creates one row per tool
-local function buildItemSlots()
+function STATE._buildItemSlots()
     -- Destroy old slots
     for _, f in ipairs(STATE._itemSlotFrames) do
         pcall(function() f:Destroy() end)
@@ -4508,7 +4528,7 @@ Sec("Items", "Game Items")
 Act("Items", "Refresh Items", C.ACC, function()
     STATE._itemPage = 1
     STATE._scanForTools()
-    buildItemSlots()
+    STATE._buildItemSlots()
     for _, f in ipairs(STATE._itemSlotFrames) do
         f.Visible = (activeTab == "Items")
     end
@@ -4572,14 +4592,14 @@ function STATE._setupItemsPager()
     prevBtn.MouseButton1Click:Connect(function()
         if (STATE._itemPage or 1) <= 1 then return end
         STATE._itemPage = STATE._itemPage - 1
-        buildItemSlots()
+        STATE._buildItemSlots()
     end)
     nextBtn.MouseButton1Click:Connect(function()
         local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
         local totalPages = math.max(1, math.ceil(#STATE._itemList / pageSize))
         if (STATE._itemPage or 1) >= totalPages then return end
         STATE._itemPage = STATE._itemPage + 1
-        buildItemSlots()
+        STATE._buildItemSlots()
     end)
 
     table.insert(tabPages["Items"], pagerRow)
@@ -5254,7 +5274,7 @@ showTab = function(name)
         if not STATE._itemsScanned then
             STATE._itemsScanned = true
             STATE._scanForTools()
-            buildItemSlots()
+            STATE._buildItemSlots()
         end
         -- make sure slots are visible
         for _, f in ipairs(STATE._itemSlotFrames) do f.Visible = true end
