@@ -1529,24 +1529,24 @@ local function camlockFindMobileTargetPart()
     local cameraHoldTime = 0.48
     local bestPlayer, bestPart, bestDist = nil, nil, math.huge
     local function getCandidate(model, targetPlayer, allowedFov)
-        if not model or not model.Parent then return nil, nil, nil end
+        if not model or not model.Parent then return nil, nil, nil, "missing" end
         local humanoid = model:FindFirstChildOfClass("Humanoid")
         local targetPart = mobileGetTargetPart(model)
-        if not humanoid or humanoid.Health <= 0 or not targetPart then return nil, nil, nil end
-        if targetPlayer and not mobileTeamPass(targetPlayer) then return nil, nil, nil end
+        if not humanoid or humanoid.Health <= 0 or not targetPart then return nil, nil, nil, "dead" end
+        if targetPlayer and not mobileTeamPass(targetPlayer) then return nil, nil, nil, "team" end
         local aimPos = STATE._abPredictPos(targetPart, STATE.camlockMobilePrediction) or targetPart.Position
-        if not STATE._abCanSee(model, aimPos) then return nil, nil, nil end
+        if not STATE._abCanSee(model, aimPos) then return nil, nil, nil, "hidden" end
         local screenPos = cam:WorldToViewportPoint(aimPos)
-        if screenPos.Z <= 0 then return nil, nil, nil end
+        if screenPos.Z <= 0 then return nil, nil, nil, "behind" end
         local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-        if allowedFov and dist > allowedFov then return nil, nil, nil end
-        return targetPart, aimPos, dist
+        if allowedFov and dist > allowedFov then return nil, nil, nil, "fov" end
+        return targetPart, aimPos, dist, nil
     end
 
     local lockedModel = STATE._camlockMobileTargetModel
     local lockedPlayer = STATE._camlockMobilePlayer
     if lockedModel then
-        local lockedPart, lockedAimPos, lockedDist = getCandidate(lockedModel, lockedPlayer, nil)
+        local lockedPart, lockedAimPos, lockedDist, lockedReason = getCandidate(lockedModel, lockedPlayer, nil)
         if lockedPart then
             if lockedDist <= lockReleaseFov then
                 STATE._camlockMobileLostAt = nil
@@ -1562,8 +1562,15 @@ local function camlockFindMobileTargetPart()
             if (now - lostAt) <= lockGraceTime then
                 return lockedPart, lockedAimPos
             end
+            mobileReleaseTargetKeepCamera(cameraHoldTime)
+            return nil, nil
         end
-        mobileReleaseTargetKeepCamera(cameraHoldTime)
+        if lockedReason == "hidden" or lockedReason == "missing" or lockedReason == "dead" or lockedReason == "behind" then
+            mobileClearLockState()
+            return nil, nil
+        end
+        mobileClearLockState()
+        return nil, nil
     end
 
     if mobileRecentlyReleasedTouch() then
@@ -1603,11 +1610,7 @@ local function camlockFindMobileTargetPart()
         return bestPart, STATE._abPredictPos(bestPart, STATE.camlockMobilePrediction) or bestPart.Position
     end
 
-    if STATE._camlockMobileLookVector then
-        mobileReleaseTargetKeepCamera(cameraHoldTime)
-    else
-        mobileClearLockState()
-    end
+    mobileClearLockState()
     return nil, nil
 end
 if STATE._camlockStepConn then
