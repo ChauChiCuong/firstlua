@@ -941,22 +941,32 @@ v1.9.0
 - 1週間キーの取得イベントを追加。
 - 背景エフェクトを追加。]]
 
+local updateHistoryLayoutVersion = 0
+
 local function refreshUpdateHistoryLayout()
-    local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 6
+    updateHistoryLayoutVersion = updateHistoryLayoutVersion + 1
+    local layoutVersion = updateHistoryLayoutVersion
+    local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 10
     if contentWidth <= 0 then
         task.defer(refreshUpdateHistoryLayout)
         return
     end
 
     updateBody.Size = UDim2.new(0, contentWidth, 0, 0)
-    task.defer(function()
+    task.spawn(function()
+        RunService.Heartbeat:Wait()
+        RunService.Heartbeat:Wait()
+        if layoutVersion ~= updateHistoryLayoutVersion then
+            return
+        end
         if not updateBody.Parent or not updateScroll.Parent then
             return
         end
 
-        local measured = math.max(updateBody.TextBounds.Y + 16, updateScroll.AbsoluteSize.Y)
+        local bottomPadding = isMobileUpdateLayout and 28 or 22
+        local measured = math.max(updateBody.TextBounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
         updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
-        updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + 8)
+        updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + bottomPadding)
         updateScroll.CanvasPosition = Vector2.new(0, 0)
     end)
 end
@@ -1022,6 +1032,7 @@ end
 
 updateHistoryContent()
 updateScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshUpdateHistoryLayout)
+updateBody:GetPropertyChangedSignal("TextBounds"):Connect(refreshUpdateHistoryLayout)
 
 local helpOverlay = Instance.new("Frame", bg)
 helpOverlay.Size = UDim2.new(1,0,1,0)
