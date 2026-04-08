@@ -1358,6 +1358,12 @@ local function mobileGetTouchAssistFactor()
     end
     return 0.94, false
 end
+local function mobileUserTurningCamera()
+    if mobileTouchCount <= 0 then return false end
+    local moveAge = tick() - mobileTouchMoveAt
+    if moveAge > 0.18 then return false end
+    return (mobileTouchMoveMag or 0) >= 2.5
+end
 local function mobileClearLockState()
     STATE._camlockMobileTargetModel = nil
     STATE._camlockMobilePlayer = nil
@@ -1593,6 +1599,13 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
     if STATE.camlockMobile then
         local targetPart, aimPos = camlockFindMobileTargetPart()
         if not targetPart then
+            if mobileUserTurningCamera() then
+                STATE._camlockMobileLookVector = nil
+                STATE._camlockMobileAimPos = nil
+                STATE._camlockMobileHoldUntil = nil
+                mobileRestoreCharacterTurn()
+                return
+            end
             local holdUntil = STATE._camlockMobileHoldUntil
             local heldLook = STATE._camlockMobileLookVector
             if holdUntil and heldLook and tick() <= holdUntil then
@@ -4066,7 +4079,7 @@ if not STATE._chatRelayScanBound then
 end
 pcall(function() STATE._chatTryBindRelay() end)
 
-local function chatSend(msg)
+function STATE._chatSend(msg)
     if not msg or #msg == 0 or #msg > 150 then return end
     local target = STATE._chatTarget
     local toId = (target and target.Parent and target.UserId) or 0
@@ -4215,7 +4228,7 @@ do
         local function doSend()
             local txt = chatBox.Text:match("^%s*(.-)%s*$")
             if #txt == 0 then return end
-            chatSend(txt)
+            STATE._chatSend(txt)
             chatBox.Text = ""
         end
         sendBtn.MouseButton1Click:Connect(doSend)
