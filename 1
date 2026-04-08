@@ -175,6 +175,8 @@ end
 -- DRAWING API SHIM
 -- Protects against executors where Drawing is unavailable.
 -- ============================================================
+local DRAWING_AVAILABLE = (type(Drawing) == "table" and type(Drawing.new) == "function")
+local USE_GUI_MOBILE_FOV = UserInputService.TouchEnabled == true or not DRAWING_AVAILABLE
 if not Drawing then
     local _dummy = {}
     local _dmt = {
@@ -200,6 +202,56 @@ if not Drawing then
             Remove=function() end, Destroy=function() end,
         }, _dmt)
     end
+end
+local mobileFovGui, mobileFovRing = nil, nil
+local function ensureMobileFovGui()
+    if mobileFovGui and mobileFovGui.Parent and mobileFovRing and mobileFovRing.Parent then
+        return true
+    end
+    local parent = getNotifyParent()
+    if not parent then return false end
+    mobileFovGui = Instance.new("ScreenGui")
+    mobileFovGui.Name = "CuongOutLookMobileFOV"
+    mobileFovGui.ResetOnSpawn = false
+    mobileFovGui.IgnoreGuiInset = true
+    mobileFovGui.DisplayOrder = 999
+    mobileFovGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    mobileFovGui.Parent = parent
+
+    mobileFovRing = Instance.new("Frame")
+    mobileFovRing.Name = "Ring"
+    mobileFovRing.AnchorPoint = Vector2.new(0.5, 0.5)
+    mobileFovRing.Position = UDim2.fromScale(0.5, 0.5)
+    mobileFovRing.Size = UDim2.fromOffset(80, 80)
+    mobileFovRing.BackgroundTransparency = 1
+    mobileFovRing.BorderSizePixel = 0
+    mobileFovRing.ZIndex = 999
+    mobileFovRing.Visible = false
+    mobileFovRing.Parent = mobileFovGui
+
+    local ringCorner = Instance.new("UICorner")
+    ringCorner.CornerRadius = UDim.new(1, 0)
+    ringCorner.Parent = mobileFovRing
+
+    local ringStroke = Instance.new("UIStroke")
+    ringStroke.Name = "Stroke"
+    ringStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    ringStroke.Thickness = 2
+    ringStroke.Color = Color3.fromRGB(0, 255, 255)
+    ringStroke.Transparency = 0
+    ringStroke.Parent = mobileFovRing
+    return true
+end
+local function updateMobileFovGui(visible, radius)
+    if not USE_GUI_MOBILE_FOV then
+        if mobileFovRing then mobileFovRing.Visible = false end
+        return
+    end
+    if not ensureMobileFovGui() then return end
+    radius = math.clamp(tonumber(radius) or 40, 5, 250)
+    mobileFovRing.Size = UDim2.fromOffset(radius * 2, radius * 2)
+    mobileFovRing.Position = UDim2.fromOffset(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    mobileFovRing.Visible = (visible == true)
 end
 -- ============================================================
 -- WATERMARK  –  CuongOutLook Admin  (giữa trên cùng)
@@ -265,6 +317,7 @@ local STATE = {
     camlockMobileTeamCheck = true,
     camlockMobileTeamOnly = false,
     camlockMobileTarget = "Head",
+    camlockMobilePrediction = true,
     camlockMobileHardness = 20,
     camlockMobileFov = 40,
     -- Anti extras
@@ -362,7 +415,7 @@ local STATE = {
 -- ============================================================
 local STATE_FILE = "cuongoutlook_state.json"
 -- Keys that are safe to save (no runtime objects / positions)
-local SAVE_KEYS = {"antiFling","antiRubberBand","antiTP","antiItemOrbit","fly","flySpeed","clickTP","noclip","speedBoost","speedValue","reach","reachValue","antiMusic","lowPoly","esp","espTeamCheck","espBox","espChams","camlock","aimKey","aimBone","aimSmooth","aimFOV","aimShowFOV","aimTeamCheck","aimPrediction","aimWallCheck","bigheadLabel","bigheadSize","triggerbot","aimAuto","aimTouch","camlockMobile","camlockMobileTeamCheck","camlockMobileTeamOnly","camlockMobileTarget","camlockMobileHardness","camlockMobileFov","antiAim","antiScreen","antiExploit","antiGravity","spinToggle","jumpPower","jumpBoost","infinite","bhop","fullbright","noFog","timeFreeze","frozenTime","antiAFK","noScreenFX","rainbowSky","removeWalls","removeAnchored","removeUnanchored","crosshairEnabled","crosshairShowDot","crosshairShowFOVRing","crosshairShowCross","dotScale","dotOffsetX","dotOffsetY","fovRingScale","fovRingOffsetX","fovRingOffsetY","crossScale","crossOffsetX","crossOffsetY","lowMenuGraphic","saveConfig","language"}
+local SAVE_KEYS = {"antiFling","antiRubberBand","antiTP","antiItemOrbit","fly","flySpeed","clickTP","noclip","speedBoost","speedValue","reach","reachValue","antiMusic","lowPoly","esp","espTeamCheck","espBox","espChams","camlock","aimKey","aimBone","aimSmooth","aimFOV","aimShowFOV","aimTeamCheck","aimPrediction","aimWallCheck","bigheadLabel","bigheadSize","triggerbot","aimAuto","aimTouch","camlockMobile","camlockMobileTeamCheck","camlockMobileTeamOnly","camlockMobileTarget","camlockMobilePrediction","camlockMobileHardness","camlockMobileFov","antiAim","antiScreen","antiExploit","antiGravity","spinToggle","jumpPower","jumpBoost","infinite","bhop","fullbright","noFog","timeFreeze","frozenTime","antiAFK","noScreenFX","rainbowSky","removeWalls","removeAnchored","removeUnanchored","crosshairEnabled","crosshairShowDot","crosshairShowFOVRing","crosshairShowCross","dotScale","dotOffsetX","dotOffsetY","fovRingScale","fovRingOffsetX","fovRingOffsetY","crossScale","crossOffsetX","crossOffsetY","lowMenuGraphic","saveConfig","language"}
 -- Tiny JSON serialiser (only needs bool, number, string)
 local function toJSON(tbl)
     local parts = {}
@@ -937,64 +990,12 @@ end
 -- WORLD EDITOR
 -- ============================================================
 local hiddenParts = {}
-STATE._playerCharRoots = STATE._playerCharRoots or {}
-for _, p in ipairs(Players:GetPlayers()) do
-    do
-        local roots = STATE._playerCharRoots
-        local old = roots[p]
-        if old then roots[old] = nil end
-        roots[p] = p.Character
-        if p.Character then roots[p.Character] = true end
-    end
-    p.CharacterAdded:Connect(function(c)
-        local roots = STATE._playerCharRoots
-        local old = roots[p]
-        if old then roots[old] = nil end
-        roots[p] = c
-        if c then roots[c] = true end
-    end)
-    p.CharacterRemoving:Connect(function(c)
-        local roots = STATE._playerCharRoots
-        if roots[p] == c then
-            roots[c] = nil
-            roots[p] = nil
-        end
-    end)
-end
-Players.PlayerAdded:Connect(function(p)
-    do
-        local roots = STATE._playerCharRoots
-        local old = roots[p]
-        if old then roots[old] = nil end
-        roots[p] = p.Character
-        if p.Character then roots[p.Character] = true end
-    end
-    p.CharacterAdded:Connect(function(c)
-        local roots = STATE._playerCharRoots
-        local old = roots[p]
-        if old then roots[old] = nil end
-        roots[p] = c
-        if c then roots[c] = true end
-    end)
-    p.CharacterRemoving:Connect(function(c)
-        local roots = STATE._playerCharRoots
-        if roots[p] == c then
-            roots[c] = nil
-            roots[p] = nil
-        end
-    end)
-end)
-Players.PlayerRemoving:Connect(function(p)
-    local roots = STATE._playerCharRoots
-    local c = roots[p]
-    if c then roots[c] = nil end
-    roots[p] = nil
-end)
 local function isPlayerPart(obj)
-    local roots = STATE._playerCharRoots
     local cur = obj
     while cur do
-        if roots[cur] then return true end
+        if Players:GetPlayerFromCharacter(cur) then
+            return true
+        end
         cur = cur.Parent
     end
     return false
@@ -1384,9 +1385,12 @@ function STATE._abCanSee(targetModel, targetPos)
     if not hit then return true end
     return hit.Instance and hit.Instance:IsDescendantOf(targetModel)
 end
-function STATE._abPredictPos(bone)
+function STATE._abPredictPos(bone, predictionEnabled)
     if not bone then return nil end
-    if not STATE.aimPrediction then return bone.Position end
+    if predictionEnabled == nil then
+        predictionEnabled = STATE.aimPrediction
+    end
+    if not predictionEnabled then return bone.Position end
     local v = bone.AssemblyLinearVelocity
     if (not v) or v.Magnitude < 0.01 then
         local parent = bone.Parent
@@ -1467,7 +1471,7 @@ local function camlockFindMobileTargetPart()
         local targetPart = mobileGetTargetPart(model)
         if not humanoid or humanoid.Health <= 0 or not targetPart then return nil, nil, nil end
         if targetPlayer and not mobileTeamPass(targetPlayer) then return nil, nil, nil end
-        local aimPos = STATE._abPredictPos(targetPart) or targetPart.Position
+        local aimPos = STATE._abPredictPos(targetPart, STATE.camlockMobilePrediction) or targetPart.Position
         if not STATE._abCanSee(model, aimPos) then return nil, nil, nil end
         local screenPos = cam:WorldToViewportPoint(aimPos)
         if screenPos.Z <= 0 then return nil, nil, nil end
@@ -1527,7 +1531,7 @@ local function camlockFindMobileTargetPart()
         STATE._camlockMobileTargetModel = bestPart.Parent
         STATE._camlockMobilePlayer = bestPlayer
         STATE._camlockMobileLostAt = nil
-        return bestPart, STATE._abPredictPos(bestPart) or bestPart.Position
+        return bestPart, STATE._abPredictPos(bestPart, STATE.camlockMobilePrediction) or bestPart.Position
     end
 
     mobileClearLockState()
@@ -1557,7 +1561,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
             return
         end
         local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
-        local desiredAimPos = aimPos or (STATE._abPredictPos(targetPart) or targetPart.Position)
+        local desiredAimPos = aimPos or (STATE._abPredictPos(targetPart, STATE.camlockMobilePrediction) or targetPart.Position)
         local aimBlend = math.clamp((dt or 0.016) * 6, 0.06, 0.18)
         local smoothAimPos = STATE._camlockMobileAimPos and STATE._camlockMobileAimPos:Lerp(desiredAimPos, aimBlend) or desiredAimPos
         STATE._camlockMobileAimPos = smoothAimPos
@@ -1817,14 +1821,15 @@ RunService.RenderStepped:Connect(function()
 
         mc.Filled = false
         mc.NumSides = 80
-        mc.Color = Color3.fromHSV((tick() * 0.35) % 1, 1, 1)
+        mc.Color = Color3.fromRGB(0, 255, 255)
         mc.Transparency = 1
         mc.Thickness = 2
         mc.ZIndex = 101
         mc.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
         local mobileRadius = tonumber(STATE.camlockMobileFov) or 40
         mc.Radius = math.clamp(mobileRadius, 5, 250)
-        mc.Visible = (STATE.camlockMobile == true)
+        mc.Visible = (STATE.camlockMobile == true) and (not USE_GUI_MOBILE_FOV)
+        updateMobileFovGui(STATE.camlockMobile == true, mobileRadius)
     end)
 end)
 RunService.RenderStepped:Connect(function(dt)
@@ -2509,9 +2514,8 @@ STATE._LANG_TEXT_EN = {
     ["Phát hiện Exploit"] = "Exploit Detection",
     ["Anti Trọng lực (very risky)"] = "Anti Gravity (very risky)",
     ["Bật Aimbot (PC)"] = "Enable Aimbot (PC)",
-    ["Bật Camlock (PC)"] = "Enable Camlock (PC)",
     ["Bật Triggerbot (PC)"] = "Enable Triggerbot (PC)",
-    ["Bật Camlock Mobile"] = "Enable Mobile Camlock",
+    ["Bật Aimbot Mobile"] = "Enable Mobile Aimbot",
     ["Triệu hồi - Summon it"] = "Summon",
     ["Triệu Hồi"] = "Summon",
     ["Triệu hồi"] = "Summon",
@@ -2524,6 +2528,7 @@ STATE._LANG_TEXT_EN = {
     ["Kiểm tra đồng đội"] = "Team Check",
     ["Kiểm tra đội Mobile"] = "Mobile Team Check",
     ["Chỉ khóa đồng đội Mobile"] = "Mobile Team Only",
+    ["Dự đoán aim Mobile"] = "Mobile Aim Prediction",
     ["Độ cứng aim Mobile"] = "Mobile Aim Hardness",
     ["Kích thước FOV Mobile"] = "Mobile FOV Size",
     ["Hiển thị FOV"] = "Show FOV",
@@ -2586,7 +2591,7 @@ STATE._LANG_TEXT_EN = {
     ["  Click Give to add to your Backpack."] = "  Click Give to add to your Backpack.",
     ["  Closes the UI completely."] = "  Closes the UI completely.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso",
-    ["  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình."] = "  Auto camlock for touch devices using the center of the screen.",
+    ["  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình."] = "  Auto aimbot for touch devices using the center of the screen.",
     ["  ON sẽ bỏ qua người cùng đội."] = "  ON ignores players on your team.",
     ["  ON chỉ khóa người cùng đội."] = "  ON only locks players on your team.",
     ["  Luân phiên: Head / Torso"] = "  Cycle: Head / Torso",
@@ -2659,6 +2664,9 @@ STATE._LANG_TEXT_EN = {
     ["Reach"] = "Reach",
     ["Reach Size"] = "Reach Size",
     ["Refresh Items"] = "Refresh Items",
+    ["Prev Page"] = "Prev Page",
+    ["Next Page"] = "Next Page",
+    ["Page"] = "Page",
     ["Rejoin Server"] = "Rejoin Server",
     ["Reset Camera"] = "Reset Camera",
     ["Reset FOV"] = "Reset FOV",
@@ -2699,7 +2707,7 @@ STATE._LANG_TEXT_VI = {
     ["  Click anywhere to teleport."] = "  Bấm vào vị trí bất kỳ để dịch chuyển.",
     ["  Closes the UI completely."] = "  Đóng hoàn toàn giao diện.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Luân phiên: Head / HumanoidRootPart / UpperTorso / LowerTorso",
-    ["  Auto camlock for touch devices using the center of the screen."] = "  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.",
+    ["  Auto aimbot for touch devices using the center of the screen."] = "  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.",
     ["  ON ignores players on your team."] = "  ON sẽ bỏ qua người cùng đội.",
     ["  ON only locks players on your team."] = "  ON chỉ khóa người cùng đội.",
     ["  Cycle: Head / Torso"] = "  Luân phiên: Head / Torso",
@@ -2747,7 +2755,8 @@ STATE._LANG_TEXT_VI = {
     ["Aimbot"] = "Aimbot",
     ["Aimbot FOV"] = "Vùng aim Aimbot",
     ["Aimbot Mobile?"] = "Aimbot cho Mobile?",
-    ["Enable Mobile Camlock"] = "Bật Camlock Mobile",
+    ["Enable Mobile Aimbot"] = "Bật Aimbot Mobile",
+    ["Mobile Aim Prediction"] = "Dự đoán aim Mobile",
     ["Anti Aim"] = "Chống khóa tâm",
     ["Anti Extras"] = "Chống nâng cao",
     ["Anti-AFK"] = "Chống AFK",
@@ -2788,6 +2797,9 @@ STATE._LANG_TEXT_VI = {
     ["Reach"] = "Tầm với",
     ["Reach Size"] = "Kích thước tầm với",
     ["Refresh Items"] = "Làm mới vật phẩm",
+    ["Prev Page"] = "Trang trước",
+    ["Next Page"] = "Trang sau",
+    ["Page"] = "Trang",
     ["Rejoin Server"] = "Vào lại server",
     ["Reset Camera"] = "Đặt lại camera",
     ["Reset FOV"] = "Đặt lại FOV",
@@ -2831,8 +2843,8 @@ function _bindLangText(obj, baseText)
     table.insert(STATE._LANG_BINDINGS, {obj = obj, text = baseText})
     obj.Text = _tr(baseText)
 end
-function _bindLangRefresh(fn)
-    table.insert(STATE._LANG_REFRESHERS, fn)
+function _bindLangRefresh(fn, owner)
+    table.insert(STATE._LANG_REFRESHERS, {fn = fn, owner = owner})
 end
 function _refreshLocalizedTexts()
     for i = #STATE._LANG_BINDINGS, 1, -1 do
@@ -2843,11 +2855,33 @@ function _refreshLocalizedTexts()
             item.obj.Text = _tr(item.text)
         end
     end
-    for _, fn in ipairs(STATE._LANG_REFRESHERS) do
-        pcall(fn)
+    for i = #STATE._LANG_REFRESHERS, 1, -1 do
+        local entry = STATE._LANG_REFRESHERS[i]
+        local fn = (type(entry) == "table") and entry.fn or entry
+        local owner = (type(entry) == "table") and entry.owner or nil
+        if owner and (not owner.Parent) then
+            table.remove(STATE._LANG_REFRESHERS, i)
+        elseif type(fn) == "function" then
+            pcall(fn)
+        else
+            table.remove(STATE._LANG_REFRESHERS, i)
+        end
     end
 end
 local sg = Instance.new("ScreenGui")
+do
+    local oldGui = nil
+    local okOld, huiOld = pcall(function() return gethui() end)
+    if okOld and huiOld then
+        oldGui = huiOld:FindFirstChild("cuongoutlookUndetect")
+    end
+    if not oldGui and plr:FindFirstChildOfClass("PlayerGui") then
+        oldGui = plr.PlayerGui:FindFirstChild("cuongoutlookUndetect")
+    end
+    if oldGui then
+        pcall(function() oldGui:Destroy() end)
+    end
+end
 sg.Name           = "cuongoutlookUndetect"
 sg.ResetOnSpawn   = false
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -3571,7 +3605,7 @@ Info("Protect", "  Zero workspace gravity. Float freely.")
 -- AIMBOT TAB
 -- ============================
 Sec("Aimbot", "Aimbot")
-STATE._camlockRow = Tog("Aimbot", "Bật Camlock (PC)",
+STATE._camlockRow = Tog("Aimbot", "Bật Aimbot (PC)",
     function() return STATE.camlock end,
     function(v) STATE.camlock = v end)
 pcall(function()
@@ -3671,7 +3705,7 @@ pcall(function()
         refreshMobileBtn()
         if STATE._camlockMobileRf then STATE._camlockMobileRf() end
         if not skipNotify then
-            notify("Camlock", STATE.camlockMobile and "Đã bật Camlock Mobile" or "Đã tắt Camlock Mobile", 2)
+            notify("Aimbot", STATE.camlockMobile and "Đã bật Aimbot Mobile" or "Đã tắt Aimbot Mobile", 2)
         end
         pcall(saveStateIfEnabled)
     end
@@ -3745,7 +3779,7 @@ pcall(function()
         end
     end)
 end)
-Info("Aimbot", "  First person only. Hold keybind to lock when close to enemy.")
+Info("Aimbot", "  First person only. Hold keybind to aim when close to enemy.")
 Tog("Aimbot", "Show FOV",
     function() return STATE.aimShowFOV end,
     function(v) STATE.aimShowFOV = v end)
@@ -3795,8 +3829,8 @@ Tog("Aimbot", "Bật Triggerbot (PC)",
         end
     end)
 Info("Aimbot", "  Auto-fire on enemy under crosshair | Hotkey: H")
-Sec("Aimbot", "Camlock Mobile")
-STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Camlock Mobile",
+Sec("Aimbot", "Aimbot Mobile")
+STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Aimbot Mobile",
     function() return STATE.camlockMobile end,
     function(v)
         if STATE._setCamlockMobile then
@@ -3805,7 +3839,7 @@ STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Camlock M
             STATE.camlockMobile = v
         end
     end)
-Info("Aimbot", "  Camlock tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.")
+Info("Aimbot", "  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.")
 Tog("Aimbot", "Kiểm tra đội Mobile",
     function() return STATE.camlockMobileTeamCheck end,
     function(v) STATE.camlockMobileTeamCheck = v end)
@@ -3814,13 +3848,17 @@ Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
     function() return STATE.camlockMobileTeamOnly end,
     function(v) STATE.camlockMobileTeamOnly = v end)
 Info("Aimbot", "  ON chỉ khóa người cùng đội.")
+Tog("Aimbot", "Dự đoán aim Mobile",
+    function() return STATE.camlockMobilePrediction end,
+    function(v) STATE.camlockMobilePrediction = v end)
+Info("Aimbot", "  Predicts enemy movement")
 STATE._camlockMobileTargetBtn = Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
     mobileClearLockState()
     if STATE._camlockMobileTargetBtn then
         STATE._camlockMobileTargetBtn.Text = "Mobile Target: " .. STATE.camlockMobileTarget
     end
-    notify("Camlock", "Mobile Target: " .. STATE.camlockMobileTarget, 2)
+    notify("Aimbot", "Mobile Target: " .. STATE.camlockMobileTarget, 2)
     pcall(saveStateIfEnabled)
 end)
 Info("Aimbot", "  Luân phiên: Head / Torso")
@@ -4014,6 +4052,147 @@ local function chatSend(msg)
     -- Fallback local-only
     addChatMsg(plr.Name, msg, true, "local", msgId)
 end
+do
+    function STATE._chatBuildInfoRow()
+        local chatInfo = Instance.new("Frame", sf)
+        chatInfo.Size             = UDim2.new(1,0,0,28)
+        chatInfo.BackgroundColor3 = C.PANEL
+        chatInfo.BorderSizePixel  = 0
+        chatInfo.LayoutOrder      = nxt()
+        chatInfo.Visible          = false
+        Instance.new("UICorner", chatInfo).CornerRadius = UDim.new(0,7)
+
+        local chatInfoL = Instance.new("TextLabel", chatInfo)
+        chatInfoL.Size               = UDim2.new(1,0,1,0)
+        chatInfoL.Position           = UDim2.new(0,9,0,0)
+        chatInfoL.BackgroundTransparency = 1
+        chatInfoL.Font               = Enum.Font.Gotham
+        chatInfoL.TextSize           = 10
+        chatInfoL.TextColor3         = C.ACC
+        chatInfoL.TextXAlignment     = Enum.TextXAlignment.Left
+        chatInfoL.Text               = (STATE.language == "en")
+            and "    Not sent to Roblox chat | Relay requires a server script."
+            or  "    Không gửi lên Roblox chat | Relay cần có server script."
+
+        _bindLangRefresh(function()
+            if chatInfoL and chatInfoL.Parent then
+                chatInfoL.Text = (STATE.language == "en")
+                    and "    Not sent to Roblox chat | Relay requires a server script."
+                    or  "    Không gửi lên Roblox chat | Relay cần có server script."
+            end
+        end, chatInfo)
+
+        table.insert(tabPages["Chat"], chatInfo)
+    end
+    function STATE._chatCreateSlotRow()
+        local row = Instance.new("Frame", sf)
+        row.Size             = UDim2.new(1,0,0,42)
+        row.BackgroundColor3 = C.DARK
+        row.BorderSizePixel  = 0
+        row.LayoutOrder      = nxt()
+        row.Visible          = false
+        Instance.new("UICorner", row).CornerRadius = UDim.new(0,6)
+
+        local accent = Instance.new("Frame", row)
+        accent.Size             = UDim2.new(0,3,1,-6)
+        accent.Position         = UDim2.new(0,0,0,3)
+        accent.BackgroundColor3 = C.ACC
+        accent.BorderSizePixel  = 0
+        Instance.new("UICorner", accent).CornerRadius = UDim.new(1,0)
+
+        local header = Instance.new("TextLabel", row)
+        header.Name               = "H"
+        header.Size               = UDim2.new(1,-12,0,14)
+        header.Position           = UDim2.new(0,10,0,3)
+        header.BackgroundTransparency = 1
+        header.Font               = Enum.Font.GothamBold
+        header.TextSize           = 10
+        header.TextColor3         = C.ACC
+        header.TextXAlignment     = Enum.TextXAlignment.Left
+        header.Text               = ""
+
+        local body = Instance.new("TextLabel", row)
+        body.Name               = "B"
+        body.Size               = UDim2.new(1,-12,0,22)
+        body.Position           = UDim2.new(0,10,0,17)
+        body.BackgroundTransparency = 1
+        body.Font               = Enum.Font.Gotham
+        body.TextSize           = 11
+        body.TextColor3         = C.TXT
+        body.TextXAlignment     = Enum.TextXAlignment.Left
+        body.TextWrapped        = true
+        body.Text               = ""
+        return row
+    end
+    function STATE._chatCreateInputBox(inputRow)
+        local chatBox = Instance.new("TextBox", inputRow)
+        chatBox.Size                   = UDim2.new(1,-50,1,-6)
+        chatBox.Position               = UDim2.new(0,6,0,3)
+        chatBox.BackgroundColor3       = C.BG
+        chatBox.BorderSizePixel        = 0
+        chatBox.Font                   = Enum.Font.Gotham
+        chatBox.TextSize               = 11
+        chatBox.TextColor3             = C.TXT
+        chatBox.PlaceholderText        = _tr("Type a message...")
+        chatBox.PlaceholderColor3      = C.TXTM
+        chatBox.Text                   = ""
+        chatBox.ClearTextOnFocus       = false
+        chatBox.TextXAlignment         = Enum.TextXAlignment.Left
+        Instance.new("UICorner", chatBox).CornerRadius = UDim.new(0,6)
+        local chatPadding = Instance.new("UIPadding", chatBox)
+        chatPadding.PaddingLeft = UDim.new(0,6)
+        return chatBox
+    end
+    function STATE._chatCreateSendButton(inputRow)
+        local sendBtn = Instance.new("TextButton", inputRow)
+        sendBtn.Size             = UDim2.new(0,40,1,-6)
+        sendBtn.Position         = UDim2.new(1,-44,0,3)
+        sendBtn.BackgroundColor3 = C.ACC
+        sendBtn.BorderSizePixel  = 0
+        sendBtn.Font             = Enum.Font.GothamBold
+        sendBtn.TextSize         = 11
+        sendBtn.TextColor3       = Color3.new(1,1,1)
+        sendBtn.Text             = _tr("Send")
+        sendBtn.AutoButtonColor  = false
+        Instance.new("UICorner", sendBtn).CornerRadius = UDim.new(0,6)
+        return sendBtn
+    end
+    function STATE._chatBindInputLocalization(inputRow, chatBox, sendBtn)
+        _bindLangRefresh(function()
+            if chatBox and chatBox.Parent then
+                chatBox.PlaceholderText = _tr("Type a message...")
+            end
+            if sendBtn and sendBtn.Parent then
+                sendBtn.Text = _tr("Send")
+            end
+        end, inputRow)
+    end
+    function STATE._chatAttachSendHandlers(chatBox, sendBtn)
+        local function doSend()
+            local txt = chatBox.Text:match("^%s*(.-)%s*$")
+            if #txt == 0 then return end
+            chatSend(txt)
+            chatBox.Text = ""
+        end
+        sendBtn.MouseButton1Click:Connect(doSend)
+        chatBox.FocusLost:Connect(function(enter)
+            if enter then doSend() end
+        end)
+    end
+    function STATE._chatBuildInputRow()
+        local inputRow = Instance.new("Frame", sf)
+        inputRow.Size             = UDim2.new(1,0,0,32)
+        inputRow.BackgroundColor3 = C.PANEL
+        inputRow.BorderSizePixel  = 0
+        inputRow.LayoutOrder      = nxt()
+        inputRow.Visible          = false
+        Instance.new("UICorner", inputRow).CornerRadius = UDim.new(0,8)
+        table.insert(tabPages["Chat"], inputRow)
+        local chatBox = STATE._chatCreateInputBox(inputRow)
+        local sendBtn = STATE._chatCreateSendButton(inputRow)
+        STATE._chatBindInputLocalization(inputRow, chatBox, sendBtn)
+        STATE._chatAttachSendHandlers(chatBox, sendBtn)
+    end
 -- Chat tab GUI
 Sec("Chat", "CuongOutLook User Chat")
 Tog("Chat", "Shared Relay Chat",
@@ -4034,67 +4213,10 @@ Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
     STATE._chatTarget = nil
     notify("Chat", "Target: ALL", 2)
 end)
--- Header info
-local chatInfo = Instance.new("Frame", sf)
-chatInfo.Size             = UDim2.new(1,0,0,28)
-chatInfo.BackgroundColor3 = C.PANEL
-chatInfo.BorderSizePixel  = 0
-chatInfo.LayoutOrder      = nxt()
-chatInfo.Visible          = false
-Instance.new("UICorner", chatInfo).CornerRadius = UDim.new(0,7)
-local chatInfoL = Instance.new("TextLabel", chatInfo)
-chatInfoL.Size               = UDim2.new(1,0,1,0)
-chatInfoL.Position           = UDim2.new(0,9,0,0)
-chatInfoL.BackgroundTransparency = 1
-chatInfoL.Font               = Enum.Font.Gotham
-chatInfoL.TextSize           = 10
-chatInfoL.TextColor3         = C.ACC
-chatInfoL.TextXAlignment     = Enum.TextXAlignment.Left
-chatInfoL.Text               = (STATE.language == "en")
-    and "    Not sent to Roblox chat | Relay requires a server script."
-    or  "    Không gửi lên Roblox chat | Relay cần có server script."
-_bindLangRefresh(function()
-    if chatInfoL and chatInfoL.Parent then
-        chatInfoL.Text = (STATE.language == "en")
-            and "    Not sent to Roblox chat | Relay requires a server script."
-            or  "    Không gửi lên Roblox chat | Relay cần có server script."
-    end
-end)
-table.insert(tabPages["Chat"], chatInfo)
+STATE._chatBuildInfoRow()
 -- Message slots (scrollable via the existing ScrollingFrame)
 for _ = 1, STATE._chatSlotsMax do
-    local row = Instance.new("Frame", sf)
-    row.Size             = UDim2.new(1,0,0,42)
-    row.BackgroundColor3 = C.DARK
-    row.BorderSizePixel  = 0
-    row.LayoutOrder      = nxt()
-    row.Visible          = false
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0,6)
-    local accent = Instance.new("Frame", row)
-    accent.Size             = UDim2.new(0,3,1,-6)
-    accent.Position         = UDim2.new(0,0,0,3)
-    accent.BackgroundColor3 = C.ACC
-    accent.BorderSizePixel  = 0
-    Instance.new("UICorner", accent).CornerRadius = UDim.new(1,0)
-    local header = Instance.new("TextLabel", row); header.Name = "H"
-    header.Size               = UDim2.new(1,-12,0,14)
-    header.Position           = UDim2.new(0,10,0,3)
-    header.BackgroundTransparency = 1
-    header.Font               = Enum.Font.GothamBold
-    header.TextSize           = 10
-    header.TextColor3         = C.ACC
-    header.TextXAlignment     = Enum.TextXAlignment.Left
-    header.Text               = ""
-    local body = Instance.new("TextLabel", row); body.Name = "B"
-    body.Size               = UDim2.new(1,-12,0,22)
-    body.Position           = UDim2.new(0,10,0,17)
-    body.BackgroundTransparency = 1
-    body.Font               = Enum.Font.Gotham
-    body.TextSize           = 11
-    body.TextColor3         = C.TXT
-    body.TextXAlignment     = Enum.TextXAlignment.Left
-    body.TextWrapped        = true
-    body.Text               = ""
+    local row = STATE._chatCreateSlotRow()
     table.insert(STATE._chatSlots, row)
     table.insert(tabPages["Chat"], row)
 end
@@ -4131,60 +4253,8 @@ STATE._refreshChat = function()
         end
     end
 end
--- Input row: text box + send button
-local inputRow = Instance.new("Frame", sf)
-inputRow.Size             = UDim2.new(1,0,0,32)
-inputRow.BackgroundColor3 = C.PANEL
-inputRow.BorderSizePixel  = 0
-inputRow.LayoutOrder      = nxt()
-inputRow.Visible          = false
-Instance.new("UICorner", inputRow).CornerRadius = UDim.new(0,8)
-table.insert(tabPages["Chat"], inputRow)
-local chatBox = Instance.new("TextBox", inputRow)
-chatBox.Size                   = UDim2.new(1,-50,1,-6)
-chatBox.Position               = UDim2.new(0,6,0,3)
-chatBox.BackgroundColor3       = C.BG
-chatBox.BorderSizePixel        = 0
-chatBox.Font                   = Enum.Font.Gotham
-chatBox.TextSize               = 11
-chatBox.TextColor3             = C.TXT
-chatBox.PlaceholderText        = _tr("Type a message...")
-chatBox.PlaceholderColor3      = C.TXTM
-chatBox.Text                   = ""
-chatBox.ClearTextOnFocus       = false
-chatBox.TextXAlignment         = Enum.TextXAlignment.Left
-Instance.new("UICorner", chatBox).CornerRadius = UDim.new(0,6)
-local _cbs = Instance.new("UIPadding", chatBox)
-_cbs.PaddingLeft = UDim.new(0,6)
-local sendBtn = Instance.new("TextButton", inputRow)
-sendBtn.Size             = UDim2.new(0,40,1,-6)
-sendBtn.Position         = UDim2.new(1,-44,0,3)
-sendBtn.BackgroundColor3 = C.ACC
-sendBtn.BorderSizePixel  = 0
-sendBtn.Font             = Enum.Font.GothamBold
-sendBtn.TextSize         = 11
-sendBtn.TextColor3       = Color3.new(1,1,1)
-sendBtn.Text             = _tr("Send")
-sendBtn.AutoButtonColor  = false
-Instance.new("UICorner", sendBtn).CornerRadius = UDim.new(0,6)
-_bindLangRefresh(function()
-    if chatBox and chatBox.Parent then
-        chatBox.PlaceholderText = _tr("Type a message...")
-    end
-    if sendBtn and sendBtn.Parent then
-        sendBtn.Text = _tr("Send")
-    end
-end)
-local function doSend()
-    local txt = chatBox.Text:match("^%s*(.-)%s*$")
-    if #txt == 0 then return end
-    chatSend(txt)
-    chatBox.Text = ""
+STATE._chatBuildInputRow()
 end
-sendBtn.MouseButton1Click:Connect(doSend)
-chatBox.FocusLost:Connect(function(enter)
-    if enter then doSend() end
-end)
 -- Refresh chat when switching to tab
 -- (hook into showTab defined at bottom of file)
 STATE._origOnDetect = STATE._onDetectionAdded
@@ -4197,6 +4267,8 @@ STATE._origOnDetect = STATE._onDetectionAdded
 -- ============================
 STATE._itemList = STATE._itemList or {}       -- { name, path, tool } - ALL tools, no name-dedup
 STATE._itemSlotFrames = STATE._itemSlotFrames or {}
+STATE._itemPage = STATE._itemPage or 1
+STATE._itemPageSize = STATE._itemPageSize or 24
 -- Every container a LocalScript can actually read.
 -- ServerStorage is server-only and always empty on client - excluded.
 function STATE._getRoots()
@@ -4207,15 +4279,47 @@ function STATE._getRoots()
         "Lighting","SoundService",
     }
     for _, svc in ipairs(services) do
-        pcall(function() table.insert(roots, game:GetService(svc)) end)
-    end
-    table.insert(roots, Workspace)
-    for _, p in ipairs(Players:GetPlayers()) do
-        pcall(function()
-            local bp = p:FindFirstChild("Backpack")
+        local function pruneItemTabPages()
+            local kept = {}
+            for _, frame in ipairs(tabPages["Items"]) do
+                if frame and frame.Parent then
+                    table.insert(kept, frame)
+                end
+            end
+            tabPages["Items"] = kept
+        end
+        for _, f in ipairs(STATE._itemSlotFrames) do
+            pcall(function() f:Destroy() end)
+        end
+        STATE._itemSlotFrames = {}
+        pruneItemTabPages()
+
+        local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
+        local totalItems = #STATE._itemList
+        local totalPages = math.max(1, math.ceil(totalItems / pageSize))
+        STATE._itemPage = math.clamp(tonumber(STATE._itemPage) or 1, 1, totalPages)
+        local startIndex = ((STATE._itemPage - 1) * pageSize) + 1
+        local endIndex = math.min(totalItems, startIndex + pageSize - 1)
+
+        if STATE._itemPageLabel and STATE._itemPageLabel.Parent then
+            STATE._itemPageLabel.Text = _tr("Page") .. " " .. STATE._itemPage .. "/" .. totalPages
+        end
+        if STATE._itemPrevBtn then
+            local canPrev = STATE._itemPage > 1
+            STATE._itemPrevBtn.BackgroundColor3 = canPrev and Color3.fromRGB(55, 35, 90) or Color3.fromRGB(45, 45, 55)
+            STATE._itemPrevBtn.TextColor3 = canPrev and C.WHT or C.TXTM
+        end
+        if STATE._itemNextBtn then
+            local canNext = STATE._itemPage < totalPages
+            STATE._itemNextBtn.BackgroundColor3 = canNext and C.ACC or Color3.fromRGB(45, 45, 55)
+            STATE._itemNextBtn.TextColor3 = canNext and C.WHT or C.TXTM
+        end
+
+        for i = startIndex, endIndex do
+            local entry = STATE._itemList[i]
             if bp then table.insert(roots, bp) end
             if p.Character then table.insert(roots, p.Character) end
-        end)
+        end
     end
     return roots
 end
@@ -4342,32 +4446,21 @@ local function buildItemSlots()
         giveBtn.Position         = UDim2.new(1,-60,0.5,-11)
         giveBtn.BackgroundColor3 = C.ACC
         giveBtn.BorderSizePixel  = 0
-        giveBtn.Text             = _tr("Give")
         giveBtn.Font             = Enum.Font.GothamBold
         giveBtn.TextSize         = 11
         giveBtn.TextColor3       = Color3.new(1,1,1)
         giveBtn.AutoButtonColor  = false
+        _bindLangText(giveBtn, "Give")
         Instance.new("UICorner",giveBtn).CornerRadius = UDim.new(0,6)
-        _bindLangRefresh(function()
-            if giveBtn and giveBtn.Parent then
-                giveBtn.Text = _tr("Give")
-            end
-        end)
         local captured = entry.tool
         giveBtn.MouseButton1Click:Connect(function()
             STATE._giveItem(captured)
-        end)
-        giveBtn.MouseEnter:Connect(function()
-            giveBtn.BackgroundColor3 = Color3.fromRGB(140,40,255)
-        end)
-        giveBtn.MouseLeave:Connect(function()
-            giveBtn.BackgroundColor3 = C.ACC
         end)
         table.insert(STATE._itemSlotFrames, row)
         table.insert(tabPages["Items"], row)
     end
     -- Empty label if nothing found
-    if #STATE._itemList == 0 then
+    if totalItems == 0 then
         local eRow = Instance.new("Frame",sf)
         eRow.Size             = UDim2.new(1,0,0,32)
         eRow.BackgroundColor3 = C.PANEL
@@ -4376,39 +4469,95 @@ local function buildItemSlots()
         eRow.Visible          = (activeTab == "Items")
         Instance.new("UICorner",eRow).CornerRadius = UDim.new(0,7)
         local eLbl = Instance.new("TextLabel",eRow)
-        eLbl.Size=UDim2.new(1,0,1,0); eLbl.BackgroundTransparency=1
-        eLbl.Text="  " .. _tr("No tools found in this game")
+        eLbl.Size=UDim2.new(1,-16,1,0); eLbl.Position = UDim2.new(0,8,0,0); eLbl.BackgroundTransparency=1
         eLbl.Font=Enum.Font.Gotham; eLbl.TextSize=11
         eLbl.TextColor3=C.TXTM; eLbl.TextXAlignment=Enum.TextXAlignment.Left
-        _bindLangRefresh(function()
-            if eLbl and eLbl.Parent then
-                eLbl.Text = "  " .. _tr("No tools found in this game")
-            end
-        end)
+        _bindLangText(eLbl, "No tools found in this game")
         table.insert(STATE._itemSlotFrames, eRow)
         table.insert(tabPages["Items"], eRow)
     end
 end
 Sec("Items", "Game Items")
 Act("Items", "Refresh Items", C.ACC, function()
-    -- Clear old tabPages entries from itemSlotFrames
-    local newPages = {}
-    for _, f in ipairs(tabPages["Items"]) do
-        local isSlot = false
-        for _, sf2 in ipairs(STATE._itemSlotFrames) do
-            if sf2 == f then isSlot = true; break end
-        end
-        if not isSlot then table.insert(newPages, f) end
-    end
-    tabPages["Items"] = newPages
+    STATE._itemPage = 1
     STATE._scanForTools()
     buildItemSlots()
-    -- Show slots if on items tab
     for _, f in ipairs(STATE._itemSlotFrames) do
         f.Visible = (activeTab == "Items")
     end
     notify("Items", "Found "..#STATE._itemList.." tools", 3)
 end)
+function STATE._itemCreatePagerButton(parent, textKey, position, bgColor)
+    local button = Instance.new("TextButton", parent)
+    button.Size = UDim2.new(0, 92, 0, 28)
+    button.Position = position
+    button.BackgroundColor3 = bgColor
+    button.BorderSizePixel = 0
+    button.Font = Enum.Font.GothamSemibold
+    button.TextSize = 11
+    button.TextColor3 = C.WHT
+    button.AutoButtonColor = false
+    _bindLangText(button, textKey)
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
+    return button
+end
+function STATE._setupItemsPager()
+    local pagerRow = Instance.new("Frame", sf)
+    pagerRow.Size = UDim2.new(1, 0, 0, 36)
+    pagerRow.BackgroundTransparency = 1
+    pagerRow.LayoutOrder = nxt()
+    pagerRow.Visible = false
+
+    local prevBtn = STATE._itemCreatePagerButton(
+        pagerRow,
+        "Prev Page",
+        UDim2.new(0, 0, 0.5, -14),
+        Color3.fromRGB(55, 35, 90)
+    )
+    local nextBtn = STATE._itemCreatePagerButton(
+        pagerRow,
+        "Next Page",
+        UDim2.new(1, -92, 0.5, -14),
+        C.ACC
+    )
+
+    local pageLbl = Instance.new("TextLabel", pagerRow)
+    pageLbl.Size = UDim2.new(1, -200, 1, 0)
+    pageLbl.Position = UDim2.new(0, 100, 0, 0)
+    pageLbl.BackgroundTransparency = 1
+    pageLbl.Font = Enum.Font.Gotham
+    pageLbl.TextSize = 11
+    pageLbl.TextColor3 = C.TXTM
+    pageLbl.TextXAlignment = Enum.TextXAlignment.Center
+
+    STATE._itemPrevBtn = prevBtn
+    STATE._itemNextBtn = nextBtn
+    STATE._itemPageLabel = pageLbl
+    _bindLangRefresh(function()
+        if pageLbl and pageLbl.Parent then
+            local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
+            local totalPages = math.max(1, math.ceil(#STATE._itemList / pageSize))
+            local page = math.clamp(tonumber(STATE._itemPage) or 1, 1, totalPages)
+            pageLbl.Text = _tr("Page") .. " " .. page .. "/" .. totalPages
+        end
+    end, pagerRow)
+
+    prevBtn.MouseButton1Click:Connect(function()
+        if (STATE._itemPage or 1) <= 1 then return end
+        STATE._itemPage = STATE._itemPage - 1
+        buildItemSlots()
+    end)
+    nextBtn.MouseButton1Click:Connect(function()
+        local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
+        local totalPages = math.max(1, math.ceil(#STATE._itemList / pageSize))
+        if (STATE._itemPage or 1) >= totalPages then return end
+        STATE._itemPage = STATE._itemPage + 1
+        buildItemSlots()
+    end)
+
+    table.insert(tabPages["Items"], pagerRow)
+end
+STATE._setupItemsPager()
 Info("Items", "  Scans ReplicatedStorage, StarterPack,")
 Info("Items", "  ServerStorage, Workspace for Tools.")
 Info("Items", "  Click Give to add to your Backpack.")
