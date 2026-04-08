@@ -1,1 +1,1192 @@
- 
+-- Táº£i Junkie SDK
+local function _d(_t)
+    local _o = table.create(#_t)
+    for _i = 1, #_t do
+        _o[_i] = string.char(_t[_i])
+    end
+    return table.concat(_o)
+end
+local Junkie = loadstring(game:HttpGet(_d({104,116,116,112,115,58,47,47,106,110,107,105,101,46,99,111,109,47,115,100,107,47,108,105,98,114,97,114,121,46,108,117,97})))()
+
+-- Cáº¥u hÃ¬nh Dashboard cá»§a báº¡n
+Junkie.service = "18034" 
+Junkie.provider = "7653" 
+Junkie.identifier = "1056706" 
+
+-- Táº¡o UI
+local PlayersService = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local localPlayer = PlayersService.LocalPlayer
+local CREDIT_USER_ID = 9930783751
+local LOADER_SCALE = 0.88
+local CARD_W = 300
+local CARD_H = 338
+local CARD_GAP = 8
+local CARD_EFFECTIVE_W = CARD_W * LOADER_SCALE
+local playerGui = localPlayer:WaitForChild("PlayerGui")
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "JunkieLoaderUI"
+screenGui.IgnoreGuiInset = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 2147483647
+pcall(function()
+    screenGui.OnTopOfCoreBlur = true
+end)
+
+local guiParent = nil
+if type(gethui) == "function" then
+    local ok, hui = pcall(gethui)
+    if ok and hui then
+        guiParent = hui
+    end
+end
+
+if not guiParent then
+    guiParent = CoreGui
+end
+
+if not guiParent then
+    guiParent = playerGui
+end
+
+screenGui.Parent = guiParent
+
+local bg = Instance.new("Frame", screenGui)
+bg.Size = UDim2.new(1,0,1,0)
+bg.BackgroundColor3 = Color3.fromRGB(10,14,24)
+bg.BorderSizePixel = 0
+
+-- Cyan glitch-fall digits background effect
+local fxLayer = Instance.new("Frame", bg)
+fxLayer.Size = UDim2.new(1,0,1,0)
+fxLayer.BackgroundTransparency = 1
+fxLayer.ZIndex = 0
+
+local FX_COUNT = 80
+local fxDigits = {}
+local fxState = {}
+local fxConn = nil
+local fxSpeedMul = 1
+local fxTerminating = false
+local fxAccum = 0
+local fxUpdateInterval = 1 / 30
+
+local function respawnDigit(lbl, fromTop)
+    local s = math.random(9, 13)
+    lbl.Text = tostring(math.random(0,9))
+    lbl.Font = Enum.Font.Code
+    lbl.TextSize = s
+    lbl.TextColor3 = Color3.fromRGB(0, math.random(200,255), 255)
+    lbl.TextTransparency = math.random(15,55) / 100
+    lbl.TextStrokeTransparency = 0.82
+    lbl.TextStrokeColor3 = Color3.fromRGB(0,255,255)
+    lbl.Size = UDim2.new(0, s + 8, 0, s + 8)
+    lbl.Position = UDim2.fromScale(
+        math.random() * 1.2 - 0.1,
+        fromTop and (-0.15 - math.random() * 0.9) or math.random()
+    )
+    fxState[lbl] = {
+        vx = (math.random() - 0.5) * 0.06,
+        vy = 0.11 + math.random() * 0.22,
+        glitch = 0
+    }
+end
+
+for _ = 1, FX_COUNT do
+    local d = Instance.new("TextLabel")
+    d.BackgroundTransparency = 1
+    d.TextXAlignment = Enum.TextXAlignment.Center
+    d.TextYAlignment = Enum.TextYAlignment.Center
+    d.ZIndex = 0
+    d.Parent = fxLayer
+    table.insert(fxDigits, d)
+    respawnDigit(d, false)
+end
+
+fxConn = RunService.RenderStepped:Connect(function(dt)
+    fxAccum = fxAccum + dt
+    if fxAccum < fxUpdateInterval then
+        return
+    end
+    dt = fxAccum
+    fxAccum = 0
+    for _, lbl in ipairs(fxDigits) do
+        local st = fxState[lbl]
+        if st then
+            local x = lbl.Position.X.Scale + st.vx * dt * fxSpeedMul
+            local y = lbl.Position.Y.Scale + st.vy * dt * fxSpeedMul
+            st.glitch = st.glitch - dt
+            if st.glitch <= 0 and not fxTerminating then
+                lbl.Text = tostring(math.random(0,9))
+                lbl.Rotation = math.random(-8, 8)
+                lbl.TextTransparency = math.random(20,65) / 100
+                st.glitch = 0.04 + math.random() * 0.14
+            end
+            if math.random() < 0.02 then
+                st.vx = math.clamp(st.vx + (math.random() - 0.5) * 0.02, -0.07, 0.07)
+            end
+            if y > 1.12 or x < -0.16 or x > 1.16 then
+                respawnDigit(lbl, true)
+            else
+                lbl.Position = UDim2.fromScale(x, y)
+            end
+        end
+    end
+end)
+
+local function playTween(obj, duration, goal)
+    local tw = TweenService:Create(
+        obj,
+        TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        goal
+    )
+    tw:Play()
+    return tw
+end
+
+local function fadeTree(root, duration)
+    local all = {root}
+    for _, d in ipairs(root:GetDescendants()) do
+        table.insert(all, d)
+    end
+    for _, obj in ipairs(all) do
+        if obj:IsA("Frame") then
+            playTween(obj, duration, {BackgroundTransparency = 1})
+        elseif obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+            local goal = {TextTransparency = 1, TextStrokeTransparency = 1}
+            pcall(function() goal.BackgroundTransparency = 1 end)
+            playTween(obj, duration, goal)
+        elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+            playTween(obj, duration, {ImageTransparency = 1, BackgroundTransparency = 1})
+        elseif obj:IsA("UIStroke") then
+            playTween(obj, duration, {Transparency = 1})
+        end
+    end
+end
+
+local card = Instance.new("Frame", bg)
+card.Size = UDim2.new(0,CARD_W,0,CARD_H)
+card.Position = UDim2.new(0.5,-(CARD_EFFECTIVE_W + CARD_GAP/2),0.5,-CARD_H/2)
+card.BackgroundColor3 = Color3.fromRGB(18,24,38)
+card.BorderSizePixel = 0
+Instance.new("UIScale", card).Scale = LOADER_SCALE
+Instance.new("UICorner", card).CornerRadius = UDim.new(0,14)
+local cardStroke = Instance.new("UIStroke", card)
+cardStroke.Color = Color3.fromRGB(56,92,148)
+cardStroke.Thickness = 1.8
+
+local creditCard = Instance.new("Frame", bg)
+creditCard.Size = UDim2.new(0,CARD_W,0,CARD_H)
+creditCard.Position = UDim2.new(0.5,CARD_GAP/2,0.5,-CARD_H/2)
+creditCard.BackgroundColor3 = Color3.fromRGB(18,24,38)
+creditCard.BorderSizePixel = 0
+Instance.new("UIScale", creditCard).Scale = LOADER_SCALE
+Instance.new("UICorner", creditCard).CornerRadius = UDim.new(0,14)
+local creditStroke = Instance.new("UIStroke", creditCard)
+creditStroke.Color = Color3.fromRGB(56,92,148)
+creditStroke.Thickness = 1.8
+
+local creditTitle = Instance.new("TextLabel", creditCard)
+creditTitle.Size = UDim2.new(1,0,0,48)
+creditTitle.Position = UDim2.new(0,0,0,12)
+creditTitle.BackgroundTransparency = 1
+creditTitle.Text = "CuongOutLook Credit"
+creditTitle.Font = Enum.Font.GothamBold
+creditTitle.TextSize = 21
+creditTitle.TextColor3 = Color3.fromRGB(238,244,255)
+creditTitle.TextXAlignment = Enum.TextXAlignment.Center
+
+local creditSub = Instance.new("TextLabel", creditCard)
+creditSub.Size = UDim2.new(1,0,0,18)
+creditSub.Position = UDim2.new(0,0,0,46)
+creditSub.BackgroundTransparency = 1
+creditSub.Text = "Official Profile"
+creditSub.Font = Enum.Font.Gotham
+creditSub.TextSize = 12
+creditSub.TextColor3 = Color3.fromRGB(132,148,178)
+creditSub.TextXAlignment = Enum.TextXAlignment.Center
+
+local avatarHolder = Instance.new("Frame", creditCard)
+avatarHolder.Size = UDim2.new(0,122,0,122)
+avatarHolder.Position = UDim2.new(0.5,-61,0,68)
+avatarHolder.BackgroundColor3 = Color3.fromRGB(13,18,30)
+avatarHolder.BorderSizePixel = 0
+Instance.new("UICorner", avatarHolder).CornerRadius = UDim.new(1,0)
+local avatarStroke = Instance.new("UIStroke", avatarHolder)
+avatarStroke.Color = Color3.fromRGB(56,92,148)
+avatarStroke.Thickness = 1.2
+
+local avatar = Instance.new("ImageLabel", avatarHolder)
+avatar.Size = UDim2.new(1,-12,1,-12)
+avatar.Position = UDim2.new(0,6,0,6)
+avatar.BackgroundTransparency = 1
+avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+avatar.ScaleType = Enum.ScaleType.Crop
+Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0)
+pcall(function()
+    local thumb = PlayersService:GetUserThumbnailAsync(CREDIT_USER_ID, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+    if thumb and thumb ~= "" then
+        avatar.Image = thumb
+    end
+end)
+
+local creditUser = Instance.new("TextLabel", creditCard)
+creditUser.Size = UDim2.new(1,-36,0,22)
+creditUser.Position = UDim2.new(0,18,0,196)
+creditUser.BackgroundTransparency = 1
+creditUser.Text = "RobloxUser: CuongOutLook"
+creditUser.Font = Enum.Font.GothamBold
+creditUser.TextSize = 14
+creditUser.TextColor3 = Color3.fromRGB(238,244,255)
+creditUser.TextXAlignment = Enum.TextXAlignment.Center
+
+local creditFacebook = Instance.new("TextLabel", creditCard)
+creditFacebook.Size = UDim2.new(1,-36,0,20)
+creditFacebook.Position = UDim2.new(0,18,0,222)
+creditFacebook.BackgroundTransparency = 1
+creditFacebook.Text = "Facebook: AD Cường Ba Viên"
+creditFacebook.Font = Enum.Font.Gotham
+creditFacebook.TextSize = 12
+creditFacebook.TextColor3 = Color3.fromRGB(184,200,228)
+creditFacebook.TextXAlignment = Enum.TextXAlignment.Center
+
+local creditFacebookBtn = Instance.new("TextButton", creditCard)
+creditFacebookBtn.Size = UDim2.new(1,-36,0,30)
+creditFacebookBtn.Position = UDim2.new(0,18,0,252)
+creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
+creditFacebookBtn.BorderSizePixel = 0
+creditFacebookBtn.Text = "Facebook Link"
+creditFacebookBtn.Font = Enum.Font.GothamBold
+creditFacebookBtn.TextSize = 12
+creditFacebookBtn.TextColor3 = Color3.fromRGB(238,244,255)
+creditFacebookBtn.AutoButtonColor = false
+Instance.new("UICorner", creditFacebookBtn).CornerRadius = UDim.new(0,10)
+
+local closeBtn = Instance.new("TextButton", card)
+closeBtn.Size = UDim2.new(0,26,0,26)
+closeBtn.Position = UDim2.new(1,-34,0,10)
+closeBtn.BackgroundColor3 = Color3.fromRGB(150,35,35)
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 13
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.AutoButtonColor = false
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0,8)
+
+local title = Instance.new("TextLabel", card)
+title.Size = UDim2.new(1,0,0,48)
+title.Position = UDim2.new(0,0,0,12)
+title.BackgroundTransparency = 1
+title.Text = "CuongOutLook Loader"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 21
+title.TextColor3 = Color3.fromRGB(238,244,255)
+title.TextXAlignment = Enum.TextXAlignment.Center
+
+local sub = Instance.new("TextLabel", card)
+sub.Size = UDim2.new(1,0,0,20)
+sub.Position = UDim2.new(0,0,0,46)
+sub.BackgroundTransparency = 1
+sub.Text = "Enter your key to continue"
+sub.Font = Enum.Font.Gotham
+sub.TextSize = 12
+sub.TextColor3 = Color3.fromRGB(132,148,178)
+sub.TextXAlignment = Enum.TextXAlignment.Center
+
+local inputBg = Instance.new("Frame", card)
+inputBg.Size = UDim2.new(1,-40,0,40)
+inputBg.Position = UDim2.new(0,20,0,86)
+inputBg.BackgroundColor3 = Color3.fromRGB(13,18,30)
+inputBg.BorderSizePixel = 0
+inputBg.ClipsDescendants = true
+Instance.new("UICorner", inputBg).CornerRadius = UDim.new(0,10)
+local inputStroke = Instance.new("UIStroke", inputBg)
+inputStroke.Color = Color3.fromRGB(56,92,148)
+inputStroke.Thickness = 1.2
+
+local txt = Instance.new("TextBox", inputBg)
+txt.Size = UDim2.new(1,-20,1,0)
+txt.Position = UDim2.new(0,10,0,0)
+txt.BackgroundTransparency = 1
+txt.PlaceholderText = "Enter key here..."
+txt.PlaceholderColor3 = Color3.fromRGB(132,148,178)
+txt.Text = ""
+txt.Font = Enum.Font.GothamBold
+txt.TextSize = 16
+txt.TextColor3 = Color3.fromRGB(238,244,255)
+txt.ClearTextOnFocus = false
+txt.TextXAlignment = Enum.TextXAlignment.Left
+txt.ClipsDescendants = true
+txt.ZIndex = 3
+
+-- Visual-only overlay for key typing effect:
+-- random chars -> glitch -> shake -> glow, while keeping txt.Text as the real key.
+txt.TextTransparency = 1
+txt.PlaceholderText = ""
+
+local txtFx = Instance.new("TextLabel", inputBg)
+txtFx.Size = UDim2.new(1,-20,1,0)
+txtFx.Position = UDim2.new(0,10,0,0)
+txtFx.BackgroundTransparency = 1
+txtFx.Text = "Enter key here..."
+txtFx.Font = txt.Font
+txtFx.TextSize = txt.TextSize
+txtFx.TextColor3 = Color3.fromRGB(132,148,178)
+txtFx.TextXAlignment = txt.TextXAlignment
+txtFx.TextYAlignment = Enum.TextYAlignment.Center
+txtFx.ClipsDescendants = true
+txtFx.ZIndex = 4
+
+local txtFxStroke = Instance.new("UIStroke", txtFx)
+txtFxStroke.Color = Color3.fromRGB(0,220,255)
+txtFxStroke.Thickness = 1.2
+txtFxStroke.Transparency = 1
+
+local GLITCH_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%#&*"
+local fxBasePos = UDim2.new(0,10,0,0)
+local keyFxConn = nil
+local keyFxAccum = 0
+local keyFxUpdateInterval = 1 / 30
+
+local function randomGlyph()
+    local i = math.random(1, #GLITCH_POOL)
+    return GLITCH_POOL:sub(i, i)
+end
+
+local function buildGlitchText(realText, revealRatio)
+    local out = table.create(#realText)
+    for i = 1, #realText do
+        local c = realText:sub(i, i)
+        local p = i / math.max(#realText, 1)
+        local revealThisChar = p <= revealRatio and math.random() > 0.22
+        out[i] = revealThisChar and c or randomGlyph()
+    end
+    return table.concat(out)
+end
+
+local function startContinuousKeyFx()
+    if keyFxConn then
+        keyFxConn:Disconnect()
+        keyFxConn = nil
+    end
+
+    local normal = Color3.fromRGB(238,244,255)
+    local accent = Color3.fromRGB(80,245,255)
+    local placeholder = Color3.fromRGB(132,148,178)
+
+    keyFxConn = RunService.RenderStepped:Connect(function(dt)
+        keyFxAccum = keyFxAccum + dt
+        if keyFxAccum < keyFxUpdateInterval then
+            return
+        end
+        keyFxAccum = 0
+        if not txtFx.Parent then
+            if keyFxConn then
+                keyFxConn:Disconnect()
+                keyFxConn = nil
+            end
+            return
+        end
+
+        local clean = tostring(txt.Text or "")
+        if clean == "" then
+            txtFx.Text = "Enter key here..."
+            txtFx.TextColor3 = placeholder
+            txtFxStroke.Transparency = 1
+            txtFx.Position = fxBasePos
+            return
+        end
+
+        local t = tick() * 3.2
+        local revealRatio = 0.65 + math.sin(t) * 0.28
+        txtFx.Text = buildGlitchText(clean, revealRatio)
+        txtFx.TextColor3 = normal:Lerp(accent, 0.25 + math.sin(t * 1.7) * 0.2)
+        txtFxStroke.Transparency = 0.35 + (math.sin(t * 2.4) + 1) * 0.22
+        txtFx.Position = UDim2.new(
+            0,
+            10 + math.random(-2, 2),
+            0,
+            math.random(-1, 1)
+        )
+    end)
+end
+
+startContinuousKeyFx()
+
+local FACEBOOK_URL = _d({104,116,116,112,115,58,47,47,102,97,99,101,98,111,111,107,46,99,111,109,47,97,100,99,117,111,110,103,51,118,105,101,110,47})
+local FREE_KEY_URL = _d({104,116,116,112,115,58,47,47,106,110,107,105,101,46,99,111,109,47,102,108,111,119,47,53,49,48,54,51,57,50,101,45,52,51,99,99,45,52,52,98,50,45,98,55,53,51,45,48,55,49,56,51,102,50,101,99,53,52,100})
+local SCRIPT_OPTIONS = {
+    {
+        name = "Aimbot OP",
+        url = _d({104,116,116,112,115,58,47,47,97,112,105,46,106,110,107,105,101,46,99,111,109,47,97,112,105,47,118,49,47,108,117,97,115,99,114,105,112,116,115,47,112,117,98,108,105,99,47,55,52,55,52,53,101,49,57,102,57,54,54,49,50,55,50,57,57,50,56,55,102,51,53,50,52,55,54,102,53,51,97,56,50,97,99,51,55,53,99,52,52,55,56,56,54,54,50,98,48,52,50,100,49,55,50,57,50,98,54,102,52,50,101,47,100,111,119,110,108,111,97,100})
+    }
+    -- Add more scripts here:
+    -- { name = "Script 2", url = "https://raw.githubusercontent.com/.../main.lua" }
+}
+local SAVED_KEY_FILE = "CuongOutLook_saved_key.txt"
+local terminated = false
+
+local function readSavedKey()
+    if type(isfile) ~= "function" or type(readfile) ~= "function" then
+        return nil
+    end
+
+    local okExists, exists = pcall(isfile, SAVED_KEY_FILE)
+    if not okExists or not exists then
+        return nil
+    end
+
+    local okRead, raw = pcall(readfile, SAVED_KEY_FILE)
+    if not okRead or type(raw) ~= "string" then
+        return nil
+    end
+
+    local clean = raw:match("^%s*(.-)%s*$")
+    if clean == "" then
+        return nil
+    end
+    return clean
+end
+
+local function saveKey(key)
+    if type(writefile) ~= "function" then
+        return false
+    end
+
+    local clean = tostring(key or ""):match("^%s*(.-)%s*$")
+    if clean == "" then
+        return false
+    end
+
+    return pcall(writefile, SAVED_KEY_FILE, clean)
+end
+
+local previousKey = readSavedKey()
+if previousKey then
+    txt.Text = previousKey
+end
+
+local function terminateLoader()
+    if terminated then return end
+    terminated = true
+    fxTerminating = true
+
+    -- Step 1: Fade out both cards
+    fadeTree(card, 0.45)
+    fadeTree(creditCard, 0.45)
+    task.wait(0.5)
+    card.Visible = false
+    creditCard.Visible = false
+
+    -- Step 2: Fade in goodbye text
+    local byeLayer = Instance.new("Frame", bg)
+    byeLayer.Size = UDim2.new(1,0,1,0)
+    byeLayer.BackgroundTransparency = 1
+    byeLayer.ZIndex = 6
+
+    local glowLayer = Instance.new("Frame", bg)
+    glowLayer.Size = UDim2.new(1,0,1,0)
+    glowLayer.BackgroundColor3 = Color3.fromRGB(0,255,255)
+    glowLayer.BackgroundTransparency = 1
+    glowLayer.BorderSizePixel = 0
+    glowLayer.ZIndex = 1
+
+    local byeTitle = Instance.new("TextLabel", byeLayer)
+    byeTitle.Size = UDim2.new(1,0,0,54)
+    byeTitle.Position = UDim2.new(0,0,0.5,-40)
+    byeTitle.BackgroundTransparency = 1
+    byeTitle.Text = "CuongOutLook"
+    byeTitle.Font = Enum.Font.GothamBlack
+    byeTitle.TextSize = 42
+    byeTitle.TextColor3 = Color3.fromRGB(0,235,255)
+    byeTitle.TextTransparency = 1
+    byeTitle.ZIndex = 7
+
+    local byeSub = Instance.new("TextLabel", byeLayer)
+    byeSub.Size = UDim2.new(1,0,0,28)
+    byeSub.Position = UDim2.new(0,0,0.5,12)
+    byeSub.BackgroundTransparency = 1
+    byeSub.Text = "See you again!"
+    byeSub.Font = Enum.Font.GothamBold
+    byeSub.TextSize = 22
+    byeSub.TextColor3 = Color3.fromRGB(188,240,255)
+    byeSub.TextTransparency = 1
+    byeSub.ZIndex = 7
+
+    playTween(byeTitle, 0.8, {TextTransparency = 0})
+    playTween(byeSub, 0.8, {TextTransparency = 0})
+    playTween(glowLayer, 0.8, {BackgroundTransparency = 0.9})
+
+    -- Keep text for 5s while cyan glow intensifies + falling speed ramps up
+    local holdDuration = 5
+    local t0 = tick()
+    while tick() - t0 < holdDuration do
+        local a = math.clamp((tick() - t0) / holdDuration, 0, 1)
+        fxSpeedMul = 1 + (a * 8)
+        glowLayer.BackgroundTransparency = math.clamp(0.9 - a * 0.35 + math.sin(tick() * 8) * 0.03, 0.45, 0.95)
+        RunService.RenderStepped:Wait()
+    end
+
+    -- Step 3: Transition to fully white background
+    playTween(bg, 1.3, {BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0})
+    playTween(glowLayer, 1.3, {BackgroundColor3 = Color3.fromRGB(255,255,255), BackgroundTransparency = 0.02})
+    for _, d in ipairs(fxDigits) do
+        if d and d.Parent then
+            playTween(d, 1.3, {TextColor3 = Color3.fromRGB(255,255,255), TextStrokeColor3 = Color3.fromRGB(255,255,255)})
+        end
+    end
+    task.wait(1.35)
+
+    -- Step 4: Fade out everything completely
+    playTween(byeTitle, 1.1, {TextTransparency = 1})
+    playTween(byeSub, 1.1, {TextTransparency = 1})
+    playTween(bg, 1.1, {BackgroundTransparency = 1})
+    playTween(glowLayer, 1.1, {BackgroundTransparency = 1})
+    for _, d in ipairs(fxDigits) do
+        if d and d.Parent then
+            playTween(d, 1.1, {TextTransparency = 1, TextStrokeTransparency = 1})
+        end
+    end
+    task.wait(1.2)
+
+    if fxConn then
+        fxConn:Disconnect()
+        fxConn = nil
+    end
+    if keyFxConn then
+        keyFxConn:Disconnect()
+        keyFxConn = nil
+    end
+    pcall(function()
+        screenGui:Destroy()
+    end)
+end
+
+local btn = Instance.new("TextButton", card)
+btn.Size = UDim2.new(1,-40,0,30)
+btn.Position = UDim2.new(0,20,0,142)
+btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btn.BorderSizePixel = 0
+btn.Text = "Validate Key"
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 14
+btn.TextColor3 = Color3.new(1,1,1)
+btn.AutoButtonColor = false
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
+
+local btnClear = Instance.new("TextButton", card)
+btnClear.Size = UDim2.new(1,-40,0,30)
+btnClear.Position = UDim2.new(0,20,0,180)
+btnClear.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnClear.BorderSizePixel = 0
+btnClear.Text = "Get key free (1 day)"
+btnClear.Font = Enum.Font.GothamBold
+btnClear.TextSize = 12
+btnClear.TextColor3 = Color3.new(1,1,1)
+btnClear.AutoButtonColor = false
+Instance.new("UICorner", btnClear).CornerRadius = UDim.new(0,10)
+
+local btnGetKey = Instance.new("TextButton", card)
+btnGetKey.Size = UDim2.new(1,-40,0,30)
+btnGetKey.Position = UDim2.new(0,20,0,218)
+btnGetKey.BackgroundColor3 = Color3.fromRGB(13,18,30)
+btnGetKey.BorderSizePixel = 0
+btnGetKey.Text = "Forever Key - 1000 Robux"
+btnGetKey.Font = Enum.Font.GothamBold
+btnGetKey.TextSize = 14
+btnGetKey.TextColor3 = Color3.fromRGB(238,244,255)
+btnGetKey.AutoButtonColor = false
+Instance.new("UICorner", btnGetKey).CornerRadius = UDim.new(0,10)
+
+local btnHowTo = Instance.new("TextButton", card)
+btnHowTo.Size = UDim2.new(1,-40,0,30)
+btnHowTo.Position = UDim2.new(0,20,0,256)
+btnHowTo.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnHowTo.BorderSizePixel = 0
+btnHowTo.Text = "How to get 1 Week Key?"
+btnHowTo.Font = Enum.Font.GothamBold
+btnHowTo.TextSize = 12
+btnHowTo.TextColor3 = Color3.fromRGB(238,244,255)
+btnHowTo.AutoButtonColor = false
+Instance.new("UICorner", btnHowTo).CornerRadius = UDim.new(0,10)
+
+local btnUpdateHistory = Instance.new("TextButton", card)
+btnUpdateHistory.Size = UDim2.new(1,-40,0,30)
+btnUpdateHistory.Position = UDim2.new(0,20,0,294)
+btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnUpdateHistory.BorderSizePixel = 0
+btnUpdateHistory.Text = "Update History"
+btnUpdateHistory.Font = Enum.Font.GothamBold
+btnUpdateHistory.TextSize = 12
+btnUpdateHistory.TextColor3 = Color3.fromRGB(238,244,255)
+btnUpdateHistory.AutoButtonColor = false
+Instance.new("UICorner", btnUpdateHistory).CornerRadius = UDim.new(0,10)
+
+local updateOverlay = Instance.new("Frame", bg)
+updateOverlay.Size = UDim2.new(1,0,1,0)
+updateOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+updateOverlay.BackgroundTransparency = 0.35
+updateOverlay.BorderSizePixel = 0
+updateOverlay.Visible = true
+updateOverlay.ZIndex = 30
+
+local updatePanel = Instance.new("Frame", updateOverlay)
+local isMobileUpdateLayout = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+updatePanel.AnchorPoint = Vector2.new(0.5, 0.5)
+if isMobileUpdateLayout then
+    updatePanel.Size = UDim2.new(0.9, 0, 0.76, 0)
+else
+    updatePanel.Size = UDim2.new(0,460,0,300)
+end
+updatePanel.Position = UDim2.new(0.5,0,0.5,0)
+updatePanel.BackgroundColor3 = Color3.fromRGB(18,24,38)
+updatePanel.BorderSizePixel = 0
+updatePanel.ZIndex = 31
+Instance.new("UICorner", updatePanel).CornerRadius = UDim.new(0,12)
+local updatePanelStroke = Instance.new("UIStroke", updatePanel)
+updatePanelStroke.Color = Color3.fromRGB(56,92,148)
+updatePanelStroke.Thickness = 1.3
+
+local updateTitle = Instance.new("TextLabel", updatePanel)
+if isMobileUpdateLayout then
+    updateTitle.Size = UDim2.new(1,-56,0,28)
+    updateTitle.Position = UDim2.new(0,14,0,10)
+else
+    updateTitle.Size = UDim2.new(1,-248,0,32)
+    updateTitle.Position = UDim2.new(0,14,0,10)
+end
+updateTitle.BackgroundTransparency = 1
+updateTitle.Font = Enum.Font.GothamBold
+updateTitle.TextSize = 18
+updateTitle.Text = "Update History"
+updateTitle.TextColor3 = Color3.fromRGB(238,244,255)
+updateTitle.TextXAlignment = Enum.TextXAlignment.Left
+updateTitle.ZIndex = 32
+
+local btnUpdateLangEN = Instance.new("TextButton", updatePanel)
+if isMobileUpdateLayout then
+    btnUpdateLangEN.Size = UDim2.new(0.5,-21,0,26)
+    btnUpdateLangEN.Position = UDim2.new(0,14,0,48)
+else
+    btnUpdateLangEN.Size = UDim2.new(0,82,0,24)
+    btnUpdateLangEN.Position = UDim2.new(1,-214,0,12)
+end
+btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnUpdateLangEN.BorderSizePixel = 0
+btnUpdateLangEN.Text = "English"
+btnUpdateLangEN.Font = Enum.Font.GothamBold
+btnUpdateLangEN.TextSize = 11
+btnUpdateLangEN.TextColor3 = Color3.new(1,1,1)
+btnUpdateLangEN.AutoButtonColor = false
+btnUpdateLangEN.ZIndex = 32
+Instance.new("UICorner", btnUpdateLangEN).CornerRadius = UDim.new(0,8)
+
+local btnUpdateLangVI = Instance.new("TextButton", updatePanel)
+if isMobileUpdateLayout then
+    btnUpdateLangVI.Size = UDim2.new(0.5,-21,0,26)
+    btnUpdateLangVI.Position = UDim2.new(0.5,7,0,48)
+else
+    btnUpdateLangVI.Size = UDim2.new(0,82,0,24)
+    btnUpdateLangVI.Position = UDim2.new(1,-126,0,12)
+end
+btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnUpdateLangVI.BorderSizePixel = 0
+btnUpdateLangVI.Text = "Tiếng Việt"
+btnUpdateLangVI.Font = Enum.Font.GothamBold
+btnUpdateLangVI.TextSize = 11
+btnUpdateLangVI.TextColor3 = Color3.new(1,1,1)
+btnUpdateLangVI.AutoButtonColor = false
+btnUpdateLangVI.ZIndex = 32
+Instance.new("UICorner", btnUpdateLangVI).CornerRadius = UDim.new(0,8)
+
+local updateScroll = Instance.new("ScrollingFrame", updatePanel)
+if isMobileUpdateLayout then
+    updateScroll.Size = UDim2.new(1,-28,1,-140)
+    updateScroll.Position = UDim2.new(0,14,0,86)
+else
+    updateScroll.Size = UDim2.new(1,-28,1,-96)
+    updateScroll.Position = UDim2.new(0,14,0,48)
+end
+updateScroll.BackgroundTransparency = 1
+updateScroll.BorderSizePixel = 0
+updateScroll.CanvasSize = UDim2.new(0,0,0,0)
+updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+updateScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+updateScroll.ScrollBarThickness = 6
+updateScroll.ScrollBarImageColor3 = Color3.fromRGB(90,130,188)
+updateScroll.ZIndex = 32
+
+local updateBody = Instance.new("TextLabel", updateScroll)
+updateBody.Size = UDim2.new(1,-8,0,0)
+updateBody.Position = UDim2.new(0,0,0,0)
+updateBody.AutomaticSize = Enum.AutomaticSize.Y
+updateBody.BackgroundTransparency = 1
+updateBody.Font = Enum.Font.Gotham
+updateBody.TextSize = isMobileUpdateLayout and 13 or 14
+updateBody.TextColor3 = Color3.fromRGB(210,224,246)
+updateBody.TextWrapped = true
+updateBody.TextXAlignment = Enum.TextXAlignment.Left
+updateBody.TextYAlignment = Enum.TextYAlignment.Top
+updateBody.LineHeight = 1.2
+updateBody.ZIndex = 32
+
+local btnUpdateClose
+local updateLang = "vi"
+local UPDATE_TEXT_VI = [[v1.9.0
+
+- Thêm Event Cách lấy Key 1 Tuần.
+- Thêm Hiệu ứng nền.
+
+v2.0.0
+
+- Thêm AimBot Mobile OP.
+- Thêm CrossHair OP.
+- Thêm Auto HeadShot OP.
+- Fix lỗi Aimbot PC bị giựt lên trời.
+- Tối ưu hóa ESP tăng hiệu năng thiết bị.]]
+
+local UPDATE_TEXT_EN = [[v1.9.0
+
+- Added event: How to get 1 Week Key.
+- Added background effects.
+
+v2.0.0
+
+- Added AimBot Mobile OP.
+- Added CrossHair OP.
+- Added Auto HeadShot OP.
+- Fixed PC Aimbot jitter launching upward.
+- Optimized ESP for better device performance.]]
+
+local function updateHistoryContent()
+    if updateLang == "vi" then
+        updateTitle.Text = "Lịch sử cập nhật"
+        updateBody.Text = UPDATE_TEXT_VI
+        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateClose.Text = "Đã hiểu"
+    else
+        updateTitle.Text = "Update History"
+        updateBody.Text = UPDATE_TEXT_EN
+        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateClose.Text = "Got it"
+    end
+end
+
+btnUpdateClose = Instance.new("TextButton", updatePanel)
+if isMobileUpdateLayout then
+    btnUpdateClose.Size = UDim2.new(1,-28,0,30)
+    btnUpdateClose.Position = UDim2.new(0,14,1,-44)
+else
+    btnUpdateClose.Size = UDim2.new(0,110,0,28)
+    btnUpdateClose.Position = UDim2.new(0,14,1,-40)
+end
+btnUpdateClose.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnUpdateClose.BorderSizePixel = 0
+btnUpdateClose.Text = "Got it"
+btnUpdateClose.Font = Enum.Font.GothamBold
+btnUpdateClose.TextSize = 12
+btnUpdateClose.TextColor3 = Color3.new(1,1,1)
+btnUpdateClose.AutoButtonColor = false
+btnUpdateClose.ZIndex = 32
+Instance.new("UICorner", btnUpdateClose).CornerRadius = UDim.new(0,8)
+
+local btnUpdateX = Instance.new("TextButton", updatePanel)
+btnUpdateX.Size = UDim2.new(0,26,0,26)
+btnUpdateX.Position = UDim2.new(1,-36,0,10)
+btnUpdateX.BackgroundColor3 = Color3.fromRGB(150,35,35)
+btnUpdateX.BorderSizePixel = 0
+btnUpdateX.Text = "X"
+btnUpdateX.Font = Enum.Font.GothamBold
+btnUpdateX.TextSize = 12
+btnUpdateX.TextColor3 = Color3.new(1,1,1)
+btnUpdateX.AutoButtonColor = false
+btnUpdateX.ZIndex = 32
+Instance.new("UICorner", btnUpdateX).CornerRadius = UDim.new(0,8)
+
+local function openUpdateHistory()
+    if terminated then return end
+    updateOverlay.Visible = true
+end
+
+local function closeUpdateHistory()
+    updateOverlay.Visible = false
+end
+
+updateHistoryContent()
+
+local helpOverlay = Instance.new("Frame", bg)
+helpOverlay.Size = UDim2.new(1,0,1,0)
+helpOverlay.BackgroundColor3 = Color3.fromRGB(0,0,0)
+helpOverlay.BackgroundTransparency = 0.35
+helpOverlay.BorderSizePixel = 0
+helpOverlay.Visible = false
+helpOverlay.ZIndex = 20
+
+local helpPanel = Instance.new("Frame", helpOverlay)
+helpPanel.Size = UDim2.new(0,500,0,320)
+helpPanel.Position = UDim2.new(0.5,-250,0.5,-160)
+helpPanel.BackgroundColor3 = Color3.fromRGB(18,24,38)
+helpPanel.BorderSizePixel = 0
+helpPanel.ZIndex = 21
+Instance.new("UICorner", helpPanel).CornerRadius = UDim.new(0,12)
+local helpPanelStroke = Instance.new("UIStroke", helpPanel)
+helpPanelStroke.Color = Color3.fromRGB(56,92,148)
+helpPanelStroke.Thickness = 1.3
+
+local helpTitle = Instance.new("TextLabel", helpPanel)
+helpTitle.Size = UDim2.new(1,-120,0,30)
+helpTitle.Position = UDim2.new(0,14,0,10)
+helpTitle.BackgroundTransparency = 1
+helpTitle.Font = Enum.Font.GothamBold
+helpTitle.TextSize = 18
+helpTitle.TextColor3 = Color3.fromRGB(238,244,255)
+helpTitle.TextXAlignment = Enum.TextXAlignment.Left
+helpTitle.ZIndex = 22
+
+local btnLangEN = Instance.new("TextButton", helpPanel)
+btnLangEN.Size = UDim2.new(0,82,0,24)
+btnLangEN.Position = UDim2.new(1,-178,0,12)
+btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnLangEN.BorderSizePixel = 0
+btnLangEN.Text = "English"
+btnLangEN.Font = Enum.Font.GothamBold
+btnLangEN.TextSize = 11
+btnLangEN.TextColor3 = Color3.new(1,1,1)
+btnLangEN.AutoButtonColor = false
+btnLangEN.ZIndex = 22
+Instance.new("UICorner", btnLangEN).CornerRadius = UDim.new(0,8)
+
+local btnLangVI = Instance.new("TextButton", helpPanel)
+btnLangVI.Size = UDim2.new(0,82,0,24)
+btnLangVI.Position = UDim2.new(1,-90,0,12)
+btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnLangVI.BorderSizePixel = 0
+btnLangVI.Text = "Tiếng Việt"
+btnLangVI.Font = Enum.Font.GothamBold
+btnLangVI.TextSize = 11
+btnLangVI.TextColor3 = Color3.new(1,1,1)
+btnLangVI.AutoButtonColor = false
+btnLangVI.ZIndex = 22
+Instance.new("UICorner", btnLangVI).CornerRadius = UDim.new(0,8)
+
+local helpText = Instance.new("TextLabel", helpPanel)
+helpText.Size = UDim2.new(1,-28,1,-96)
+helpText.Position = UDim2.new(0,14,0,48)
+helpText.BackgroundTransparency = 1
+helpText.Font = Enum.Font.Gotham
+helpText.TextSize = 14
+helpText.TextColor3 = Color3.fromRGB(210,224,246)
+helpText.TextWrapped = false
+helpText.TextXAlignment = Enum.TextXAlignment.Left
+helpText.TextYAlignment = Enum.TextYAlignment.Top
+helpText.LineHeight = 1.2
+helpText.ZIndex = 22
+
+local btnCopyLink = Instance.new("TextButton", helpPanel)
+btnCopyLink.Size = UDim2.new(0,100,0,26)
+btnCopyLink.Position = UDim2.new(0,14,1,-36)
+btnCopyLink.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnCopyLink.BorderSizePixel = 0
+btnCopyLink.Text = "Copy Link"
+btnCopyLink.Font = Enum.Font.GothamBold
+btnCopyLink.TextSize = 12
+btnCopyLink.TextColor3 = Color3.fromRGB(238,244,255)
+btnCopyLink.AutoButtonColor = false
+btnCopyLink.ZIndex = 22
+Instance.new("UICorner", btnCopyLink).CornerRadius = UDim.new(0,8)
+
+local btnHelpClose = Instance.new("TextButton", helpPanel)
+btnHelpClose.Size = UDim2.new(0,26,0,26)
+btnHelpClose.Position = UDim2.new(1,-34,1,-36)
+btnHelpClose.BackgroundColor3 = Color3.fromRGB(150,35,35)
+btnHelpClose.BorderSizePixel = 0
+btnHelpClose.Text = "X"
+btnHelpClose.Font = Enum.Font.GothamBold
+btnHelpClose.TextSize = 12
+btnHelpClose.TextColor3 = Color3.new(1,1,1)
+btnHelpClose.AutoButtonColor = false
+btnHelpClose.ZIndex = 22
+Instance.new("UICorner", btnHelpClose).CornerRadius = UDim.new(0,8)
+
+local helpLang = "en"
+local HELP_TEXT_EN = [[How to get 1 Week Key?
+
+1) Share this script on social media:
+    Facebook, YouTube, X, TikTok, etc.
+
+2) Send your post link to Facebook AD Cuong Ba Vien
+    (use the Copy Link button below).
+
+3) After verification, send your Roblox UserID.
+    You can get it from your Profile URL on Roblox website.
+
+4) CuongOutLook will send your key.
+    Enjoy your reward.]]
+local HELP_TEXT_VI = [[How to get 1 Week Key?
+
+1) Chia sẻ script này lên mạng xã hội:
+    Facebook, YouTube, X, TikTok, ...
+
+2) Gửi link bài đăng vào Facebook AD Cuong Ba Vien
+    (dùng nút Copy Link bên dưới) để CuongOutLook kiểm tra.
+
+3) Sau khi xác minh xong, gửi Roblox UserID của bạn.
+    Bạn có thể lấy ID trong đường dẫn Profile trên web Roblox.
+
+4) CuongOutLook sẽ gửi key cho bạn.
+    Chúc bạn chơi vui.]]
+
+local function updateHelpContent()
+    if helpLang == "vi" then
+        helpTitle.Text = "Cách lấy key 1 tuần"
+        helpText.Text = HELP_TEXT_VI
+        btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+    else
+        helpTitle.Text = "How to get 1 Week Key?"
+        helpText.Text = HELP_TEXT_EN
+        btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+    end
+end
+
+updateHelpContent()
+
+closeBtn.MouseEnter:Connect(function()
+    closeBtn.BackgroundColor3 = Color3.fromRGB(185,45,45)
+end)
+closeBtn.MouseLeave:Connect(function()
+    closeBtn.BackgroundColor3 = Color3.fromRGB(150,35,35)
+end)
+closeBtn.MouseButton1Click:Connect(function()
+    terminateLoader()
+end)
+
+btn.MouseEnter:Connect(function()
+    if terminated then return end
+    if btn.Text ~= "Success!" then
+        btn.BackgroundColor3 = Color3.fromRGB(40,235,255)
+    end
+end)
+btn.MouseLeave:Connect(function()
+    if terminated then return end
+    if btn.Text ~= "Success!" then
+        btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
+    end
+end)
+
+btnClear.MouseEnter:Connect(function()
+    if terminated then return end
+    btnClear.BackgroundColor3 = Color3.fromRGB(52,70,104)
+end)
+btnClear.MouseLeave:Connect(function()
+    if terminated then return end
+    btnClear.BackgroundColor3 = Color3.fromRGB(38,52,78)
+end)
+btnClear.MouseButton1Click:Connect(function()
+    if terminated then return end
+    local opened = pcall(function()
+        game:GetService("GuiService"):OpenBrowserWindow(FREE_KEY_URL)
+    end)
+    if not opened then
+        pcall(function() setclipboard(FREE_KEY_URL) end)
+    end
+    btnClear.Text = opened and "Opening..." or "Link copied!"
+    task.delay(1.2, function()
+        if btnClear and btnClear.Parent then
+            btnClear.Text = "Get key free (1 day)"
+        end
+    end)
+end)
+
+btnGetKey.MouseEnter:Connect(function()
+    if terminated then return end
+    btnGetKey.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+btnGetKey.MouseLeave:Connect(function()
+    if terminated then return end
+    btnGetKey.BackgroundColor3 = Color3.fromRGB(13,18,30)
+end)
+btnGetKey.MouseButton1Click:Connect(function()
+    if terminated then return end
+    pcall(function() setclipboard(FACEBOOK_URL) end)
+    btnGetKey.Text = "Copied link!"
+    task.delay(1.2, function()
+        if btnGetKey and btnGetKey.Parent then
+            btnGetKey.Text = "Buy Forever Key on Facebook"
+        end
+    end)
+end)
+
+creditFacebookBtn.MouseEnter:Connect(function()
+    if terminated then return end
+    creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+creditFacebookBtn.MouseLeave:Connect(function()
+    if terminated then return end
+    creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+creditFacebookBtn.MouseButton1Click:Connect(function()
+    if terminated then return end
+    local opened = pcall(function()
+        game:GetService("GuiService"):OpenBrowserWindow(FACEBOOK_URL)
+    end)
+    if not opened then
+        pcall(function() setclipboard(FACEBOOK_URL) end)
+    end
+    creditFacebookBtn.Text = opened and "Opening..." or "Copied link!"
+    task.delay(1.2, function()
+        if creditFacebookBtn and creditFacebookBtn.Parent then
+            creditFacebookBtn.Text = "Facebook Link"
+        end
+    end)
+end)
+
+btnHowTo.MouseEnter:Connect(function()
+    if terminated then return end
+    btnHowTo.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+btnHowTo.MouseLeave:Connect(function()
+    if terminated then return end
+    btnHowTo.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+btnHowTo.MouseButton1Click:Connect(function()
+    if terminated then return end
+    helpLang = "en"
+    updateHelpContent()
+    helpOverlay.Visible = true
+end)
+
+btnUpdateHistory.MouseEnter:Connect(function()
+    if terminated then return end
+    btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(35,45,67)
+end)
+btnUpdateHistory.MouseLeave:Connect(function()
+    if terminated then return end
+    btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(24,31,47)
+end)
+btnUpdateHistory.MouseButton1Click:Connect(function()
+    openUpdateHistory()
+end)
+
+btnUpdateClose.MouseButton1Click:Connect(function()
+    closeUpdateHistory()
+end)
+
+btnUpdateX.MouseButton1Click:Connect(function()
+    closeUpdateHistory()
+end)
+
+btnUpdateLangEN.MouseButton1Click:Connect(function()
+    updateLang = "en"
+    updateHistoryContent()
+end)
+
+btnUpdateLangVI.MouseButton1Click:Connect(function()
+    updateLang = "vi"
+    updateHistoryContent()
+end)
+
+btnLangEN.MouseButton1Click:Connect(function()
+    helpLang = "en"
+    updateHelpContent()
+end)
+btnLangVI.MouseButton1Click:Connect(function()
+    helpLang = "vi"
+    updateHelpContent()
+end)
+
+btnCopyLink.MouseButton1Click:Connect(function()
+    pcall(function() setclipboard(FACEBOOK_URL) end)
+    btnCopyLink.Text = "Copied!"
+    task.delay(1, function()
+        if btnCopyLink and btnCopyLink.Parent then
+            btnCopyLink.Text = "Copy Link"
+        end
+    end)
+end)
+
+btnHelpClose.MouseButton1Click:Connect(function()
+    helpOverlay.Visible = false
+end)
+local function onValid(key)
+    if terminated then return end
+    -- XÃ³a khoáº£ng tráº¯ng thá»«a náº¿u copy nháº§m
+    local cleanKey = key:match("^%s*(.-)%s*$")
+    
+    getgenv().SCRIPT_KEY = cleanKey
+    saveKey(cleanKey)
+    
+    -- XÃ³a giao diá»‡n Loader
+    screenGui:Destroy()
+    
+    -- Äá»£i 1 chÃºt cho an toÃ n
+    task.wait(0.5)
+    
+    local selectedScript = SCRIPT_OPTIONS[1]
+    local hasUrl = selectedScript and type(selectedScript.url) == "string" and selectedScript.url ~= ""
+    local hasRun = selectedScript and type(selectedScript.run) == "function"
+    if not selectedScript or (not hasUrl and not hasRun) then
+        warn("Khong tim thay script hop le de tai.")
+        return
+    end
+
+    print("Dang tai script: " .. tostring(selectedScript.name))
+    
+    -- ==========================================
+    -- ÄÃ‚Y LÃ€ NÆ I DUY NHáº¤T ÄÆ¯á»¢C Äá»‚ Lá»†NH LOADSTRING
+    -- Thay link raw script cá»§a báº¡n vÃ o Ä‘Ã¢y:
+    local okLoad, loadErr = pcall(function()
+        if hasRun then
+            selectedScript.run()
+        else
+            loadstring(game:HttpGet(selectedScript.url))()
+        end
+    end)
+    if not okLoad then
+        warn("Load script that bai: " .. tostring(loadErr))
+    end
+    -- ==========================================
+end
+
+-- Xá»­ lÃ½ nÃºt báº¥m
+btn.MouseButton1Click:Connect(function()
+    if terminated then return end
+    local inputKey = txt.Text
+    
+    if inputKey == "" then
+        btn.Text = "Please enter a key!"
+        task.wait(1)
+        btn.Text = "Validate Key"
+        return
+    end
+
+    btn.Text = "Checking..."
+    
+    local success, isValid = pcall(function()
+        return Junkie.check_key(inputKey)
+    end)
+
+    if success and isValid then
+        btn.Text = "Checking!"
+        btn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
+        task.wait(0.5)
+        -- Gá»i hÃ m onValid Ä‘á»ƒ báº¯t Ä‘áº§u cháº¡y script chÃ­nh
+        onValid(inputKey)
+    else
+        btn.Text = "Invalid Key!"
+        btn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
+        task.wait(1)
+        btn.Text = "Validate Key"
+        btn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    end
+end)
+
+-- TUYá»†T Äá»I KHÃ”NG Äá»‚ Lá»†NH LOADSTRING NÃ€O á»ž DÆ¯á»šI NÃ€Y Ná»®A NHÃ‰!
