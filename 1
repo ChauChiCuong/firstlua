@@ -1,4 +1,4 @@
--- Táº£i Junkie SDK
+-- Tải Junkie SDK
 local function _d(_t)
     local _o = table.create(#_t)
     for _i = 1, #_t do
@@ -8,12 +8,12 @@ local function _d(_t)
 end
 local Junkie = loadstring(game:HttpGet(_d({104,116,116,112,115,58,47,47,106,110,107,105,101,46,99,111,109,47,115,100,107,47,108,105,98,114,97,114,121,46,108,117,97})))()
 
--- Cáº¥u hÃ¬nh Dashboard cá»§a báº¡n
+-- Cấu hình Dashboard của bạn
 Junkie.service = "18034" 
 Junkie.provider = "7653" 
 Junkie.identifier = "1056706" 
 
--- Táº¡o UI
+-- Tạo UI
 local PlayersService = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
@@ -39,6 +39,8 @@ local UI_TEXTS = {
     en = {
         creditTitle = "CuongOutLook Credit",
         creditSub = "Official Profile",
+        creditUser = "Roblox User: CuongOutLook",
+        creditFacebookName = "Facebook: AD Cường Ba Viên",
         loaderTitle = "CuongOutLook Loader",
         loaderSubtitle = "Enter your key to continue",
         keyPlaceholder = "Enter key here...",
@@ -58,11 +60,14 @@ local UI_TEXTS = {
         facebookOpening = "Opening...",
         facebookCopied = "Copied link!",
         copyLink = "Copy Link",
-        copied = "Copied!"
+        copied = "Copied!",
+        seeYouAgain = "See you again!"
     },
     vi = {
         creditTitle = "Credit CuongOutLook",
         creditSub = "Hồ sơ chính thức",
+        creditUser = "Người dùng Roblox: CuongOutLook",
+        creditFacebookName = "Facebook: AD Cường Ba Viên",
         loaderTitle = "Trình tải CuongOutLook",
         loaderSubtitle = "Nhập key để tiếp tục",
         keyPlaceholder = "Nhập key tại đây...",
@@ -82,11 +87,14 @@ local UI_TEXTS = {
         facebookOpening = "Đang mở...",
         facebookCopied = "Đã sao chép link!",
         copyLink = "Sao chép link",
-        copied = "Đã sao chép!"
+        copied = "Đã sao chép!",
+        seeYouAgain = "Hẹn gặp lại!"
     },
     jp = {
         creditTitle = "CuongOutLook クレジット",
         creditSub = "公式プロフィール",
+        creditUser = "Robloxユーザー: CuongOutLook",
+        creditFacebookName = "Facebook: AD Cường Ba Viên",
         loaderTitle = "CuongOutLook ローダー",
         loaderSubtitle = "続行するにはキーを入力してください",
         keyPlaceholder = "ここにキーを入力...",
@@ -106,7 +114,8 @@ local UI_TEXTS = {
         facebookOpening = "開いています...",
         facebookCopied = "リンクをコピーしました!",
         copyLink = "リンクをコピー",
-        copied = "コピーしました!"
+        copied = "コピーしました!",
+        seeYouAgain = "また会いましょう!"
     }
 }
 
@@ -363,7 +372,7 @@ local creditUser = Instance.new("TextLabel", creditCard)
 creditUser.Size = UDim2.new(1,-36,0,22)
 creditUser.Position = UDim2.new(0,18,0,196)
 creditUser.BackgroundTransparency = 1
-creditUser.Text = "RobloxUser: CuongOutLook"
+creditUser.Text = getUiText("creditUser")
 creditUser.Font = Enum.Font.GothamBold
 creditUser.TextSize = 14
 creditUser.TextColor3 = Color3.fromRGB(238,244,255)
@@ -373,7 +382,7 @@ local creditFacebook = Instance.new("TextLabel", creditCard)
 creditFacebook.Size = UDim2.new(1,-36,0,20)
 creditFacebook.Position = UDim2.new(0,18,0,222)
 creditFacebook.BackgroundTransparency = 1
-creditFacebook.Text = "Facebook: AD Cường Ba Viên"
+creditFacebook.Text = getUiText("creditFacebookName")
 creditFacebook.Font = Enum.Font.Gotham
 creditFacebook.TextSize = 12
 creditFacebook.TextColor3 = Color3.fromRGB(184,200,228)
@@ -700,7 +709,7 @@ local function terminateLoader()
     byeSub.Size = UDim2.new(1,0,0,28)
     byeSub.Position = UDim2.new(0,0,0.5,12)
     byeSub.BackgroundTransparency = 1
-    byeSub.Text = "See you again!"
+    byeSub.Text = getUiText("seeYouAgain")
     byeSub.Font = Enum.Font.GothamBold
     byeSub.TextSize = 22
     byeSub.TextColor3 = Color3.fromRGB(188,240,255)
@@ -1151,6 +1160,8 @@ end
 local function applyUiLanguage()
     creditTitle.Text = getUiText("creditTitle")
     creditSub.Text = getUiText("creditSub")
+    creditUser.Text = getUiText("creditUser")
+    creditFacebook.Text = getUiText("creditFacebookName")
     creditFacebookBtn.Text = getUiText("facebookLink")
     title.Text = getUiText("loaderTitle")
     sub.Text = getUiText("loaderSubtitle")
@@ -1335,31 +1346,31 @@ btnHelpClose.MouseButton1Click:Connect(function()
 end)
 local function onValid(key)
     if terminated then return end
-    -- XÃ³a khoáº£ng tráº¯ng thá»«a náº¿u copy nháº§m
+    -- Xóa khoảng trắng thừa nếu copy nhầm
     local cleanKey = key:match("^%s*(.-)%s*$")
     
     getgenv().SCRIPT_KEY = cleanKey
     saveKey(cleanKey)
     
-    -- XÃ³a giao diá»‡n Loader
+    -- Xóa giao diện Loader
     screenGui:Destroy()
     
-    -- Äá»£i 1 chÃºt cho an toÃ n
+    -- Đợi 1 chút cho an toàn
     task.wait(0.5)
     
     local selectedScript = SCRIPT_OPTIONS[1]
     local hasUrl = selectedScript and type(selectedScript.url) == "string" and selectedScript.url ~= ""
     local hasRun = selectedScript and type(selectedScript.run) == "function"
     if not selectedScript or (not hasUrl and not hasRun) then
-        warn("Khong tim thay script hop le de tai.")
+        warn("Không tìm thấy script hợp lệ để tải.")
         return
     end
 
-    print("Dang tai script: " .. tostring(selectedScript.name))
+    print("Đang tải script: " .. tostring(selectedScript.name))
     
     -- ==========================================
-    -- ÄÃ‚Y LÃ€ NÆ I DUY NHáº¤T ÄÆ¯á»¢C Äá»‚ Lá»†NH LOADSTRING
-    -- Thay link raw script cá»§a báº¡n vÃ o Ä‘Ã¢y:
+    -- ĐÂY LÀ NƠI DUY NHẤT ĐƯỢC ĐỂ LỆNH LOADSTRING
+    -- Thay link raw script của bạn vào đây:
     local okLoad, loadErr = pcall(function()
         if hasRun then
             selectedScript.run()
@@ -1368,12 +1379,12 @@ local function onValid(key)
         end
     end)
     if not okLoad then
-        warn("Load script that bai: " .. tostring(loadErr))
+        warn("Load script thất bại: " .. tostring(loadErr))
     end
     -- ==========================================
 end
 
--- Xá»­ lÃ½ nÃºt báº¥m
+-- Xử lý nút bấm
 btn.MouseButton1Click:Connect(function()
     if terminated then return end
     local inputKey = txt.Text
@@ -1395,7 +1406,7 @@ btn.MouseButton1Click:Connect(function()
         btn.Text = getUiText("success")
         btn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
         task.wait(0.5)
-        -- Gá»i hÃ m onValid Ä‘á»ƒ báº¯t Ä‘áº§u cháº¡y script chÃ­nh
+        -- Gọi hàm onValid để bắt đầu chạy script chính
         onValid(inputKey)
     else
         btn.Text = getUiText("invalidKey")
@@ -1406,4 +1417,4 @@ btn.MouseButton1Click:Connect(function()
     end
 end)
 
--- TUYá»†T Äá»I KHÃ”NG Äá»‚ Lá»†NH LOADSTRING NÃ€O á»ž DÆ¯á»šI NÃ€Y Ná»®A NHÃ‰!
+-- TUYỆT ĐỐI KHÔNG ĐỂ LỆNH LOADSTRING NÀO Ở DƯỚI NÀY NỮA NHÉ!
