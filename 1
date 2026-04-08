@@ -29,6 +29,7 @@ local CARD_GAP = 8
 local CARD_EFFECTIVE_W = CARD_W * LOADER_SCALE
 local CARD_EFFECTIVE_H = CARD_H * LOADER_SCALE
 local currentLang = "en"
+local SAVED_LANGUAGE_FILE = "CuongOutLook_saved_lang.txt"
 local LANGUAGE_LABELS = {
     en = "English",
     vi = "Tiếng Việt",
@@ -108,6 +109,38 @@ local UI_TEXTS = {
         copied = "コピーしました!"
     }
 }
+
+local function readSavedLanguage()
+    if type(isfile) ~= "function" or type(readfile) ~= "function" then
+        return nil
+    end
+
+    local okExists, exists = pcall(isfile, SAVED_LANGUAGE_FILE)
+    if not okExists or not exists then
+        return nil
+    end
+
+    local okRead, raw = pcall(readfile, SAVED_LANGUAGE_FILE)
+    if not okRead or type(raw) ~= "string" then
+        return nil
+    end
+
+    local clean = raw:match("^%s*(.-)%s*$")
+    if UI_TEXTS[clean] then
+        return clean
+    end
+    return nil
+end
+
+local function saveLanguage(lang)
+    if type(writefile) ~= "function" or not UI_TEXTS[lang] then
+        return false
+    end
+
+    return pcall(writefile, SAVED_LANGUAGE_FILE, lang)
+end
+
+currentLang = readSavedLanguage() or currentLang
 
 local function getUiText(key)
     local langPack = UI_TEXTS[currentLang] or UI_TEXTS.en
@@ -867,22 +900,7 @@ v3.0.0
 - Thay CuongOutLook Server Chat thành CuongOutLook Private Chat (đang bảo trì).
 - Thay giao diện Items, tránh gây lag.
 - Thêm ServerHop.
-- Thêm tab Setting bao gồm: Lưu script và Đồ họa menu thấp.
-
-Bản update cũ hơn
-
-v2.0.0
-
-- Thêm AimBot Mobile OP.
-- Thêm CrossHair OP.
-- Thêm Auto HeadShot OP.
-- Fix lỗi Aimbot PC bị giựt lên trời.
-- Tối ưu hóa ESP tăng hiệu năng thiết bị.
-
-v1.9.0
-
-- Thêm Event Cách lấy Key 1 Tuần.
-- Thêm Hiệu ứng nền.]]
+- Thêm tab Setting bao gồm: Lưu script và Đồ họa menu thấp.]]
 
 local UPDATE_TEXT_EN = [[Latest update
 
@@ -895,22 +913,7 @@ v3.0.0
 - Replaced CuongOutLook Server Chat with CuongOutLook Private Chat (under maintenance).
 - Reworked the Items interface to reduce lag.
 - Added ServerHop.
-- Added a Setting tab including: Save Script and Low Menu Graphics.
-
-Older updates
-
-v2.0.0
-
-- Added AimBot Mobile OP.
-- Added CrossHair OP.
-- Added Auto HeadShot OP.
-- Fixed PC Aimbot jitter launching upward.
-- Optimized ESP for better device performance.
-
-v1.9.0
-
-- Added event: How to get 1 Week Key.
-- Added background effects.]]
+- Added a Setting tab including: Save Script and Low Menu Graphics.]]
 
 local UPDATE_TEXT_JP = [[最新のアップデート
 
@@ -923,22 +926,7 @@ v3.0.0
 - CuongOutLook Server Chat を CuongOutLook Private Chat に変更（現在メンテナンス中）。
 - ラグを避けるため Items UI を変更。
 - ServerHop を追加。
-- Setting タブを追加: スクリプト保存 と 低負荷メニューグラフィック を含む。
-
-以前のアップデート
-
-v2.0.0
-
-- AimBot Mobile OP を追加。
-- CrossHair OP を追加。
-- Auto HeadShot OP を追加。
-- PC版 Aimbot の上方向へのブレを修正。
-- ESP を最適化し、端末性能を改善。
-
-v1.9.0
-
-- 1週間キーの取得イベントを追加。
-- 背景エフェクトを追加。]]
+- Setting タブを追加: スクリプト保存 と 低負荷メニューグラフィック を含む。]]
 
 local updateHistoryLayoutToken = 0
 
@@ -1183,6 +1171,7 @@ end
 
 local function setUiLanguage(lang)
     currentLang = UI_TEXTS[lang] and lang or "en"
+    saveLanguage(currentLang)
     menuLangList.Visible = false
     applyUiLanguage()
 end
