@@ -128,7 +128,7 @@ local function notify(title, msg, dur)
         t.TextSize = 12
         t.TextXAlignment = Enum.TextXAlignment.Left
         t.TextColor3 = NOTIFY_STYLE.ACC
-        t.Text = "CuongOutLook | " .. tostring(title or "")
+        t.Text = tostring(title or "")
         local b = Instance.new("TextLabel", card)
         b.BackgroundTransparency = 1
         b.Position = UDim2.new(0, 10, 0, 24)
@@ -137,7 +137,6 @@ local function notify(title, msg, dur)
         b.TextSize = 11
         b.TextWrapped = true
         b.TextXAlignment = Enum.TextXAlignment.Left
-        b.TextYAlignment = Enum.TextYAlignment.Top
         b.TextColor3 = NOTIFY_STYLE.TXT
         b.Text = tostring(msg or "")
         TweenService:Create(
@@ -146,7 +145,7 @@ local function notify(title, msg, dur)
             {Size = UDim2.new(0, 320, 0, 58)}
         ):Play()
         table.insert(notifyStack, card)
-        while #notifyStack > 5 do
+        if #notifyStack > 6 then
             local old = table.remove(notifyStack, 1)
             if old and old.Parent then pcall(function() old:Destroy() end) end
         end
@@ -487,35 +486,31 @@ local function loadState()
 end
 -- ============================================================
 -- SAFE POSITION TRACKER
--- ============================================================
 RunService.Heartbeat:Connect(function()
     local hrp = getHRP()
     local hum = getHum()
-    if not hrp or not hum then return end
-    if hum.FloorMaterial ~= Enum.Material.Air and not STATE.fly then
-        STATE.lastSafePos  = hrp.Position
+    if hrp and hum and hum.Health > 0 then
+        STATE.lastSafePos = hrp.Position
         STATE.lastSafeTime = tick()
     end
 end)
--- ============================================================
--- ANTI-FLING
--- ============================================================
+
 local FLING_THRESH = 120
 RunService.Heartbeat:Connect(function()
     if not STATE.antiFling then return end
     local hrp = getHRP()
     if not hrp or not STATE.lastSafePos then return end
-    if hrp.AssemblyLinearVelocity.Magnitude > FLING_THRESH then
+    local vel = hrp.AssemblyLinearVelocity.Magnitude
+    if vel > FLING_THRESH then
         hrp.CFrame                  = CFrame.new(STATE.lastSafePos + Vector3.new(0, 3, 0))
         hrp.AssemblyLinearVelocity  = Vector3.zero
         hrp.AssemblyAngularVelocity = Vector3.zero
-        notify("Anti-Fling", "Blocked", 2)
+        notify(_tr("Anti-Fling"), _tr("Blocked"), 2)
     end
 end)
 -- ============================================================
 -- ANTI-RUBBER BAND
 -- ============================================================
-local rb_prevPos = nil
 RunService.Heartbeat:Connect(function()
     if not STATE.antiRubberBand then rb_prevPos = nil; return end
     local hrp = getHRP()
@@ -524,10 +519,10 @@ RunService.Heartbeat:Connect(function()
     if rb_prevPos == nil then rb_prevPos = cur; return end
     local delta = (cur - rb_prevPos).Magnitude
     local vel   = hrp.AssemblyLinearVelocity.Magnitude
-    if delta > 15 and vel < 4 and STATE.lastSafePos then
+    if delta > 8 and vel < 8 and not STATE.fly then
         hrp.CFrame                 = CFrame.new(rb_prevPos)
         hrp.AssemblyLinearVelocity = Vector3.zero
-        notify("Anti-RB", "Blocked", 2)
+        notify(_tr("Anti-RB"), _tr("Blocked"), 2)
     else
         rb_prevPos = cur
     end
@@ -535,12 +530,8 @@ end)
 -- ============================================================
 -- ANTI-TP
 -- ============================================================
-local tp_prevPos    = nil
-local tp_ignoreTick = 0
-local function markOwnTP()
     tp_ignoreTick = tick()
     tp_prevPos    = nil
-end
 RunService.Heartbeat:Connect(function()
     if not STATE.antiTP then tp_prevPos = nil; return end
     local hrp = getHRP()
@@ -553,7 +544,7 @@ RunService.Heartbeat:Connect(function()
     if delta > 50 and vel < 8 and not STATE.fly then
         hrp.CFrame                 = CFrame.new(tp_prevPos)
         hrp.AssemblyLinearVelocity = Vector3.zero
-        notify("Anti-TP", "Blocked", 3)
+        notify(_tr("Anti-TP"), _tr("Blocked"), 3)
     else
         tp_prevPos = cur
     end
@@ -664,7 +655,7 @@ local function addCheaterESP(p)
     local lbl = Instance.new("TextLabel", bb)
     lbl.Size                  = UDim2.new(1, 0, 1, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Text                  = "DUMB CHEATER"
+    lbl.Text                  = _tr("DUMB CHEATER")
     lbl.Font                  = Enum.Font.GothamBold
     lbl.TextSize              = 14
     lbl.TextColor3            = Color3.fromRGB(255, 55, 55)
@@ -710,7 +701,7 @@ local function flagCheater(p, reason)
     local key = tostring(p.UserId) .. "_" .. reason
     if STATE.detectedCheaters[key] then return end
     STATE.detectedCheaters[key] = true
-    notify("Cheater", p.Name .. " | " .. reason, 6)
+    notify(_tr("Cheater"), p.Name .. " | " .. reason, 6)
     logDetection(p.Name, reason)
     addCheaterESP(p)
 end
@@ -778,13 +769,13 @@ local function scanPlayerGui(p)
     if not pg then return 0, nil end
     for _, obj in ipairs(pg:GetChildren()) do
         if EXEC_GUI_NAMES[obj.Name] then
-            return 5, "Executor GUI: " .. obj.Name
+            return 5, _tr("Executor GUI: ") .. obj.Name
         end
         -- Fuzzy match: contains known executor keywords
         local lower = obj.Name:lower()
         if lower:find("synapse") or lower:find("krnl") or lower:find("exploit")
             or lower:find("executor") or lower:find("inject") then
-            return 5, "Executor GUI (fuzzy): " .. obj.Name
+            return 5, _tr("Executor GUI (fuzzy): ") .. obj.Name
         end
     end
     return 0, nil
@@ -816,37 +807,37 @@ local function checkInjection(p)
     local hasLV = hrp:FindFirstChildOfClass("LinearVelocity")   ~= nil
     local hasAO = hrp:FindFirstChildOfClass("AlignOrientation") ~= nil
     -- BV+BG TOGETHER: no legit game adds both at same time
-    if hasBV and hasBG then add(5, "BV+BG fly") end
+    if hasBV and hasBG then add(5, _tr("BV+BG fly")) end
     -- LV+AO TOGETHER: modern fly script signature
-    if hasLV and hasAO then add(5, "LV+AO fly") end
+    if hasLV and hasAO then add(5, _tr("LV+AO fly")) end
     -- Fly platform part spawned by script near/in character
     for _, obj in ipairs(c:GetDescendants()) do
         if obj:IsA("BasePart") and FLY_PART_NAMES[obj.Name] then
-            add(5, "Fly part in char: "..obj.Name); break
+            add(5, _tr("Fly part in char: ") .. obj.Name); break
         end
     end
     for _, obj in ipairs(Workspace:GetChildren()) do
         if obj:IsA("BasePart") and FLY_PART_NAMES[obj.Name] then
             if (obj.Position - hrp.Position).Magnitude < 10 then
-                add(4, "Fly part near player: "..obj.Name); break
+                add(4, _tr("Fly part near player: ") .. obj.Name); break
             end
         end
     end
     -- Godmode: MaxHealth set to impossible value
     -- Legit games cap at a few thousand at most
     if hum.MaxHealth > 100000 or hum.MaxHealth ~= hum.MaxHealth then
-        add(5, "MaxHealth godmode: "..tostring(math.floor(hum.MaxHealth)))
+        add(5, _tr("MaxHealth godmode: ") .. tostring(math.floor(hum.MaxHealth)))
     end
     -- Executor GUI visible in PlayerGui (some executors put GUI wrong place)
     local guiScore, guiReason = scanPlayerGui(p)
     if guiScore > 0 then add(guiScore, guiReason) end
     -- WalkSpeed way above everyone else (after 5s baseline)
     if injBaselineSet and hum.WalkSpeed > injGameMaxWalk + 50 then
-        add(3, "WalkSpeed +"..math.floor(hum.WalkSpeed - injGameMaxWalk).." above server")
+        add(3, _tr("WalkSpeed +") .. math.floor(hum.WalkSpeed - injGameMaxWalk) .. _tr(" above server"))
     end
     -- Verdict
     if score >= 5 then
-        flagCheater(p, "["..score.."pts] "..table.concat(reasons, " + "))
+        flagCheater(p, "[" .. score .. " " .. _tr("pts") .. "] " .. table.concat(reasons, " + "))
     end
 end
 local injCheckTimer2 = 0
@@ -953,7 +944,7 @@ local function applyLowPoly()
             end
         end)
     end)
-    notify("Low Poly", "Enabled - FPS boost active", 3)
+    notify(_tr("Low Poly"), _tr("Enabled - FPS boost active"), 3)
 end
 local function removeLowPoly()
     if not lpActive then return end
@@ -986,7 +977,7 @@ local function removeLowPoly()
         end
     end
     lpOriginals = {}
-    notify("Low Poly", "Disabled - restored", 3)
+    notify(_tr("Low Poly"), _tr("Disabled - restored"), 3)
 end
 -- ============================================================
 -- WORLD EDITOR
@@ -1990,7 +1981,7 @@ UserInputService.InputBegan:Connect(function(inp, gameProcessed)
             pcall(mouse1release)
             STATE._triggerHeld = false
         end
-        notify("Triggerbot", STATE.triggerbot and "Enabled" or "Disabled", 2)
+        notify(_tr("Triggerbot"), _tr(STATE.triggerbot and "Enabled" or "Disabled"), 2)
         pcall(saveStateIfEnabled)
     end
 end)
@@ -2376,7 +2367,7 @@ local function flingOne(target, onDone)
     bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
     bv.Velocity = Vector3.zero
     bv.Parent   = thrp
-    notify("Fling", "Spinning " .. target.Name .. "...", 1)
+    notify(_tr("Fling"), _tr("Spinning") .. " " .. target.Name .. "...", 1)
     -- Step 5: After 0.4s release and LAUNCH
     task.delay(0.4, function()
         pcall(function() bav:Destroy() end)
@@ -2396,7 +2387,7 @@ local function flingOne(target, onDone)
                 myHRP.CFrame = CFrame.new(STATE.lastSafePos + Vector3.new(0, 3, 0))
             end
         end)
-        notify("Fling", "LAUNCHED " .. target.Name .. "!!!", 2)
+        notify(_tr("Fling"), _tr("LAUNCHED") .. " " .. target.Name .. "!!!", 2)
         task.delay(0.35, function()
             if onDone then onDone(getNearestPlayer()) end
         end)
@@ -2515,7 +2506,7 @@ local function spectate(target)
             if h then Camera.CameraSubject = h end
         end
     end)
-    notify("Spectate", "Spectating " .. target.Name, 3)
+    notify(_tr("Spectate"), _tr("Spectating") .. " " .. target.Name, 3)
 end
 -- ============================================================
 -- RESPAWN
@@ -2538,7 +2529,7 @@ if STATE._hadSave then
         if STATE._applyRestoredState then
             STATE._applyRestoredState()
         end
-        notify("CuongOutLook", (STATE.language == "en") and "Settings restored" or "Đã khôi phục cài đặt", 3)
+        notify("CuongOutLook", (STATE.language == "jp") and "設定を復元しました" or ((STATE.language == "en") and "Settings restored" or "Đã khôi phục cài đặt"), 3)
     end)
 end
 -- ============================================================
@@ -2557,14 +2548,14 @@ local C = {
     RED   = Color3.fromRGB(200, 40, 40),
     DARK  = Color3.fromRGB(13, 18, 30),
 }
-if STATE.language ~= "en" and STATE.language ~= "vi" then
+    if STATE.language ~= "en" and STATE.language ~= "vi" and STATE.language ~= "jp" then
     STATE.language = "vi"
 end
 STATE._LANG = {
     vi = {
-        title = "CuongOutLook Aimbot OP",
+        title = "CuongOutLook Aimbot OP v3.0",
         subtitle = "Menu Tiếng Việt mọi game FPS",
-        langBtn = "Tiếng Việt",
+        langBtn = "Ngôn ngữ",
         menuCollapsed = "Menu thu gọn. Bấm nút COL để mở lại.",
         tabs = {
             Protect="Bảo vệ", ESP="ESP", Aimbot="Aimbot", Movement="Di chuyển",
@@ -2574,15 +2565,27 @@ STATE._LANG = {
         },
     },
     en = {
-        title = "CuongOutLook Aimbot OP",
+        title = "CuongOutLook Aimbot OP v3.0",
         subtitle = "English menu for FPS games",
-        langBtn = "English",
+        langBtn = "Language",
         menuCollapsed = "Menu collapsed. Click COL button to expand.",
         tabs = {
             Protect="Protect", ESP="ESP", Aimbot="Aimbot", Movement="Movement",
             Chat="Chat", Items="Items", Visual="Visual", World="World", Players="Players",
             Setting="Setting",
             ["Credit Admin"]="Credit Admin",
+        },
+    },
+    jp = {
+        title = "CuongOutLook Aimbot OP v3.0",
+        subtitle = "FPSゲーム向け日本語メニュー",
+        langBtn = "言語",
+        menuCollapsed = "メニューを折りたたみました。COLボタンを押して再度開きます。",
+        tabs = {
+            Protect="保護", ESP="ESP", Aimbot="エイムボット", Movement="移動",
+            Chat="チャット", Items="アイテム", Visual="表示", World="ワールド", Players="プレイヤー",
+            Setting="設定",
+            ["Credit Admin"]="管理者情報",
         },
     },
 }
@@ -2594,6 +2597,14 @@ function _tabLabel(tabKey)
     local pack = STATE._LANG[STATE.language] or STATE._LANG.vi
     local tabs = pack.tabs or {}
     return tabs[tabKey] or tabKey
+end
+STATE._LANGUAGE_NAMES = {
+    vi = "Tiếng Việt",
+    en = "English",
+    jp = "日本語",
+}
+function STATE._getLanguageButtonText()
+    return _L("langBtn") .. ": " .. (STATE._LANGUAGE_NAMES[STATE.language] or STATE.language) .. " v"
 end
 STATE._LANG_TEXT_EN = {
     ["Anti Hất văng (risk)"] = "Anti Fling (risk)",
@@ -2682,6 +2693,8 @@ STATE._LANG_TEXT_EN = {
     ["  Click Give to add to your Backpack."] = "  Click Give to add to your Backpack.",
     ["  Closes the UI completely."] = "  Closes the UI completely.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso",
+    ["  General menu settings area."] = "  General menu settings area.",
+    ["  Auto save all toggle and slider values."] = "  Auto save all toggle and slider values.",
     ["  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình."] = "  Auto aimbot for touch devices using the center of the screen.",
     ["  ON sẽ bỏ qua người cùng đội."] = "  ON ignores players on your team.",
     ["  ON chỉ khóa người cùng đội."] = "  ON only locks players on your team.",
@@ -2690,6 +2703,7 @@ STATE._LANG_TEXT_EN = {
     ["  Default is 70. Higher = wider view."] = "  Default is 70. Higher = wider view.",
     ["  depth of field. Cleaner visuals + FPS boost."] = "  depth of field. Cleaner visuals + FPS boost.",
     ["  Disconnects your own client from the current server."] = "  Disconnects your own client from the current server.",
+    ["  First person only. Hold keybind to aim when close to enemy."] = "  First person only. Hold keybind to aim when close to enemy.",
     ["  First person only. Hold keybind to lock when close to enemy."] = "  First person only. Hold keybind to lock when close to enemy.",
     ["  Flashes white on F12/PrintScreen, exclueding Mobile"] = "  Flashes white on F12/PrintScreen, exclueding Mobile",
     ["  Hides all Anchored=false collidable parts."] = "  Hides all Anchored=false collidable parts.",
@@ -2723,9 +2737,11 @@ STATE._LANG_TEXT_EN = {
     ["  Quét dấu vết executor hoặc exploit trên người chơi khác."] = "  Scans other players for executor or exploit traces.",
     ["  Zero workspace gravity. Float freely."] = "  Zero workspace gravity. Float freely.",
     ["Aim Prediction"] = "Aim Prediction",
+    ["Aim Bone"] = "Aim Bone",
     ["Aim Smoothness"] = "Aim Smoothness",
     ["Aimbot"] = "Aimbot",
     ["Aimbot FOV"] = "Aimbot FOV",
+    ["Aimbot Mobile"] = "Aimbot Mobile",
     ["Aimbot Mobile?"] = "Aimbot Mobile?",
     ["Anti Aim"] = "Anti Aim",
     ["Anti Extras"] = "Anti Extras",
@@ -2738,15 +2754,56 @@ STATE._LANG_TEXT_EN = {
     ["Camera"] = "Camera",
     ["Camera Distance"] = "Camera Distance",
     ["Chams"] = "Chams",
-    ["CuongOutLook User Chat"] = "CuongOutLook User Chat",
+        ["Cross B"] = "Cross B",
+        ["Cross Enemy B"] = "Cross Enemy B",
+        ["Cross Enemy Color"] = "Cross Enemy Color",
+        ["Cross Enemy G"] = "Cross Enemy G",
+        ["Cross Enemy R"] = "Cross Enemy R",
+        ["Cross G"] = "Cross G",
+        ["Cross Length"] = "Cross Length",
+        ["Cross R"] = "Cross R",
+        ["Cross Thickness"] = "Cross Thickness",
+        ["Cross X"] = "Cross X",
+        ["Cross Y"] = "Cross Y",
+        ["Executor GUI: "] = "Executor GUI: ",
+        ["Executor GUI (fuzzy): "] = "Executor GUI (fuzzy): ",
+        ["BV+BG fly"] = "BV+BG fly",
+        ["LV+AO fly"] = "LV+AO fly",
+        ["Fly part in char: "] = "Fly part in char: ",
+        ["Fly part near player: "] = "Fly part near player: ",
+        ["MaxHealth godmode: "] = "MaxHealth godmode: ",
+        ["WalkSpeed +"] = "WalkSpeed +",
+        [" above server"] = " above server",
+        ["pts"] = "pts",
+    ["Dot Scale"] = "Dot Scale",
+    ["Dot Thickness"] = "Dot Thickness",
+    ["Dot X"] = "Dot X",
+    ["Dot Y"] = "Dot Y",
     ["Enable ESP"] = "Enable ESP",
     ["Features"] = "Features",
     ["Field of View"] = "Field of View",
+    ["FOV B"] = "FOV B",
+    ["FOV Enemy B"] = "FOV Enemy B",
+    ["FOV Enemy Color"] = "FOV Enemy Color",
+    ["FOV Enemy G"] = "FOV Enemy G",
+    ["FOV Enemy R"] = "FOV Enemy R",
+    ["FOV G"] = "FOV G",
+    ["FOV Layer"] = "FOV Layer",
+    ["FOV R"] = "FOV R",
+    ["FOV Size"] = "FOV Size",
+    ["FOV Thickness"] = "FOV Thickness",
+    ["FOV X"] = "FOV X",
+    ["FOV Y"] = "FOV Y",
     ["Fling"] = "Fling",
     ["Fling Once"] = "Fling Once",
     ["Game Items"] = "Game Items",
+    ["Layer / Thickness"] = "Layer / Thickness",
+    ["Items"] = "Items",
+    ["Visual"] = "Visual",
+    ["Language"] = "Language",
     ["Lighting"] = "Lighting",
     ["Menu"] = "Menu",
+    ["Mobile Target"] = "Mobile Target",
     ["Movement"] = "Movement",
     ["Options"] = "Options",
     ["Performance"] = "Performance",
@@ -2772,16 +2829,392 @@ STATE._LANG_TEXT_EN = {
     ["Stop Spectate"] = "Stop Spectate",
     ["Tâm ngắm"] = "Crosshair",
     ["Target"] = "Target",
+    ["Torso"] = "Torso",
     ["Team Check"] = "Team Check",
     ["Team Color"] = "Team Color",
     ["Teleport"] = "Teleport",
     ["Third Person"] = "Third Person",
     ["TP to"] = "TP to",
+    ["X Color B"] = "X Color B",
+    ["X Color G"] = "X Color G",
+    ["X Color R"] = "X Color R",
+    ["X Duration x10"] = "X Duration x10",
+    ["X Mark"] = "X Mark",
+    ["X Mark On Click"] = "X Mark On Click",
+    ["X Scale"] = "X Scale",
+    ["X Thickness"] = "X Thickness",
     ["Wall Check"] = "Wall Check",
     ["Watch"] = "Watch",
     ["Whisper To"] = "Whisper To",
     ["World"] = "World",
     ["World Editing"] = "World Editing",
+    ["Anti-Fling"] = "Anti-Fling",
+    ["Anti-RB"] = "Anti-RB",
+    ["Anti-TP"] = "Anti-TP",
+    ["Blocked"] = "Blocked",
+    ["Cheater"] = "Cheater",
+    ["DUMB CHEATER"] = "DUMB CHEATER",
+    ["Low Poly"] = "Low Poly",
+    ["Enabled - FPS boost active"] = "Enabled - FPS boost active",
+    ["Disabled - restored"] = "Disabled - restored",
+    ["Triggerbot"] = "Triggerbot",
+    ["Enabled"] = "Enabled",
+    ["Disabled"] = "Disabled",
+    ["Fling"] = "Fling",
+    ["Spinning"] = "Spinning",
+    ["LAUNCHED"] = "LAUNCHED",
+    ["Spectate"] = "Spectate",
+    ["Spectating"] = "Spectating",
+    ["Copy"] = "Copy",
+    ["copied"] = "copied",
+    ["Clipboard not supported by this executor"] = "Clipboard not supported by this executor",
+    ["Link"] = "Link",
+    ["Facebook link"] = "Facebook link",
+    ["YouTube link"] = "YouTube link",
+    ["Mobile Aimbot Enabled"] = "Mobile Aimbot Enabled",
+    ["Mobile Aimbot Disabled"] = "Mobile Aimbot Disabled",
+    ["Invalid key bind"] = "Invalid key bind",
+    ["Target: "] = "Target: ",
+    ["No Backpack found"] = "No Backpack found",
+    ["Got: "] = "Got: ",
+    [" (moved)"] = " (moved)",
+    [" (equipped)"] = " (equipped)",
+    ["Requested: "] = "Requested: ",
+    [" via "] = " via ",
+    ["Could not give: "] = "Could not give: ",
+    [" (server-locked)"] = " (server-locked)",
+    ["Disconnecting..."] = "Disconnecting...",
+    ["Rejoining server..."] = "Rejoining server...",
+    ["Searching least-populated server..."] = "Searching least-populated server...",
+    ["Hopping to least-populated server..."] = "Hopping to least-populated server...",
+    ["No suitable server found"] = "No suitable server found",
+    ["Menu destroyed"] = "Menu destroyed",
+    ["Select a target first"] = "Select a target first",
+    ["Chain fling stopped"] = "Chain fling stopped",
+    ["Chain fling started - spins then launches, auto-switches!"] = "Chain fling started - spins then launches, auto-switches!",
+    ["Teleported to "] = "Teleported to ",
+    ["Save Config"] = "Save Config",
+    ["Chấm"] = "Dot",
+    ["Vòng FOV riêng"] = "FOV Ring",
+    ["Chữ thập"] = "Cross",
+}
+STATE._LANG_TEXT_JP = {
+    ["Anti Hất văng (risk)"] = "アンチフリング (危険)",
+    ["Anti Tốc biến (risk)"] = "アンチラバーバンド (危険)",
+    ["Anti Dịch chuyển"] = "アンチテレポート",
+    ["Anti Vật phẩm bay vòng"] = "回転アイテム対策",
+    ["Xuyên tường (risk)"] = "壁抜け (危険)",
+    ["Anti Chụp màn hình"] = "スクリーンショット対策",
+    ["Phát hiện Exploit"] = "Exploit検出",
+    ["Anti Trọng lực (very risky)"] = "アンチ重力 (非常に危険)",
+    ["Bật Aimbot (PC)"] = "Aimbotを有効化 (PC)",
+    ["Bật Triggerbot (PC)"] = "Triggerbotを有効化 (PC)",
+    ["Bật Aimbot Mobile"] = "モバイルAimbotを有効化",
+    ["Triệu hồi - Summon it"] = "起動",
+    ["Triệu Hồi"] = "起動",
+    ["Triệu hồi"] = "起動",
+    ["Độ mượt aim"] = "エイムの滑らかさ",
+    ["Chỉnh vòng aim"] = "エイムFOV",
+    ["Bộ phận aim"] = "エイム部位",
+    ["Key kích hoạt"] = "起動キー",
+    ["Cài đặt khác"] = "その他設定",
+    ["Dự đoán vị trí mục tiêu"] = "ターゲット予測",
+    ["Kiểm tra đồng đội"] = "チームチェック",
+    ["Kiểm tra đội Mobile"] = "モバイルチームチェック",
+    ["Chỉ khóa đồng đội Mobile"] = "モバイル味方のみ",
+    ["Dự đoán aim Mobile"] = "モバイルエイム予測",
+    ["Độ cứng aim Mobile"] = "モバイルエイム硬度",
+    ["Kích thước FOV Mobile"] = "モバイルFOVサイズ",
+    ["Hiển thị FOV"] = "FOVを表示",
+    ["Bay vô hạn (risk)"] = "無限飛行 (危険)",
+    ["Tốc độ bay"] = "飛行速度",
+    ["Click Dịch chuyển (risk)"] = "クリックテレポート (危険)",
+    ["Tăng tốc độ đi bộ"] = "移動速度ブースト",
+    ["Tốc độ đi bộ"] = "歩行速度",
+    ["Nhảy & Không khí"] = "ジャンプと空中",
+    ["Tăng lực nhảy"] = "ジャンプ強化",
+    ["Lực nhảy"] = "ジャンプ力",
+    ["Nhảy vô hạn"] = "無限ジャンプ",
+    ["Bật Tâm ngắm"] = "クロスヘアを有効化",
+    ["  • Chấm nhỏ"] = "  • ドット",
+    ["    Kích thước chấm"] = "    ドットサイズ",
+    ["    X offset chấm"] = "    ドットXオフセット",
+    ["    Y offset chấm"] = "    ドットYオフセット",
+    ["  • Vòng FOV riêng"] = "  • FOVリング",
+    ["    Kích thước vòng FOV"] = "    FOVリングサイズ",
+    ["    X offset vòng FOV"] = "    FOVリングXオフセット",
+    ["    Y offset vòng FOV"] = "    FOVリングYオフセット",
+    ["  • Chữ thập"] = "  • クロス",
+    ["    Độ dài chữ thập"] = "    クロス長さ",
+    ["    X offset chữ thập"] = "    クロスXオフセット",
+    ["    Y offset chữ thập"] = "    クロスYオフセット",
+    ["Bầu trời cầu vồng"] = "レインボースカイ",
+    ["Xóa hiệu ứng"] = "ローポリ",
+    ["Xóa nhạc"] = "音楽をミュート",
+    ["Xóa tường"] = "壁を削除",
+    ["Xóa phần cố định"] = "固定パーツを削除",
+    ["Xóa phần không cố định"] = "非固定パーツを削除",
+    ["Không tối"] = "フルブライト",
+    ["Không có sương mù"] = "霧を無効化",
+    ["Đóng băng thời gian (đồng hồ)"] = "時間を固定",
+    ["Thời gian đóng băng"] = "固定時間",
+    ["Xóa hiệu ứng màn hình"] = "画面効果を削除",
+    ["Kick chính mình"] = "自分をキック",
+    ["Phá hủy Menu"] = "メニューを破棄",
+    ["Hất văng người chơi (risk)"] = "プレイヤーをフリング (危険)",
+    ["Chế độ xem"] = "観戦",
+    ["Dịch chuyển (risk)"] = "テレポート (危険)",
+    ["Chain Fling (OFF)"] = "チェーンフリング (OFF)",
+    ["Chain Fling (ON)"] = "チェーンフリング (ON)",
+    ["Menu Tiếng Việt mọi game FPS"] = "FPSゲーム向け日本語メニュー",
+    ["Credit Admin"] = "管理者情報",
+    ["Select..."] = "選択...",
+    ["(none)"] = "(なし)",
+    ["  0=midnight  6=sunrise  14=noon  20=night"] = "  0=深夜  6=日の出  14=正午  20=夜",
+    ["  Anti Fling. Enables noclip."] = "  フリングを防ぎます。壁抜けも有効になります。",
+    ["  Auto-fire on enemy under crosshair | Hotkey: H"] = "  クロスヘア上の敵を自動射撃 | ホットキー: H",
+    ["  Auto-jumps the moment you land."] = "  着地した瞬間に自動で再ジャンプします。",
+    ["  Before open this script, please turn Off in Tâm Ngắm part."] = "  このスクリプトを開く前に、クロスヘア項目をOFFにしてください。",
+    ["  Before summon the script, pls Turn Off Bật Aimbot"] = "  スクリプト起動前にAimbotをOFFにしてください。",
+    ["  Big FPS boost on low-end devices."] = "  低スペック端末でFPSを大きく改善します。",
+    ["  BigHead mode + size control"] = "  ビッグヘッドモードとサイズ調整。",
+    ["  Blocks rubberband with server position snapping."] = "  サーバーによる位置巻き戻しを防ぎます。",
+    ["  Blocks server teleports >50 studs."] = "  50スタッド超のサーバーテレポートを防ぎます。",
+    ["  Click anywhere to teleport."] = "  どこでもクリックしてテレポートします。",
+    ["  Click Give to add to your Backpack."] = "  受け取るを押すとバックパックに追加されます。",
+    ["  Closes the UI completely."] = "  UIを完全に閉じます。",
+    ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  切替: Head / HumanoidRootPart / UpperTorso / LowerTorso",
+    ["  General menu settings area."] = "  メニュー全体の設定エリアです。",
+    ["  Auto save all toggle and slider values."] = "  すべてのトグルとスライダー値を自動保存します。",
+    ["  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình."] = "  タッチ端末向けの自動Aimbot。画面中央を使用します。",
+    ["  Auto aimbot for touch devices using the center of the screen."] = "  タッチ端末向けの自動Aimbot。画面中央を使用します。",
+    ["  ON sẽ bỏ qua người cùng đội."] = "  ONで同じチームを無視します。",
+    ["  ON ignores players on your team."] = "  ONで同じチームを無視します。",
+    ["  ON chỉ khóa người cùng đội."] = "  ONで同じチームのみをロックします。",
+    ["  ON only locks players on your team."] = "  ONで同じチームのみをロックします。",
+    ["  Luân phiên: Head / Torso"] = "  切替: Head / Torso",
+    ["  Cycle: Head / Torso"] = "  切替: Head / Torso",
+    ["  Cycles Lighting Ambient through rainbow colors"] = "  環境光を虹色に循環させます。",
+    ["  Default is 70. Higher = wider view."] = "  初期値は70です。高いほど視野が広くなります。",
+    ["  depth of field. Cleaner visuals + FPS boost."] = "  被写界深度を削除します。見やすくなりFPSも向上します。",
+    ["  Disconnects your own client from the current server."] = "  現在のサーバーから自分のクライアントを切断します。",
+    ["  First person only. Hold keybind to aim when close to enemy."] = "  一人称専用。敵が近い時にキー長押しで照準します。",
+    ["  First person only. Hold keybind to lock when close to enemy."] = "  一人称専用。敵が近い時にキー長押しでロックします。",
+    ["  Flashes white on F12/PrintScreen, exclueding Mobile"] = "  F12/PrintScreen時に白く点滅します。モバイルは除外されます。",
+    ["  Hides all Anchored=false collidable parts."] = "  Anchored=falseの衝突パーツをすべて非表示にします。",
+    ["  Hides all Anchored=true parts."] = "  Anchored=trueのパーツをすべて非表示にします。",
+    ["  Hides collidable visible parts."] = "  表示中で衝突するパーツを非表示にします。",
+    ["  Hides orbiting items. Throttled (no lag)."] = "  周回アイテムを非表示にします。負荷制御済みです。",
+    ["  Ignore targets behind walls/objects"] = "  壁や物体の後ろの対象を無視",
+    ["  Ignore teammates"] = "  味方を無視",
+    ["  Jump again mid-air endlessly."] = "  空中で何度でも再ジャンプできます。",
+    ["  Jumps to another public server in this game."] = "  このゲームの別の公開サーバーへ移動します。",
+    ["  Lock camera zoom distance. 1=first person."] = "  カメラのズーム距離を固定します。1=一人称。",
+    ["  Makes all textures flat. Removes effects."] = "  すべてのテクスチャを簡略化し、効果を削除します。",
+    ["  Max ambient brightness. See in the dark."] = "  環境光を最大にして暗所でも見やすくします。",
+    ["  OFF: local chat only on your device."] = "  OFF: 自分の端末だけのローカルチャットです。",
+    ["  ON: whisper/all chat for users with this script (relay required)."] = "  ON: このスクリプト利用者向けのささやき/全体チャットです (relay必要)。",
+    ["  OFF: chỉ local chat trên máy bạn."] = "  OFF: 自分の端末だけのローカルチャットです。",
+    ["  ON: whisper/all chat cho user cùng script (cần relay)."] = "  ON: このスクリプト利用者向けのささやき/全体チャットです (relay必要)。",
+    ["  Pings input every 60s so you never get kicked."] = "  60秒ごとに入力を送ってAFKキックを防ぎます。",
+    ["  Predicts enemy movement"] = "  敵の動きを予測します",
+    ["  Red glow through walls"] = "  壁越しに赤く表示します",
+    ["  Rejoins your current game/server."] = "  現在のゲーム/サーバーに再参加します。",
+    ["  Removes all fog from the game."] = "  ゲーム内の霧をすべて削除します。",
+    ["  Removes blur, bloom, sun rays, color grade,"] = "  ブラー、ブルーム、太陽光線、カラー補正を削除します。",
+    ["  Scans ReplicatedStorage, StarterPack,"] = "  ReplicatedStorage、StarterPack をスキャンし、",
+    ["  ServerStorage, Workspace for Tools."] = "  ServerStorage と Workspace 内のToolを探します。",
+    ["  Silences all Sounds in workspace + SoundService."] = "  Workspace と SoundService の音をすべて消します。",
+    ["  SPACE=up  CTRL=down  WASD=move"] = "  SPACE=上  CTRL=下  WASD=移動",
+    ["  Spins HRP to break enemy aimbot lock"] = "  HRPを回転させて敵のAimbotロックを崩します",
+    ["  Spins target ULTRA fast, launches them,"] = "  対象を超高速回転させて吹き飛ばし、",
+    ["  Spins YOU at 9999 rad/s. Still walk freely."] = "  自分を9999rad/sで回転させますが移動は可能です。",
+    ["  Teammates shown in blue, enemies red"] = "  味方は青、敵は赤で表示されます",
+    ["  then auto-switches to next nearest player."] = "  その後、自動で次に近いプレイヤーへ切り替えます。",
+    ["  Quét dấu vết executor hoặc exploit trên người chơi khác."] = "  他のプレイヤーのexecutor/exploit痕跡を検出します。",
+    ["  Scans other players for executor or exploit traces."] = "  他のプレイヤーのexecutor/exploit痕跡を検出します。",
+    ["  Zero workspace gravity. Float freely."] = "  Workspaceの重力を0にして自由に浮遊できます。",
+    ["Aim Prediction"] = "エイム予測",
+    ["Aim Bone"] = "エイム部位",
+    ["Aim Smoothness"] = "エイム滑らかさ",
+    ["Aimbot"] = "エイムボット",
+    ["Aimbot FOV"] = "Aimbot FOV",
+    ["Aimbot Mobile"] = "モバイルAimbot",
+    ["Aimbot Mobile?"] = "モバイルAimbot?",
+    ["Enable Mobile Aimbot"] = "モバイルAimbotを有効化",
+    ["Mobile Aim Prediction"] = "モバイルエイム予測",
+    ["Anti Aim"] = "アンチエイム",
+    ["Anti Extras"] = "追加対策",
+    ["Anti-AFK"] = "AFK対策",
+    ["Bighead"] = "ビッグヘッド",
+    ["BigHead OP"] = "強化ビッグヘッド",
+    ["Bighead Size"] = "頭サイズ",
+    ["Bind"] = "キー設定",
+    ["Box"] = "ボックス",
+    ["Bunny Hop"] = "バニーホップ",
+    ["COPY ID"] = "IDをコピー",
+    ["COPY LINK"] = "リンクをコピー",
+    ["Camera"] = "カメラ",
+    ["Camera Distance"] = "カメラ距離",
+    ["Chams"] = "Chams",
+    ["Cross B"] = "クロス B",
+    ["Cross Enemy B"] = "敵クロス B",
+    ["Cross Enemy Color"] = "敵クロス色",
+    ["Cross Enemy G"] = "敵クロス G",
+    ["Cross Enemy R"] = "敵クロス R",
+    ["Cross G"] = "クロス G",
+    ["Cross Length"] = "クロス長さ",
+    ["Cross R"] = "クロス R",
+    ["Cross Thickness"] = "クロス太さ",
+    ["Cross X"] = "クロス X",
+    ["Cross Y"] = "クロス Y",
+    ["CuongOutLook User Chat"] = "CuongOutLook ユーザーチャット",
+    ["Dot B"] = "ドット B",
+    ["Dot Enemy B"] = "敵ドット B",
+    ["Dot Enemy Color"] = "敵ドット色",
+    ["Dot Enemy G"] = "敵ドット G",
+    ["Dot Enemy R"] = "敵ドット R",
+    ["Dot G"] = "ドット G",
+    ["Dot Layer"] = "ドット層",
+    ["Dot R"] = "ドット R",
+    ["Dot Scale"] = "ドットサイズ",
+    ["Dot Thickness"] = "ドット太さ",
+    ["Dot X"] = "ドット X",
+    ["Dot Y"] = "ドット Y",
+    ["Donate ID"] = "支援ID",
+    ["Enable ESP"] = "ESPを有効化",
+    ["Features"] = "機能",
+    ["Field of View"] = "視野角",
+    ["FOV B"] = "FOV B",
+    ["FOV Enemy B"] = "敵FOV B",
+    ["FOV Enemy Color"] = "敵FOV色",
+    ["FOV Enemy G"] = "敵FOV G",
+    ["FOV Enemy R"] = "敵FOV R",
+    ["FOV G"] = "FOV G",
+    ["FOV Layer"] = "FOV層",
+    ["FOV R"] = "FOV R",
+    ["FOV Size"] = "FOVサイズ",
+    ["FOV Thickness"] = "FOV太さ",
+    ["FOV X"] = "FOV X",
+    ["FOV Y"] = "FOV Y",
+    ["Fling"] = "フリング",
+    ["Fling Once"] = "1回フリング",
+    ["Game Items"] = "ゲームアイテム",
+    ["Give"] = "受け取る",
+    ["Layer / Thickness"] = "層 / 太さ",
+    ["Items"] = "アイテム",
+    ["Visual"] = "表示",
+    ["Language"] = "言語",
+    ["Lighting"] = "ライティング",
+    ["Low- Menu Graphic"] = "低負荷メニュー表示",
+    ["Menu"] = "メニュー",
+    ["Mobile Target"] = "モバイル対象",
+    ["Movement"] = "移動",
+    ["Mobile Team Check"] = "モバイルチームチェック",
+    ["Mobile Team Only"] = "モバイル味方のみ",
+    ["Mobile Aim Hardness"] = "モバイルエイム硬度",
+    ["Mobile FOV Size"] = "モバイルFOVサイズ",
+    ["No tools found in this game"] = "このゲームではToolが見つかりませんでした",
+    ["Options"] = "オプション",
+    ["Performance"] = "パフォーマンス",
+    ["Player ESP"] = "プレイヤーESP",
+    ["Protections"] = "保護",
+    ["Reach"] = "リーチ",
+    ["Reach Size"] = "リーチサイズ",
+    ["Refresh Items"] = "アイテム更新",
+    ["Prev Page"] = "前のページ",
+    ["Next Page"] = "次のページ",
+    ["Page"] = "ページ",
+    ["Rejoin Server"] = "サーバー再参加",
+    ["Reset Camera"] = "カメラをリセット",
+    ["Reset FOV"] = "FOVをリセット",
+    ["Restore All Parts"] = "すべてのパーツを復元",
+    ["RobloxUserName: CuongOutLook"] = "Robloxユーザー名: CuongOutLook",
+    ["Screen Effects"] = "画面効果",
+    ["Send"] = "送信",
+    ["Server Hop"] = "サーバー移動",
+    ["Set Target: ALL"] = "対象設定: 全員",
+    ["Setting"] = "設定",
+    ["Shared Relay Chat"] = "共有リレーチャット",
+    ["Show FOV"] = "FOVを表示",
+    ["Sound"] = "サウンド",
+    ["Spin"] = "回転",
+    ["Stop Spectate"] = "観戦停止",
+    ["Tâm ngắm"] = "クロスヘア",
+    ["Target"] = "対象",
+    ["Torso"] = "胴体",
+    ["Team Check"] = "チームチェック",
+    ["Team Color"] = "チームカラー",
+    ["Teleport"] = "テレポート",
+    ["Third Person"] = "三人称",
+    ["TP to"] = "TP先",
+    ["Type a message..."] = "メッセージを入力...",
+    ["Head"] = "頭",
+    ["HumanoidRootPart"] = "HumanoidRootPart",
+    ["UpperTorso"] = "上半身",
+    ["LowerTorso"] = "下半身",
+    ["X Color B"] = "X色 B",
+    ["X Color G"] = "X色 G",
+    ["X Color R"] = "X色 R",
+    ["X Duration x10"] = "X表示時間 x10",
+    ["X Mark"] = "Xマーク",
+    ["X Mark On Click"] = "クリック時にX表示",
+    ["X Scale"] = "Xサイズ",
+    ["X Thickness"] = "X太さ",
+    ["Watch"] = "観戦",
+    ["Whisper To"] = "ささやき先",
+    ["World"] = "ワールド",
+    ["World Editing"] = "ワールド編集",
+    ["General menu settings area."] = "メニュー全体の設定エリアです。",
+    ["Anti-Fling"] = "アンチフリング",
+    ["Anti-RB"] = "アンチラバーバンド",
+    ["Anti-TP"] = "アンチテレポート",
+    ["Blocked"] = "ブロックしました",
+    ["Cheater"] = "チーター",
+    ["DUMB CHEATER"] = "危険なチーター",
+    ["Low Poly"] = "ローポリ",
+    ["Enabled - FPS boost active"] = "有効化しました - FPSブースト動作中",
+    ["Disabled - restored"] = "無効化しました - 復元済み",
+    ["Triggerbot"] = "Triggerbot",
+    ["Enabled"] = "有効",
+    ["Disabled"] = "無効",
+    ["Fling"] = "フリング",
+    ["Spinning"] = "回転中",
+    ["LAUNCHED"] = "吹き飛ばしました",
+    ["Spectate"] = "観戦",
+    ["Spectating"] = "観戦中",
+    ["Copy"] = "コピー",
+    ["copied"] = "をコピーしました",
+    ["Clipboard not supported by this executor"] = "このexecutorはクリップボードに対応していません",
+    ["Link"] = "リンク",
+    ["Facebook link"] = "Facebookリンク",
+    ["YouTube link"] = "YouTubeリンク",
+    ["Mobile Aimbot Enabled"] = "モバイルAimbotを有効化しました",
+    ["Mobile Aimbot Disabled"] = "モバイルAimbotを無効化しました",
+    ["Invalid key bind"] = "無効なキー割り当てです",
+    ["Target: "] = "対象: ",
+    ["No Backpack found"] = "バックパックが見つかりません",
+    ["Got: "] = "取得: ",
+    [" (moved)"] = " (移動)",
+    [" (equipped)"] = " (装備)",
+    ["Requested: "] = "要求済み: ",
+    [" via "] = " 経由 ",
+    ["Could not give: "] = "取得できませんでした: ",
+    [" (server-locked)"] = " (サーバーロック)",
+    ["Disconnecting..."] = "切断しています...",
+    ["Rejoining server..."] = "サーバーに再接続しています...",
+    ["Searching least-populated server..."] = "最も空いているサーバーを探しています...",
+    ["Hopping to least-populated server..."] = "最も空いているサーバーへ移動しています...",
+    ["No suitable server found"] = "適切なサーバーが見つかりませんでした",
+    ["Menu destroyed"] = "メニューを破棄しました",
+    ["Select a target first"] = "先に対象を選択してください",
+    ["Chain fling stopped"] = "チェーンフリングを停止しました",
+    ["Chain fling started - spins then launches, auto-switches!"] = "チェーンフリング開始 - 回転後に吹き飛ばし、自動で次へ切り替えます!",
+    ["Teleported to "] = "テレポート先: ",
+    ["Save Config"] = "設定を保存",
+    ["Chấm"] = "ドット",
+    ["Vòng FOV riêng"] = "FOVリング",
+    ["Chữ thập"] = "クロス",
 }
 STATE._LANG_TEXT_VI = {
     ["  0=midnight  6=sunrise  14=noon  20=night"] = "  0=nửa đêm  6=bình minh  14=trưa  20=ban đêm",
@@ -2798,6 +3231,8 @@ STATE._LANG_TEXT_VI = {
     ["  Click anywhere to teleport."] = "  Bấm vào vị trí bất kỳ để dịch chuyển.",
     ["  Closes the UI completely."] = "  Đóng hoàn toàn giao diện.",
     ["  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso"] = "  Luân phiên: Head / HumanoidRootPart / UpperTorso / LowerTorso",
+    ["  General menu settings area."] = "  Khu vực cài đặt chung của menu.",
+    ["  Auto save all toggle and slider values."] = "  Tự động lưu toàn bộ giá trị bật/tắt và thanh trượt.",
     ["  Auto aimbot for touch devices using the center of the screen."] = "  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.",
     ["  ON ignores players on your team."] = "  ON sẽ bỏ qua người cùng đội.",
     ["  ON only locks players on your team."] = "  ON chỉ khóa người cùng đội.",
@@ -2806,6 +3241,7 @@ STATE._LANG_TEXT_VI = {
     ["  Default is 70. Higher = wider view."] = "  Mặc định là 70. Cao hơn = góc nhìn rộng hơn.",
     ["  depth of field. Cleaner visuals + FPS boost."] = "  xóa chiều sâu trường ảnh. Hình ảnh sạch hơn và tăng FPS.",
     ["  Disconnects your own client from the current server."] = "  Ngắt kết nối client của bạn khỏi server hiện tại.",
+    ["  First person only. Hold keybind to aim when close to enemy."] = "  Chỉ dùng ở góc nhìn thứ nhất. Giữ phím để ngắm khi ở gần địch.",
     ["  First person only. Hold keybind to lock when close to enemy."] = "  Chỉ dùng ở góc nhìn thứ nhất. Giữ phím để khóa khi ở gần địch.",
     ["  Flashes white on F12/PrintScreen, exclueding Mobile"] = "  Chớp trắng khi bấm F12/PrintScreen, không áp dụng cho Mobile.",
     ["  Hides all Anchored=false collidable parts."] = "  Ẩn mọi phần có va chạm với Anchored=false.",
@@ -2842,9 +3278,11 @@ STATE._LANG_TEXT_VI = {
     ["Exploit Detection"] = "Phát hiện Exploit",
     ["  Zero workspace gravity. Float freely."] = "  Đưa trọng lực Workspace về 0 để bay lơ lửng.",
     ["Aim Prediction"] = "Dự đoán aim",
+    ["Aim Bone"] = "Bộ phận ngắm",
     ["Aim Smoothness"] = "Độ mượt aim",
     ["Aimbot"] = "Aimbot",
     ["Aimbot FOV"] = "Vùng aim Aimbot",
+    ["Aimbot Mobile"] = "Aimbot Mobile",
     ["Aimbot Mobile?"] = "Aimbot cho Mobile?",
     ["Enable Mobile Aimbot"] = "Bật Aimbot Mobile",
     ["Mobile Aim Prediction"] = "Dự đoán aim Mobile",
@@ -2862,19 +3300,59 @@ STATE._LANG_TEXT_VI = {
     ["Camera"] = "Camera",
     ["Camera Distance"] = "Khoảng cách camera",
     ["Chams"] = "Tô màu xuyên tường",
+    ["Cross B"] = "Chữ thập B",
+    ["Cross Enemy B"] = "Chữ thập địch B",
+    ["Cross Enemy Color"] = "Màu chữ thập khi gặp địch",
+    ["Cross Enemy G"] = "Chữ thập địch G",
+    ["Cross Enemy R"] = "Chữ thập địch R",
+    ["Cross G"] = "Chữ thập G",
+    ["Cross Length"] = "Độ dài chữ thập",
+    ["Cross R"] = "Chữ thập R",
+    ["Cross Thickness"] = "Độ dày chữ thập",
+    ["Cross X"] = "Độ lệch X chữ thập",
+    ["Cross Y"] = "Độ lệch Y chữ thập",
     ["Credit Admin"] = "Thông tin Admin",
     ["CuongOutLook User Chat"] = "Chat người dùng CuongOutLook",
+    ["Dot B"] = "Chấm B",
+    ["Dot Enemy B"] = "Chấm địch B",
+    ["Dot Enemy Color"] = "Màu chấm khi gặp địch",
+    ["Dot Enemy G"] = "Chấm địch G",
+    ["Dot Enemy R"] = "Chấm địch R",
+    ["Dot G"] = "Chấm G",
+    ["Dot Layer"] = "Lớp chấm",
+    ["Dot R"] = "Chấm R",
+    ["Dot Scale"] = "Kích thước chấm",
+    ["Dot Thickness"] = "Độ dày chấm",
+    ["Dot X"] = "Độ lệch X chấm",
+    ["Dot Y"] = "Độ lệch Y chấm",
     ["Donate ID"] = "ID ủng hộ",
     ["Enable ESP"] = "Bật ESP",
     ["Features"] = "Tính năng",
     ["Field of View"] = "Góc nhìn",
+    ["FOV B"] = "FOV B",
+    ["FOV Enemy B"] = "FOV địch B",
+    ["FOV Enemy Color"] = "Màu FOV khi gặp địch",
+    ["FOV Enemy G"] = "FOV địch G",
+    ["FOV Enemy R"] = "FOV địch R",
+    ["FOV G"] = "FOV G",
+    ["FOV Layer"] = "Lớp FOV",
+    ["FOV R"] = "FOV R",
+    ["FOV Size"] = "Kích thước FOV",
+    ["FOV Thickness"] = "Độ dày FOV",
+    ["FOV X"] = "Độ lệch X FOV",
+    ["FOV Y"] = "Độ lệch Y FOV",
     ["Fling"] = "Hất văng",
     ["Fling Once"] = "Hất văng một lần",
     ["Game Items"] = "Vật phẩm trong game",
     ["Give"] = "Nhận",
+    ["Layer / Thickness"] = "Lớp / Độ dày",
+    ["Items"] = "Vật phẩm",
+    ["Visual"] = "Hình ảnh",
+    ["Language"] = "Ngôn ngữ",
     ["Lighting"] = "Ánh sáng",
     ["Low- Menu Graphic"] = "Đồ họa menu thấp",
     ["Menu"] = "Menu",
+    ["Mobile Target"] = "Mục tiêu Mobile",
     ["Movement"] = "Di chuyển",
     ["Mobile Team Check"] = "Kiểm tra đội Mobile",
     ["Mobile Team Only"] = "Chỉ khóa đồng đội Mobile",
@@ -2907,27 +3385,102 @@ STATE._LANG_TEXT_VI = {
     ["Spin"] = "Xoay",
     ["Stop Spectate"] = "Dừng theo dõi",
     ["Target"] = "Mục tiêu",
+    ["Torso"] = "Thân",
     ["Team Check"] = "Kiểm tra đồng đội",
     ["Team Color"] = "Màu đội",
     ["Teleport"] = "Dịch chuyển",
     ["Third Person"] = "Góc nhìn thứ ba",
     ["TP to"] = "Dịch chuyển tới",
     ["Type a message..."] = "Nhập tin nhắn...",
+    ["Head"] = "Đầu",
+    ["HumanoidRootPart"] = "Gốc nhân vật",
+    ["UpperTorso"] = "Thân trên",
+    ["LowerTorso"] = "Thân dưới",
+    ["X Color B"] = "Màu X B",
+    ["X Color G"] = "Màu X G",
+    ["X Color R"] = "Màu X R",
+    ["X Duration x10"] = "Thời gian X x10",
+    ["X Mark"] = "Dấu X",
+    ["X Mark On Click"] = "Hiện dấu X khi bấm",
+    ["X Scale"] = "Kích thước X",
+    ["X Thickness"] = "Độ dày X",
     ["Watch"] = "Theo dõi",
     ["Whisper To"] = "Nhắn riêng tới",
     ["World"] = "Thế giới",
     ["World Editing"] = "Chỉnh sửa thế giới",
     ["General menu settings area."] = "Khu vực cài đặt chung của menu.",
     ["Triệu hồi - Summon it"] = "Triệu hồi",
+    ["Anti-Fling"] = "Chống hất văng",
+    ["Anti-RB"] = "Chống kéo giật",
+    ["Anti-TP"] = "Chống dịch chuyển",
+    ["Blocked"] = "Đã chặn",
+    ["Cheater"] = "Kẻ gian lận",
+    ["DUMB CHEATER"] = "KẺ GIAN LẬN",
+    ["Low Poly"] = "Đồ họa thấp",
+    ["Enabled - FPS boost active"] = "Đã bật - tăng FPS đang hoạt động",
+    ["Disabled - restored"] = "Đã tắt - đã khôi phục",
+    ["Triggerbot"] = "Triggerbot",
+    ["Enabled"] = "Đã bật",
+    ["Disabled"] = "Đã tắt",
+    ["Fling"] = "Hất văng",
+    ["Spinning"] = "Đang xoay",
+    ["LAUNCHED"] = "Đã hất văng",
+    ["Spectate"] = "Theo dõi",
+    ["Spectating"] = "Đang theo dõi",
+    ["Copy"] = "Sao chép",
+    ["copied"] = "đã được sao chép",
+    ["Clipboard not supported by this executor"] = "Executor này không hỗ trợ clipboard",
+    ["Link"] = "Liên kết",
+    ["Facebook link"] = "Liên kết Facebook",
+    ["YouTube link"] = "Liên kết YouTube",
+    ["Mobile Aimbot Enabled"] = "Đã bật Aimbot Mobile",
+    ["Mobile Aimbot Disabled"] = "Đã tắt Aimbot Mobile",
+    ["Invalid key bind"] = "Phím gán không hợp lệ",
+    ["Target: "] = "Mục tiêu: ",
+    ["No Backpack found"] = "Không tìm thấy ba lô",
+    ["Got: "] = "Đã nhận: ",
+    [" (moved)"] = " (đã chuyển)",
+    [" (equipped)"] = " (đã trang bị)",
+    ["Requested: "] = "Đã yêu cầu: ",
+    [" via "] = " qua ",
+    ["Could not give: "] = "Không thể nhận: ",
+    [" (server-locked)"] = " (bị khóa bởi máy chủ)",
+    ["Disconnecting..."] = "Đang ngắt kết nối...",
+    ["Rejoining server..."] = "Đang vào lại server...",
+    ["Searching least-populated server..."] = "Đang tìm server ít người nhất...",
+    ["Hopping to least-populated server..."] = "Đang chuyển tới server ít người nhất...",
+    ["No suitable server found"] = "Không tìm thấy server phù hợp",
+    ["Menu destroyed"] = "Đã phá hủy menu",
+    ["Select a target first"] = "Hãy chọn mục tiêu trước",
+    ["Chain fling stopped"] = "Đã dừng chain fling",
+    ["Chain fling started - spins then launches, auto-switches!"] = "Đã bật chain fling - xoay rồi hất văng, tự chuyển mục tiêu!",
+    ["Teleported to "] = "Đã dịch chuyển tới ",
+    ["Save Config"] = "Lưu cấu hình",
+    ["Chấm"] = "Chấm",
+    ["Vòng FOV riêng"] = "Vòng FOV riêng",
+    ["Chữ thập"] = "Chữ thập",
 }
 STATE._LANG_BINDINGS = {}
 STATE._LANG_REFRESHERS = {}
 function _tr(text)
     if type(text) ~= "string" then return text end
-    if STATE.language == "en" then
-        return STATE._LANG_TEXT_EN[text] or text
+    if STATE.language == "jp" then
+        return (STATE._LANG_TEXT_JP and STATE._LANG_TEXT_JP[text]) or STATE._LANG_TEXT_EN[text] or STATE._LANG_TEXT_VI[text] or text
     end
-    return STATE._LANG_TEXT_VI[text] or text
+    if STATE.language == "en" then
+        return STATE._LANG_TEXT_EN[text] or STATE._LANG_TEXT_VI[text] or text
+    end
+    return STATE._LANG_TEXT_VI[text] or STATE._LANG_TEXT_EN[text] or text
+end
+function STATE._refreshAimBoneText()
+    if STATE._aimBoneBtn and STATE._aimBoneBtn.Parent then
+        STATE._aimBoneBtn.Text = _tr("Aim Bone") .. ": " .. _tr(STATE.aimBone or "Head")
+    end
+end
+function STATE._refreshMobileTargetText()
+    if STATE._camlockMobileTargetBtn and STATE._camlockMobileTargetBtn.Parent then
+        STATE._camlockMobileTargetBtn.Text = _tr("Mobile Target") .. ": " .. _tr(STATE.camlockMobileTarget or "Head")
+    end
 end
 function _bindLangText(obj, baseText)
     if not obj then return end
@@ -3028,6 +3581,61 @@ local function respawnDigit(lbl, fromTop)
     }
 end
 
+local function stopMenuBackgroundFx()
+    if fxConn then
+        fxConn:Disconnect()
+        fxConn = nil
+    end
+    fxLayer.Visible = false
+    for _, lbl in ipairs(fxDigits) do
+        lbl.Visible = false
+    end
+end
+
+local function startMenuBackgroundFx()
+    if fxConn then
+        fxConn:Disconnect()
+        fxConn = nil
+    end
+    fxLayer.Visible = true
+    for _, lbl in ipairs(fxDigits) do
+        lbl.Visible = true
+    end
+    STATE._fxAccum = 0
+    fxConn = RunService.RenderStepped:Connect(function(dt)
+        if not window.Parent or not fxLayer.Parent then
+            if fxConn then fxConn:Disconnect(); fxConn = nil end
+            return
+        end
+        STATE._fxAccum = STATE._fxAccum + dt
+        if STATE._fxAccum < (1/30) then return end
+        dt = STATE._fxAccum
+        STATE._fxAccum = 0
+        for _, lbl in ipairs(fxDigits) do
+            local st = fxState[lbl]
+            if st then
+                local x = lbl.Position.X.Scale + st.vx * dt
+                local y = lbl.Position.Y.Scale + st.vy * dt
+                st.glitch = st.glitch - dt
+                if st.glitch <= 0 then
+                    lbl.Text = tostring(math.random(0, 9))
+                    lbl.Rotation = math.random(-8, 8)
+                    lbl.TextTransparency = math.random(20, 65) / 100
+                    st.glitch = 0.04 + math.random() * 0.14
+                end
+                if math.random() < 0.02 then
+                    st.vx = math.clamp(st.vx + (math.random() - 0.5) * 0.02, -0.07, 0.07)
+                end
+                if y > 1.12 or x < -0.16 or x > 1.16 then
+                    respawnDigit(lbl, true)
+                else
+                    lbl.Position = UDim2.fromScale(x, y)
+                end
+            end
+        end
+    end)
+end
+
 for _ = 1, FX_COUNT do
     local d = Instance.new("TextLabel")
     d.BackgroundTransparency = 1
@@ -3041,38 +3649,7 @@ for _ = 1, FX_COUNT do
 end
 
 STATE._fxAccum = 0
-fxConn = RunService.RenderStepped:Connect(function(dt)
-    if not window.Parent or not fxLayer.Parent then
-        if fxConn then fxConn:Disconnect(); fxConn = nil end
-        return
-    end
-    STATE._fxAccum = STATE._fxAccum + dt
-    if STATE._fxAccum < (1/30) then return end
-    dt = STATE._fxAccum
-    STATE._fxAccum = 0
-    for _, lbl in ipairs(fxDigits) do
-        local st = fxState[lbl]
-        if st then
-            local x = lbl.Position.X.Scale + st.vx * dt
-            local y = lbl.Position.Y.Scale + st.vy * dt
-            st.glitch = st.glitch - dt
-            if st.glitch <= 0 then
-                lbl.Text = tostring(math.random(0, 9))
-                lbl.Rotation = math.random(-8, 8)
-                lbl.TextTransparency = math.random(20, 65) / 100
-                st.glitch = 0.04 + math.random() * 0.14
-            end
-            if math.random() < 0.02 then
-                st.vx = math.clamp(st.vx + (math.random() - 0.5) * 0.02, -0.07, 0.07)
-            end
-            if y > 1.12 or x < -0.16 or x > 1.16 then
-                respawnDigit(lbl, true)
-            else
-                lbl.Position = UDim2.fromScale(x, y)
-            end
-        end
-    end
-end)
+startMenuBackgroundFx()
 local sbTitle = Instance.new("Frame", window)
 sbTitle.Size             = UDim2.new(0, 236, 0, 44)
 sbTitle.Position         = UDim2.new(0, 12, 0, 12)
@@ -3105,15 +3682,16 @@ end)
 closeBtn.MouseLeave:Connect(function()
     closeBtn.BackgroundColor3 = C.RED
 end)
+local refreshLanguageUI
 local langBtn = Instance.new("TextButton", window)
-langBtn.Size             = UDim2.new(0, 100, 0, 28)
-langBtn.Position         = UDim2.new(1, -18 - 34 - 8 - 100, 0, 18)
+langBtn.Size             = UDim2.new(0, 132, 0, 28)
+langBtn.Position         = UDim2.new(1, -18 - 34 - 8 - 132, 0, 18)
 langBtn.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
 langBtn.BorderSizePixel  = 0
 langBtn.Font             = Enum.Font.GothamSemibold
 langBtn.TextSize         = 10
 langBtn.TextColor3       = Color3.fromRGB(110, 245, 255)
-langBtn.Text             = _L("langBtn")
+langBtn.Text             = STATE._getLanguageButtonText()
 langBtn.AutoButtonColor  = false
 Instance.new("UICorner", langBtn).CornerRadius = UDim.new(0, 10)
 local _lbs = Instance.new("UIStroke", langBtn)
@@ -3125,14 +3703,72 @@ end)
 langBtn.MouseLeave:Connect(function()
     langBtn.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
 end)
--- Create collapsed button (small black square with "COL")
+STATE._langMenu = Instance.new("Frame", window)
+STATE._langMenu.Size = UDim2.new(0, 132, 0, 96)
+STATE._langMenu.Position = UDim2.new(1, -18 - 34 - 8 - 132, 0, 50)
+STATE._langMenu.BackgroundColor3 = Color3.fromRGB(10, 18, 28)
+STATE._langMenu.BorderSizePixel = 0
+STATE._langMenu.Visible = false
+STATE._langMenu.ZIndex = 20
+Instance.new("UICorner", STATE._langMenu).CornerRadius = UDim.new(0, 10)
+local _langMenuStroke = Instance.new("UIStroke", STATE._langMenu)
+_langMenuStroke.Color = Color3.fromRGB(0, 200, 230)
+_langMenuStroke.Transparency = 0.15
+_langMenuStroke.Thickness = 1
+local _langMenuPad = Instance.new("UIPadding", STATE._langMenu)
+_langMenuPad.PaddingLeft = UDim.new(0, 6)
+_langMenuPad.PaddingRight = UDim.new(0, 6)
+_langMenuPad.PaddingTop = UDim.new(0, 6)
+_langMenuPad.PaddingBottom = UDim.new(0, 6)
+local _langMenuLayout = Instance.new("UIListLayout", STATE._langMenu)
+_langMenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+_langMenuLayout.Padding = UDim.new(0, 4)
+STATE._langOptionBtns = {}
+for order, code in ipairs({"vi", "en", "jp"}) do
+    local opt = Instance.new("TextButton", STATE._langMenu)
+    opt.Name = "Lang_" .. code
+    opt.Size = UDim2.new(1, 0, 0, 24)
+    opt.BackgroundColor3 = Color3.fromRGB(16, 28, 42)
+    opt.BorderSizePixel = 0
+    opt.LayoutOrder = order
+    opt.Font = Enum.Font.Gotham
+    opt.TextSize = 11
+    opt.TextColor3 = C.TXT
+    opt.Text = STATE._LANGUAGE_NAMES[code] or code
+    opt.AutoButtonColor = false
+    opt.ZIndex = 21
+    Instance.new("UICorner", opt).CornerRadius = UDim.new(0, 8)
+    local optStroke = Instance.new("UIStroke", opt)
+    optStroke.Color = Color3.fromRGB(42, 70, 98)
+    optStroke.Transparency = 0.2
+    optStroke.Thickness = 1
+    opt.MouseEnter:Connect(function()
+        if STATE.language ~= code then
+            opt.BackgroundColor3 = Color3.fromRGB(24, 42, 60)
+        end
+    end)
+    opt.MouseLeave:Connect(function()
+        if STATE.language ~= code then
+            opt.BackgroundColor3 = Color3.fromRGB(16, 28, 42)
+        end
+    end)
+    opt.MouseButton1Click:Connect(function()
+        STATE.language = code
+        STATE._langMenu.Visible = false
+        refreshLanguageUI()
+        notify(_tr("Language"), (STATE.language == "jp") and "日本語に切り替えました" or ((STATE.language == "vi") and "Đã chuyển sang Tiếng Việt" or "Switched to English"), 2)
+        pcall(saveStateIfEnabled)
+    end)
+    STATE._langOptionBtns[code] = opt
+end
+langBtn.MouseButton1Click:Connect(function()
+    STATE._langMenu.Visible = not STATE._langMenu.Visible
+end)
 local collapsedBtn = Instance.new("TextButton", sg)
 collapsedBtn.Size             = UDim2.new(0, 50, 0, 50)
 collapsedBtn.Position         = UDim2.new(0, 20, 0, 20)
 collapsedBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 collapsedBtn.BorderSizePixel  = 0
-collapsedBtn.Font             = Enum.Font.GothamBold
-collapsedBtn.TextSize         = 12
 collapsedBtn.TextColor3       = Color3.fromRGB(0, 255, 255)
 collapsedBtn.Text             = ""
 collapsedBtn.AutoButtonColor  = false
@@ -3218,12 +3854,45 @@ local function startCollapsedButtonFx()
         )
     end)
 end
-startCollapsedButtonFx()
+
+local function stopCollapsedButtonFx()
+    if collapsedFxConn then
+        collapsedFxConn:Disconnect()
+        collapsedFxConn = nil
+    end
+    collapsedBtn.BackgroundColor3 = collapsedHovering and Color3.fromRGB(24, 28, 28) or Color3.fromRGB(0, 0, 0)
+    collapsedStroke.Color = Color3.fromRGB(0, 255, 255)
+    collapsedStroke.Thickness = 5
+    collapsedFxLabel.Visible = true
+    collapsedFxLabel.Text = "COL"
+    collapsedFxLabel.TextColor3 = Color3.fromRGB(235, 248, 255)
+    collapsedFxStroke.Transparency = 0.22
+    collapsedFxLabel.Position = collapsedFxBasePos
+    collapsedBtn.Size = collapsedBtnBaseSize
+end
+
+local function applyLowMenuGraphicMode()
+    if STATE.lowMenuGraphic then
+        stopMenuBackgroundFx()
+        stopCollapsedButtonFx()
+    else
+        startMenuBackgroundFx()
+        startCollapsedButtonFx()
+    end
+end
+
+applyLowMenuGraphicMode()
 collapsedBtn.MouseEnter:Connect(function()
     collapsedHovering = true
+    if STATE.lowMenuGraphic then
+        stopCollapsedButtonFx()
+    end
 end)
 collapsedBtn.MouseLeave:Connect(function()
     collapsedHovering = false
+    if STATE.lowMenuGraphic then
+        stopCollapsedButtonFx()
+    end
 end)
 local subLbl = Instance.new("TextLabel", window)
 subLbl.Size               = UDim2.new(0, 320, 0, 18)
@@ -3285,6 +3954,9 @@ local function setMenuHidden(hidden)
     menuHidden = hidden
     window.Visible = not hidden
     collapsedBtn.Visible = hidden
+    if hidden and STATE._langMenu then
+        STATE._langMenu.Visible = false
+    end
     if hidden then
         notify("CuongOutLook Aimbot", _L("menuCollapsed"), 5)
     end
@@ -3334,10 +4006,16 @@ for i, t in ipairs(TABS) do
     tabBtns[t]         = b
     b.MouseButton1Click:Connect(function() showTab(t) end)
 end
-local function refreshLanguageUI()
+refreshLanguageUI = function()
     sbLbl.Text = _L("title")
     subLbl.Text = _L("subtitle")
-    langBtn.Text = _L("langBtn")
+    langBtn.Text = STATE._getLanguageButtonText()
+    for code, btn in pairs(STATE._langOptionBtns or {}) do
+        local selected = (STATE.language == code)
+        btn.Text = STATE._LANGUAGE_NAMES[code] or code
+        btn.BackgroundColor3 = selected and C.ACC or Color3.fromRGB(16, 28, 42)
+        btn.TextColor3 = selected and C.WHT or C.TXT
+    end
     for tabName, btn in pairs(tabBtns) do
         btn.Text = _tabLabel(tabName)
     end
@@ -3346,12 +4024,7 @@ local function refreshLanguageUI()
         STATE._chainBtn.Text = _tr(STATE.chainFling and "Chain Fling (ON)" or "Chain Fling (OFF)")
     end
 end
-langBtn.MouseButton1Click:Connect(function()
-    STATE.language = (STATE.language == "vi") and "en" or "vi"
-    refreshLanguageUI()
-    notify("Language", (STATE.language == "vi") and "Đã chuyển sang Tiếng Việt" or "Switched to English", 2)
-    pcall(saveStateIfEnabled)
-end)
+refreshLanguageUI()
 local adminCredit = Instance.new("TextButton", tabBar)
 adminCredit.Name             = "Credit Admin"
 adminCredit.Size             = UDim2.new(0, 96, 0, 30)
@@ -3401,13 +4074,13 @@ local function copyToClipboard(text, label)
         end
     end)
     if ok then
-        notify("Copy", (label or "Link") .. " copied", 2)
+        notify(_tr("Copy"), _tr(label or "Link") .. " " .. _tr("copied"), 2)
     else
-        notify("Copy", "Clipboard not supported by this executor", 3)
+        notify(_tr("Copy"), _tr("Clipboard not supported by this executor"), 3)
     end
 end
 -- UI builders
-local function Sec(tab, txt)
+function STATE._Sec(tab, txt)
     local f = Instance.new("Frame", sf)
     f.Size                  = UDim2.new(1, 0, 0, 24)
     f.BackgroundTransparency = 1
@@ -3423,7 +4096,7 @@ local function Sec(tab, txt)
     lb.TextXAlignment        = Enum.TextXAlignment.Left
     table.insert(tabPages[tab], f)
 end
-local function Info(tab, txt)
+function STATE._Info(tab, txt)
     local f = Instance.new("Frame", sf)
     f.Size                  = UDim2.new(1, 0, 0, 20)
     f.BackgroundTransparency = 1
@@ -3440,7 +4113,7 @@ local function Info(tab, txt)
     lb.TextWrapped           = true
     table.insert(tabPages[tab], f)
 end
-local function Tog(tab, label, getS, setS, extra)
+function STATE._Tog(tab, label, getS, setS, extra)
     local row = Instance.new("Frame", sf)
     row.Size             = UDim2.new(1, 0, 0, 42)
     row.BackgroundColor3 = C.PANEL
@@ -3484,7 +4157,7 @@ local function Tog(tab, label, getS, setS, extra)
     table.insert(tabPages[tab], row)
     return row, rf
 end
-local function Sli(tab, label, getV, setV, mn, mx)
+function STATE._Sli(tab, label, getV, setV, mn, mx)
     local row = Instance.new("Frame", sf)
     row.Size             = UDim2.new(1, 0, 0, 54)
     row.BackgroundColor3 = C.PANEL
@@ -3635,68 +4308,68 @@ end
 -- ============================
 -- ESP TAB
 -- ============================
-Sec("ESP", "Player ESP")
-Tog("ESP", "Enable ESP",
+STATE._Sec("ESP", "Player ESP")
+STATE._Tog("ESP", "Enable ESP",
     function() return STATE.esp end,
     function(v) STATE.esp = v; if not v then clearAllESP() end end)
-Sec("ESP", "Features")
-Tog("ESP", "Box",
+STATE._Sec("ESP", "Features")
+STATE._Tog("ESP", "Box",
     function() return STATE.espBox end,
     function(v) STATE.espBox = v end)
-Tog("ESP", "Chams",
+STATE._Tog("ESP", "Chams",
     function() return STATE.espChams end,
     function(v) STATE.espChams = v end)
-Info("ESP", "  Red glow through walls")
-Sec("ESP", "Options")
-Tog("ESP", "Team Color",
+STATE._Info("ESP", "  Red glow through walls")
+STATE._Sec("ESP", "Options")
+STATE._Tog("ESP", "Team Color",
     function() return STATE.espTeamCheck end,
     function(v) STATE.espTeamCheck = v end)
-Info("ESP", "  Teammates shown in blue, enemies red")
+STATE._Info("ESP", "  Teammates shown in blue, enemies red")
 -- ============================
 -- PROTECT TAB
 -- ============================
-Sec("Protect", "Protections")
-Tog("Protect", "Anti Hất văng (risk)",
+STATE._Sec("Protect", "Protections")
+STATE._Tog("Protect", "Anti Hất văng (risk)",
     function() return STATE.antiFling end,
     function(v) STATE.antiFling = v end)
-Info("Protect", "  Anti Fling. Enables noclip.")
-Tog("Protect", "Anti Tốc biến (risk)",
+STATE._Info("Protect", "  Anti Fling. Enables noclip.")
+STATE._Tog("Protect", "Anti Tốc biến (risk)",
     function() return STATE.antiRubberBand end,
     function(v) STATE.antiRubberBand = v; if not v then rb_prevPos = nil end end)
-Info("Protect", "  Blocks rubberband with server position snapping.")
-Tog("Protect", "Anti Dịch chuyển",
+STATE._Info("Protect", "  Blocks rubberband with server position snapping.")
+STATE._Tog("Protect", "Anti Dịch chuyển",
     function() return STATE.antiTP end,
     function(v) STATE.antiTP = v; if not v then tp_prevPos = nil end end)
-Info("Protect", "  Blocks server teleports >50 studs.")
-Tog("Protect", "Anti Vật phẩm bay vòng",
+STATE._Info("Protect", "  Blocks server teleports >50 studs.")
+STATE._Tog("Protect", "Anti Vật phẩm bay vòng",
     function() return STATE.antiItemOrbit end,
     function(v) STATE.antiItemOrbit = v end)
-Info("Protect", "  Hides orbiting items. Throttled (no lag).")
-Tog("Protect", "Xuyên tường (risk)",
+STATE._Info("Protect", "  Hides orbiting items. Throttled (no lag).")
+STATE._Tog("Protect", "Xuyên tường (risk)",
     function() return STATE.noclip end,
     function(v) STATE.noclip = v end)
-Sec("Protect", "Anti Extras")
-Tog("Protect", "Anti Aim",
+STATE._Sec("Protect", "Anti Extras")
+STATE._Tog("Protect", "Anti Aim",
     function() return STATE.antiAim end,
     function(v) STATE.antiAim = v; if v then startAntiAim() end end)
-Info("Protect", "  Spins HRP to break enemy aimbot lock")
-Tog("Protect", "Anti Chụp màn hình",
+STATE._Info("Protect", "  Spins HRP to break enemy aimbot lock")
+STATE._Tog("Protect", "Anti Chụp màn hình",
     function() return STATE.antiScreen end,
     function(v) STATE.antiScreen = v end)
-Info("Protect", "  Flashes white on F12/PrintScreen, exclueding Mobile")
-Tog("Protect", "Phát hiện Exploit",
+STATE._Info("Protect", "  Flashes white on F12/PrintScreen, exclueding Mobile")
+STATE._Tog("Protect", "Phát hiện Exploit",
     function() return STATE.antiExploit end,
     function(v) STATE.antiExploit = v end)
-Info("Protect", "  Quét dấu vết executor hoặc exploit trên người chơi khác.")
-Tog("Protect", "Anti Trọng lực (very risky)",
+STATE._Info("Protect", "  Quét dấu vết executor hoặc exploit trên người chơi khác.")
+STATE._Tog("Protect", "Anti Trọng lực (very risky)",
     function() return STATE.antiGravity end,
     function(v) STATE.antiGravity = v; applyAntiGrav(v) end)
-Info("Protect", "  Zero workspace gravity. Float freely.")
+STATE._Info("Protect", "  Zero workspace gravity. Float freely.")
 -- ============================
 -- AIMBOT TAB
 -- ============================
-Sec("Aimbot", "Aimbot")
-STATE._camlockRow = Tog("Aimbot", "Bật Aimbot (PC)",
+STATE._Sec("Aimbot", "Aimbot")
+STATE._camlockRow = STATE._Tog("Aimbot", "Bật Aimbot (PC)",
     function() return STATE.camlock end,
     function(v) STATE.camlock = v end)
 pcall(function()
@@ -3796,7 +4469,7 @@ pcall(function()
         refreshMobileBtn()
         if STATE._camlockMobileRf then STATE._camlockMobileRf() end
         if not skipNotify then
-            notify("Aimbot", STATE.camlockMobile and "Đã bật Aimbot Mobile" or "Đã tắt Aimbot Mobile", 2)
+            notify(_tr("Aimbot"), _tr(STATE.camlockMobile and "Mobile Aimbot Enabled" or "Mobile Aimbot Disabled"), 2)
         end
         pcall(saveStateIfEnabled)
     end
@@ -3831,7 +4504,7 @@ pcall(function()
         end
         if enterPressed and typed and typed ~= "" then
             if not setAimBind(typed) then
-                notify("Aimbot", "Key bind không hợp lệ", 2)
+                notify(_tr("Aimbot"), _tr("Invalid key bind"), 2)
             end
         end
         refreshKeyText()
@@ -3870,14 +4543,14 @@ pcall(function()
         end
     end)
 end)
-Info("Aimbot", "  First person only. Hold keybind to aim when close to enemy.")
-Tog("Aimbot", "Show FOV",
+STATE._Info("Aimbot", "  First person only. Hold keybind to aim when close to enemy.")
+STATE._Tog("Aimbot", "Show FOV",
     function() return STATE.aimShowFOV end,
     function(v) STATE.aimShowFOV = v end)
-Sli("Aimbot", "Aimbot FOV",
+STATE._Sli("Aimbot", "Aimbot FOV",
     function() return STATE.aimFOV end,
     function(v) STATE.aimFOV = v end, 20, 500)
-Sli("Aimbot", "Aim Smoothness",
+STATE._Sli("Aimbot", "Aim Smoothness",
     function() return STATE.aimSmooth end,
     function(v) STATE.aimSmooth = v end, 0, 40)
 STATE._aimBoneBtn = STATE._Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head"), Color3.fromRGB(0, 170, 255), function()
@@ -3891,26 +4564,26 @@ STATE._aimBoneBtn = STATE._Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head
     end
     idx = (idx % #bones) + 1
     STATE.aimBone = bones[idx]
-    if STATE._aimBoneBtn then
-        STATE._aimBoneBtn.Text = "Aim Bone: " .. STATE.aimBone
-    end
-    notify("Aimbot", "Aim Bone: " .. STATE.aimBone, 2)
+    STATE._refreshAimBoneText()
+    notify(_tr("Aimbot"), _tr("Aim Bone") .. ": " .. _tr(STATE.aimBone), 2)
     pcall(saveStateIfEnabled)
 end)
-Info("Aimbot", "  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso")
-Tog("Aimbot", "Aim Prediction",
+STATE._refreshAimBoneText()
+_bindLangRefresh(STATE._refreshAimBoneText, STATE._aimBoneBtn)
+STATE._Info("Aimbot", "  Cycle: Head / HumanoidRootPart / UpperTorso / LowerTorso")
+STATE._Tog("Aimbot", "Aim Prediction",
     function() return STATE.aimPrediction end,
     function(v) STATE.aimPrediction = v end)
-Info("Aimbot", "  Predicts enemy movement")
-Tog("Aimbot", "Wall Check",
+STATE._Info("Aimbot", "  Predicts enemy movement")
+STATE._Tog("Aimbot", "Wall Check",
     function() return STATE.aimWallCheck end,
     function(v) STATE.aimWallCheck = v end)
-Info("Aimbot", "  Ignore targets behind walls/objects")
-Tog("Aimbot", "Team Check",
+STATE._Info("Aimbot", "  Ignore targets behind walls/objects")
+STATE._Tog("Aimbot", "Team Check",
     function() return STATE.aimTeamCheck end,
     function(v) STATE.aimTeamCheck = v end)
-Info("Aimbot", "  Ignore teammates")
-Tog("Aimbot", "Bật Triggerbot (PC)",
+STATE._Info("Aimbot", "  Ignore teammates")
+STATE._Tog("Aimbot", "Bật Triggerbot (PC)",
     function() return STATE.triggerbot end,
     function(v)
         STATE.triggerbot = v
@@ -3919,9 +4592,9 @@ Tog("Aimbot", "Bật Triggerbot (PC)",
             STATE._triggerHeld = false
         end
     end)
-Info("Aimbot", "  Auto-fire on enemy under crosshair | Hotkey: H")
-Sec("Aimbot", "Aimbot Mobile")
-STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Aimbot Mobile",
+STATE._Info("Aimbot", "  Auto-fire on enemy under crosshair | Hotkey: H")
+STATE._Sec("Aimbot", "Aimbot Mobile")
+STATE._camlockMobileRow, STATE._camlockMobileRf = STATE._Tog("Aimbot", "Bật Aimbot Mobile",
     function() return STATE.camlockMobile end,
     function(v)
         if STATE._setCamlockMobile then
@@ -3930,97 +4603,97 @@ STATE._camlockMobileRow, STATE._camlockMobileRf = Tog("Aimbot", "Bật Aimbot Mo
             STATE.camlockMobile = v
         end
     end)
-Info("Aimbot", "  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.")
-Tog("Aimbot", "Kiểm tra đội Mobile",
+STATE._Info("Aimbot", "  Aimbot tự động cho thiết bị cảm ứng, dùng tâm giữa màn hình.")
+STATE._Tog("Aimbot", "Kiểm tra đội Mobile",
     function() return STATE.camlockMobileTeamCheck end,
     function(v) STATE.camlockMobileTeamCheck = v end)
-Info("Aimbot", "  ON sẽ bỏ qua người cùng đội.")
-Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
+STATE._Info("Aimbot", "  ON sẽ bỏ qua người cùng đội.")
+STATE._Tog("Aimbot", "Chỉ khóa đồng đội Mobile",
     function() return STATE.camlockMobileTeamOnly end,
     function(v) STATE.camlockMobileTeamOnly = v end)
-Info("Aimbot", "  ON chỉ khóa người cùng đội.")
-Tog("Aimbot", "Dự đoán aim Mobile",
+STATE._Info("Aimbot", "  ON chỉ khóa người cùng đội.")
+STATE._Tog("Aimbot", "Dự đoán aim Mobile",
     function() return STATE.camlockMobilePrediction end,
     function(v) STATE.camlockMobilePrediction = v end)
-Info("Aimbot", "  Predicts enemy movement")
+STATE._Info("Aimbot", "  Predicts enemy movement")
 STATE._camlockMobileTargetBtn = STATE._Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
     mobileClearLockState()
-    if STATE._camlockMobileTargetBtn then
-        STATE._camlockMobileTargetBtn.Text = "Mobile Target: " .. STATE.camlockMobileTarget
-    end
-    notify("Aimbot", "Mobile Target: " .. STATE.camlockMobileTarget, 2)
+    STATE._refreshMobileTargetText()
+    notify(_tr("Aimbot"), _tr("Mobile Target") .. ": " .. _tr(STATE.camlockMobileTarget), 2)
     pcall(saveStateIfEnabled)
 end)
-Info("Aimbot", "  Luân phiên: Head / Torso")
-Sli("Aimbot", "Độ cứng aim Mobile",
+STATE._refreshMobileTargetText()
+_bindLangRefresh(STATE._refreshMobileTargetText, STATE._camlockMobileTargetBtn)
+STATE._Info("Aimbot", "  Luân phiên: Head / Torso")
+STATE._Sli("Aimbot", "Độ cứng aim Mobile",
     function() return STATE.camlockMobileHardness end,
     function(v) STATE.camlockMobileHardness = v end, 0, 60)
-Sli("Aimbot", "Kích thước FOV Mobile",
+STATE._Sli("Aimbot", "Kích thước FOV Mobile",
     function() return STATE.camlockMobileFov end,
     function(v) STATE.camlockMobileFov = v end, 5, 250)
-Sec("Aimbot", "BigHead OP")
-Tog("Aimbot", "Bighead",
+STATE._Sec("Aimbot", "BigHead OP")
+STATE._Tog("Aimbot", "Bighead",
     function() return STATE.bigheadLabel end,
     function(v) STATE.bigheadLabel = v end)
-Sli("Aimbot", "Bighead Size",
+STATE._Sli("Aimbot", "Bighead Size",
     function() return STATE.bigheadSize end,
     function(v) STATE.bigheadSize = v end, 2, 14)
-Info("Aimbot", "  BigHead mode + size control")
+STATE._Info("Aimbot", "  BigHead mode + size control")
 -- ============================
 -- MOVEMENT TAB
 -- ============================
-Sec("Movement", "Movement")
-Tog("Movement", "Bay vô hạn (risk)",
+STATE._Sec("Movement", "Movement")
+STATE._Tog("Movement", "Bay vô hạn (risk)",
     function() return STATE.fly end,
     function(v) STATE.fly = v end,
     function(on) if on then startFly() else stopFly() end end)
-Info("Movement", "  SPACE=up  CTRL=down  WASD=move")
-Sli("Movement", "Tốc độ bay",
+STATE._Info("Movement", "  SPACE=up  CTRL=down  WASD=move")
+STATE._Sli("Movement", "Tốc độ bay",
     function() return STATE.flySpeed end,
     function(v) STATE.flySpeed = v end, 10, 200)
-Tog("Movement", "Click Dịch chuyển (risk)",
+STATE._Tog("Movement", "Click Dịch chuyển (risk)",
     function() return STATE.clickTP end,
     function(v) STATE.clickTP = v end)
-Info("Movement", "  Click anywhere to teleport.")
-Tog("Movement", "Tăng tốc độ đi bộ",
+STATE._Info("Movement", "  Click anywhere to teleport.")
+STATE._Tog("Movement", "Tăng tốc độ đi bộ",
     function() return STATE.speedBoost end,
     function(v)
         STATE.speedBoost = v
         if not v then local h = getHum(); if h then h.WalkSpeed = 16 end end
     end)
-Sli("Movement", "Tốc độ đi bộ",
+STATE._Sli("Movement", "Tốc độ đi bộ",
     function() return STATE.speedValue end,
     function(v) STATE.speedValue = v end, 16, 200)
-Tog("Movement", "Reach",
+STATE._Tog("Movement", "Reach",
     function() return STATE.reach end,
     function(v) STATE.reach = v end)
-Sli("Movement", "Reach Size",
+STATE._Sli("Movement", "Reach Size",
     function() return STATE.reachValue end,
     function(v) STATE.reachValue = v end, 5, 60)
-Sec("Movement", "Nhảy & Không khí")
-Tog("Movement", "Tăng lực nhảy",
+STATE._Sec("Movement", "Nhảy & Không khí")
+STATE._Tog("Movement", "Tăng lực nhảy",
     function() return STATE.jumpBoost end,
     function(v) STATE.jumpBoost = v; if not v then local h=getHum(); if h then h.JumpPower=50 end end end)
-Sli("Movement", "Lực nhảy",
+STATE._Sli("Movement", "Lực nhảy",
     function() return STATE.jumpPower end,
     function(v) STATE.jumpPower = v end, 50, 500)
-Tog("Movement", "Nhảy vô hạn",
+STATE._Tog("Movement", "Nhảy vô hạn",
     function() return STATE.infinite end,
     function(v) STATE.infinite = v end)
-Info("Movement", "  Jump again mid-air endlessly.")
-Tog("Movement", "Bunny Hop",
+STATE._Info("Movement", "  Jump again mid-air endlessly.")
+STATE._Tog("Movement", "Bunny Hop",
     function() return STATE.bhop end,
     function(v) STATE.bhop = v end)
-Info("Movement", "  Auto-jumps the moment you land.")
-Sec("Movement", "Fling")
-Tog("Movement", "Spin",
+STATE._Info("Movement", "  Auto-jumps the moment you land.")
+STATE._Sec("Movement", "Fling")
+STATE._Tog("Movement", "Spin",
     function() return STATE.spinToggle end,
     function(v)
         STATE.spinToggle = v
         if v then startSpin() else stopSpin() end
     end)
-Info("Movement", "  Spins YOU at 9999 rad/s. Still walk freely.")
+STATE._Info("Movement", "  Spins YOU at 9999 rad/s. Still walk freely.")
 -- ============================
 -- CHAT TAB  -  Shared Private Relay Chat
 -- ============================
@@ -4161,15 +4834,19 @@ do
         chatInfoL.TextSize           = 10
         chatInfoL.TextColor3         = C.ACC
         chatInfoL.TextXAlignment     = Enum.TextXAlignment.Left
-        chatInfoL.Text               = (STATE.language == "en")
+        chatInfoL.Text               = (STATE.language == "jp")
+            and "    Robloxチャットには送信されません | Relayにはサーバースクリプトが必要です。"
+            or ((STATE.language == "en")
             and "    Not sent to Roblox chat | Relay requires a server script."
-            or  "    Không gửi lên Roblox chat | Relay cần có server script."
+            or  "    Không gửi lên Roblox chat | Relay cần có server script.")
 
         _bindLangRefresh(function()
             if chatInfoL and chatInfoL.Parent then
-                chatInfoL.Text = (STATE.language == "en")
+                chatInfoL.Text = (STATE.language == "jp")
+                    and "    Robloxチャットには送信されません | Relayにはサーバースクリプトが必要です。"
+                    or ((STATE.language == "en")
                     and "    Not sent to Roblox chat | Relay requires a server script."
-                    or  "    Không gửi lên Roblox chat | Relay cần có server script."
+                    or  "    Không gửi lên Roblox chat | Relay cần có server script.")
             end
         end, chatInfo)
 
@@ -4292,8 +4969,8 @@ do
         end
     end
 -- Chat tab GUI
-Sec("Chat", "CuongOutLook User Chat")
-Tog("Chat", "Shared Relay Chat",
+STATE._Sec("Chat", "CuongOutLook User Chat")
+STATE._Tog("Chat", "Shared Relay Chat",
     function() return STATE._chatUseShared end,
     function(v)
         STATE._chatUseShared = v
@@ -4301,15 +4978,15 @@ Tog("Chat", "Shared Relay Chat",
             pcall(function() STATE._chatTryBindRelay() end)
         end
     end)
-Info("Chat", "  ON: whisper/all chat cho user cùng script (cần relay).")
-Info("Chat", "  OFF: chỉ local chat trên máy bạn.")
+STATE._Info("Chat", "  ON: whisper/all chat cho user cùng script (cần relay).")
+STATE._Info("Chat", "  OFF: chỉ local chat trên máy bạn.")
 STATE._Drop("Chat", "Whisper To", function(p)
     STATE._chatTarget = p
-    notify("Chat", "Target: " .. p.Name, 2)
+    notify(_tr("Chat"), _tr("Target: ") .. p.Name, 2)
 end)
 STATE._Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
     STATE._chatTarget = nil
-    notify("Chat", "Target: ALL", 2)
+    notify(_tr("Chat"), _tr("Set Target: ALL"), 2)
 end)
 STATE._chatBuildInfoRow()
 -- Message slots (scrollable via the existing ScrollingFrame)
@@ -4447,13 +5124,13 @@ end
 function STATE._giveItem(toolObj)
     local bp   = plr:FindFirstChild("Backpack")
     local char = plr.Character
-    if not bp then notify("Items","No Backpack found",2); return end
+    if not bp then notify(_tr("Items"), _tr("No Backpack found"), 2); return end
     local name = toolObj.Name
     -- Method 1: Clone into backpack (works for most tools)
     local ok1, clone = pcall(function() return toolObj:Clone() end)
     if ok1 and clone then
         clone.Parent = bp
-        notify("Items","Got: "..name, 2)
+        notify(_tr("Items"), _tr("Got: ") .. name, 2)
         return
     end
     -- Method 2: Move original into backpack (if not locked and not in use)
@@ -4465,7 +5142,7 @@ function STATE._giveItem(toolObj)
         end
     end)
     if ok2 and toolObj.Parent == bp then
-        notify("Items","Got: "..name.." (moved)", 2)
+        notify(_tr("Items"), _tr("Got: ") .. name .. _tr(" (moved)"), 2)
         return
     end
     -- Method 3: Equip directly to character
@@ -4475,7 +5152,7 @@ function STATE._giveItem(toolObj)
             cl.Parent = char
         end)
         if ok3 then
-            notify("Items","Got: "..name.." (equipped)", 2)
+            notify(_tr("Items"), _tr("Got: ") .. name .. _tr(" (equipped)"), 2)
             return
         end
     end
@@ -4493,17 +5170,17 @@ function STATE._giveItem(toolObj)
             if remote:IsA("RemoteEvent") then
                 pcall(function() remote:FireServer(toolObj) end)
                 pcall(function() remote:FireServer(name) end)
-                notify("Items","Requested: "..name.." via "..rName, 3)
+                notify(_tr("Items"), _tr("Requested: ") .. name .. _tr(" via ") .. rName, 3)
                 return
             elseif remote:IsA("RemoteFunction") then
                 pcall(function() remote:InvokeServer(toolObj) end)
                 pcall(function() remote:InvokeServer(name) end)
-                notify("Items","Requested: "..name.." via "..rName, 3)
+                notify(_tr("Items"), _tr("Requested: ") .. name .. _tr(" via ") .. rName, 3)
                 return
             end
         end
     end
-    notify("Items","Could not give: "..name.." (server-locked)", 3)
+    notify(_tr("Items"), _tr("Could not give: ") .. name .. _tr(" (server-locked)"), 3)
 end
 -- Item slot builder - creates one row per tool
 function STATE._buildItemSlots()
@@ -4571,7 +5248,7 @@ function STATE._buildItemSlots()
         table.insert(tabPages["Items"], eRow)
     end
 end
-Sec("Items", "Game Items")
+STATE._Sec("Items", "Game Items")
 STATE._Act("Items", "Refresh Items", C.ACC, function()
     STATE._itemPage = 1
     STATE._scanForTools()
@@ -4579,7 +5256,7 @@ STATE._Act("Items", "Refresh Items", C.ACC, function()
     for _, f in ipairs(STATE._itemSlotFrames) do
         f.Visible = (activeTab == "Items")
     end
-    notify("Items", "Found "..#STATE._itemList.." tools", 3)
+    notify(_tr("Items"), (STATE.language == "jp") and (#STATE._itemList .. " 個のToolが見つかりました") or ((STATE.language == "en") and ("Found " .. #STATE._itemList .. " tools") or ("Đã tìm thấy " .. #STATE._itemList .. " công cụ")), 3)
 end)
 function STATE._itemCreatePagerButton(parent, textKey, position, bgColor)
     local button = Instance.new("TextButton", parent)
@@ -4652,15 +5329,15 @@ function STATE._setupItemsPager()
     table.insert(tabPages["Items"], pagerRow)
 end
 STATE._setupItemsPager()
-Info("Items", "  Scans ReplicatedStorage, StarterPack,")
-Info("Items", "  ServerStorage, Workspace for Tools.")
-Info("Items", "  Click Give to add to your Backpack.")
+STATE._Info("Items", "  Scans ReplicatedStorage, StarterPack,")
+STATE._Info("Items", "  ServerStorage, Workspace for Tools.")
+STATE._Info("Items", "  Click Give to add to your Backpack.")
 -- Auto-scan on first open
 STATE._itemsScanned = STATE._itemsScanned or false
 -- ============================
 -- VISUAL TAB
 -- ============================
-Sec("Visual", "Camera")
+STATE._Sec("Visual", "Camera")
 STATE._fovPendingValue = STATE._fovPendingValue or nil
 STATE._fovLastAppliedAt = STATE._fovLastAppliedAt or 0
 STATE._fovApplyInterval = STATE._fovApplyInterval or 0.05
@@ -4685,16 +5362,16 @@ STATE._fovFlushConn = RunService.Heartbeat:Connect(function()
     if (tick() - (STATE._fovLastAppliedAt or 0)) < (STATE._fovApplyInterval or 0.05) then return end
     STATE._setFOV(STATE._fovPendingValue, true)
 end)
-Sli("Visual", "Field of View",
+STATE._Sli("Visual", "Field of View",
     function() return math.floor(Camera.FieldOfView) end,
     function(v) STATE._setFOV(v) end, 30, 120)
-Info("Visual", "  Default is 70. Higher = wider view.")
+STATE._Info("Visual", "  Default is 70. Higher = wider view.")
 STATE._Act("Visual", "Reset FOV", C.ACC, function()
     STATE._setFOV(70, true)
-    notify("Visual","FOV reset to 70", 2)
+    notify(_tr("Visual"), (STATE.language == "jp") and "FOVを70にリセットしました" or ((STATE.language == "en") and "FOV reset to 70" or "Đã đặt lại FOV về 70"), 2)
 end)
-Sec("Visual", "Third Person")
-Sli("Visual", "Camera Distance",
+STATE._Sec("Visual", "Third Person")
+STATE._Sli("Visual", "Camera Distance",
     function() return STATE._tpDistState or 15 end,
     function(v)
         STATE._tpDistState = v
@@ -4703,7 +5380,7 @@ Sli("Visual", "Camera Distance",
             Players.LocalPlayer.CameraMinZoomDistance = v
         end)
     end, 1, 100)
-Info("Visual", "  Lock camera zoom distance. 1=first person.")
+STATE._Info("Visual", "  Lock camera zoom distance. 1=first person.")
 STATE._Act("Visual", "Reset Camera", C.ACC, function()
     pcall(function()
         Players.LocalPlayer.CameraMaxZoomDistance = 128
@@ -4711,9 +5388,9 @@ STATE._Act("Visual", "Reset Camera", C.ACC, function()
     end)
     STATE._setFOV(70, true)
     Camera.CameraType  = Enum.CameraType.Custom
-    notify("Visual","Camera reset", 2)
+    notify(_tr("Visual"), (STATE.language == "jp") and "カメラをリセットしました" or ((STATE.language == "en") and "Camera reset" or "Đã đặt lại camera"), 2)
 end)
-Sec("Visual", "Tâm ngắm")
+STATE._Sec("Visual", "Tâm ngắm")
 do
     function STATE._chColor(r, g, b)
         return Color3.fromRGB(math.clamp(r or 0, 0, 255), math.clamp(g or 0, 0, 255), math.clamp(b or 0, 0, 255))
@@ -4757,67 +5434,67 @@ do
         return nil
     end
 
-    Tog("Visual", "Bật Tâm ngắm",
+    STATE._Tog("Visual", "Bật Tâm ngắm",
         function() return STATE.crosshairEnabled end,
         function(v) STATE.crosshairEnabled = v end)
-    Tog("Visual", "Chấm",
+    STATE._Tog("Visual", "Chấm",
         function() return STATE.crosshairShowDot end,
         function(v) STATE.crosshairShowDot = v end)
-    Sli("Visual", "Dot Scale", function() return STATE.dotScale end, function(v) STATE.dotScale = v end, 0, 20)
-    Sli("Visual", "Dot X", function() return STATE.dotOffsetX end, function(v) STATE.dotOffsetX = v end, -100, 100)
-    Sli("Visual", "Dot Y", function() return STATE.dotOffsetY end, function(v) STATE.dotOffsetY = v end, -100, 100)
-    Tog("Visual", "Dot Enemy Color", function() return STATE.dotEnemyColorEnabled end, function(v) STATE.dotEnemyColorEnabled = v end)
-    Sli("Visual", "Dot R", function() return STATE.dotColorR end, function(v) STATE.dotColorR = v end, 0, 255)
-    Sli("Visual", "Dot G", function() return STATE.dotColorG end, function(v) STATE.dotColorG = v end, 0, 255)
-    Sli("Visual", "Dot B", function() return STATE.dotColorB end, function(v) STATE.dotColorB = v end, 0, 255)
-    Sli("Visual", "Dot Enemy R", function() return STATE.dotEnemyColorR end, function(v) STATE.dotEnemyColorR = v end, 0, 255)
-    Sli("Visual", "Dot Enemy G", function() return STATE.dotEnemyColorG end, function(v) STATE.dotEnemyColorG = v end, 0, 255)
-    Sli("Visual", "Dot Enemy B", function() return STATE.dotEnemyColorB end, function(v) STATE.dotEnemyColorB = v end, 0, 255)
+    STATE._Sli("Visual", "Dot Scale", function() return STATE.dotScale end, function(v) STATE.dotScale = v end, 0, 20)
+    STATE._Sli("Visual", "Dot X", function() return STATE.dotOffsetX end, function(v) STATE.dotOffsetX = v end, -100, 100)
+    STATE._Sli("Visual", "Dot Y", function() return STATE.dotOffsetY end, function(v) STATE.dotOffsetY = v end, -100, 100)
+    STATE._Tog("Visual", "Dot Enemy Color", function() return STATE.dotEnemyColorEnabled end, function(v) STATE.dotEnemyColorEnabled = v end)
+    STATE._Sli("Visual", "Dot R", function() return STATE.dotColorR end, function(v) STATE.dotColorR = v end, 0, 255)
+    STATE._Sli("Visual", "Dot G", function() return STATE.dotColorG end, function(v) STATE.dotColorG = v end, 0, 255)
+    STATE._Sli("Visual", "Dot B", function() return STATE.dotColorB end, function(v) STATE.dotColorB = v end, 0, 255)
+    STATE._Sli("Visual", "Dot Enemy R", function() return STATE.dotEnemyColorR end, function(v) STATE.dotEnemyColorR = v end, 0, 255)
+    STATE._Sli("Visual", "Dot Enemy G", function() return STATE.dotEnemyColorG end, function(v) STATE.dotEnemyColorG = v end, 0, 255)
+    STATE._Sli("Visual", "Dot Enemy B", function() return STATE.dotEnemyColorB end, function(v) STATE.dotEnemyColorB = v end, 0, 255)
 
-    Tog("Visual", "Vòng FOV riêng",
+    STATE._Tog("Visual", "Vòng FOV riêng",
         function() return STATE.crosshairShowFOVRing end,
         function(v) STATE.crosshairShowFOVRing = v end)
-    Sli("Visual", "FOV Size", function() return STATE.fovRingScale end, function(v) STATE.fovRingScale = v end, 0, 300)
-    Sli("Visual", "FOV X", function() return STATE.fovRingOffsetX end, function(v) STATE.fovRingOffsetX = v end, -100, 100)
-    Sli("Visual", "FOV Y", function() return STATE.fovRingOffsetY end, function(v) STATE.fovRingOffsetY = v end, -100, 100)
-    Tog("Visual", "FOV Enemy Color", function() return STATE.fovRingEnemyColorEnabled end, function(v) STATE.fovRingEnemyColorEnabled = v end)
-    Sli("Visual", "FOV R", function() return STATE.fovRingColorR end, function(v) STATE.fovRingColorR = v end, 0, 255)
-    Sli("Visual", "FOV G", function() return STATE.fovRingColorG end, function(v) STATE.fovRingColorG = v end, 0, 255)
-    Sli("Visual", "FOV B", function() return STATE.fovRingColorB end, function(v) STATE.fovRingColorB = v end, 0, 255)
-    Sli("Visual", "FOV Enemy R", function() return STATE.fovRingEnemyColorR end, function(v) STATE.fovRingEnemyColorR = v end, 0, 255)
-    Sli("Visual", "FOV Enemy G", function() return STATE.fovRingEnemyColorG end, function(v) STATE.fovRingEnemyColorG = v end, 0, 255)
-    Sli("Visual", "FOV Enemy B", function() return STATE.fovRingEnemyColorB end, function(v) STATE.fovRingEnemyColorB = v end, 0, 255)
+    STATE._Sli("Visual", "FOV Size", function() return STATE.fovRingScale end, function(v) STATE.fovRingScale = v end, 0, 300)
+    STATE._Sli("Visual", "FOV X", function() return STATE.fovRingOffsetX end, function(v) STATE.fovRingOffsetX = v end, -100, 100)
+    STATE._Sli("Visual", "FOV Y", function() return STATE.fovRingOffsetY end, function(v) STATE.fovRingOffsetY = v end, -100, 100)
+    STATE._Tog("Visual", "FOV Enemy Color", function() return STATE.fovRingEnemyColorEnabled end, function(v) STATE.fovRingEnemyColorEnabled = v end)
+    STATE._Sli("Visual", "FOV R", function() return STATE.fovRingColorR end, function(v) STATE.fovRingColorR = v end, 0, 255)
+    STATE._Sli("Visual", "FOV G", function() return STATE.fovRingColorG end, function(v) STATE.fovRingColorG = v end, 0, 255)
+    STATE._Sli("Visual", "FOV B", function() return STATE.fovRingColorB end, function(v) STATE.fovRingColorB = v end, 0, 255)
+    STATE._Sli("Visual", "FOV Enemy R", function() return STATE.fovRingEnemyColorR end, function(v) STATE.fovRingEnemyColorR = v end, 0, 255)
+    STATE._Sli("Visual", "FOV Enemy G", function() return STATE.fovRingEnemyColorG end, function(v) STATE.fovRingEnemyColorG = v end, 0, 255)
+    STATE._Sli("Visual", "FOV Enemy B", function() return STATE.fovRingEnemyColorB end, function(v) STATE.fovRingEnemyColorB = v end, 0, 255)
 
-    Tog("Visual", "Chữ thập",
+    STATE._Tog("Visual", "Chữ thập",
         function() return STATE.crosshairShowCross end,
         function(v) STATE.crosshairShowCross = v end)
-    Sli("Visual", "Cross Length", function() return STATE.crossScale end, function(v) STATE.crossScale = v end, 2, 50)
-    Sli("Visual", "Cross X", function() return STATE.crossOffsetX end, function(v) STATE.crossOffsetX = v end, -100, 100)
-    Sli("Visual", "Cross Y", function() return STATE.crossOffsetY end, function(v) STATE.crossOffsetY = v end, -100, 100)
-    Tog("Visual", "Cross Enemy Color", function() return STATE.crossEnemyColorEnabled end, function(v) STATE.crossEnemyColorEnabled = v end)
-    Sli("Visual", "Cross R", function() return STATE.crossColorR end, function(v) STATE.crossColorR = v end, 0, 255)
-    Sli("Visual", "Cross G", function() return STATE.crossColorG end, function(v) STATE.crossColorG = v end, 0, 255)
-    Sli("Visual", "Cross B", function() return STATE.crossColorB end, function(v) STATE.crossColorB = v end, 0, 255)
-    Sli("Visual", "Cross Enemy R", function() return STATE.crossEnemyColorR end, function(v) STATE.crossEnemyColorR = v end, 0, 255)
-    Sli("Visual", "Cross Enemy G", function() return STATE.crossEnemyColorG end, function(v) STATE.crossEnemyColorG = v end, 0, 255)
-    Sli("Visual", "Cross Enemy B", function() return STATE.crossEnemyColorB end, function(v) STATE.crossEnemyColorB = v end, 0, 255)
+    STATE._Sli("Visual", "Cross Length", function() return STATE.crossScale end, function(v) STATE.crossScale = v end, 2, 50)
+    STATE._Sli("Visual", "Cross X", function() return STATE.crossOffsetX end, function(v) STATE.crossOffsetX = v end, -100, 100)
+    STATE._Sli("Visual", "Cross Y", function() return STATE.crossOffsetY end, function(v) STATE.crossOffsetY = v end, -100, 100)
+    STATE._Tog("Visual", "Cross Enemy Color", function() return STATE.crossEnemyColorEnabled end, function(v) STATE.crossEnemyColorEnabled = v end)
+    STATE._Sli("Visual", "Cross R", function() return STATE.crossColorR end, function(v) STATE.crossColorR = v end, 0, 255)
+    STATE._Sli("Visual", "Cross G", function() return STATE.crossColorG end, function(v) STATE.crossColorG = v end, 0, 255)
+    STATE._Sli("Visual", "Cross B", function() return STATE.crossColorB end, function(v) STATE.crossColorB = v end, 0, 255)
+    STATE._Sli("Visual", "Cross Enemy R", function() return STATE.crossEnemyColorR end, function(v) STATE.crossEnemyColorR = v end, 0, 255)
+    STATE._Sli("Visual", "Cross Enemy G", function() return STATE.crossEnemyColorG end, function(v) STATE.crossEnemyColorG = v end, 0, 255)
+    STATE._Sli("Visual", "Cross Enemy B", function() return STATE.crossEnemyColorB end, function(v) STATE.crossEnemyColorB = v end, 0, 255)
 
-    Sec("Visual", "Layer / Thickness")
-    Sli("Visual", "Dot Layer", function() return STATE.dotLayer end, function(v) STATE.dotLayer = v end, 1, 30)
-    Sli("Visual", "Cross Layer", function() return STATE.crossLayer end, function(v) STATE.crossLayer = v end, 1, 30)
-    Sli("Visual", "FOV Layer", function() return STATE.fovRingLayer end, function(v) STATE.fovRingLayer = v end, 1, 30)
-    Sli("Visual", "Dot Thickness", function() return STATE.dotThickness end, function(v) STATE.dotThickness = v end, 1, 10)
-    Sli("Visual", "Cross Thickness", function() return STATE.crossThickness end, function(v) STATE.crossThickness = v end, 1, 10)
-    Sli("Visual", "FOV Thickness", function() return STATE.fovRingThickness end, function(v) STATE.fovRingThickness = v end, 1, 10)
+    STATE._Sec("Visual", "Layer / Thickness")
+    STATE._Sli("Visual", "Dot Layer", function() return STATE.dotLayer end, function(v) STATE.dotLayer = v end, 1, 30)
+    STATE._Sli("Visual", "Cross Layer", function() return STATE.crossLayer end, function(v) STATE.crossLayer = v end, 1, 30)
+    STATE._Sli("Visual", "FOV Layer", function() return STATE.fovRingLayer end, function(v) STATE.fovRingLayer = v end, 1, 30)
+    STATE._Sli("Visual", "Dot Thickness", function() return STATE.dotThickness end, function(v) STATE.dotThickness = v end, 1, 10)
+    STATE._Sli("Visual", "Cross Thickness", function() return STATE.crossThickness end, function(v) STATE.crossThickness = v end, 1, 10)
+    STATE._Sli("Visual", "FOV Thickness", function() return STATE.fovRingThickness end, function(v) STATE.fovRingThickness = v end, 1, 10)
 
-    Sec("Visual", "X Mark")
-    Tog("Visual", "X Mark On Click", function() return STATE.xMarkEnabled end, function(v) STATE.xMarkEnabled = v end)
-    Sli("Visual", "X Scale", function() return STATE.xMarkScale end, function(v) STATE.xMarkScale = v end, 5, 50)
-    Sli("Visual", "X Thickness", function() return STATE.xMarkThickness end, function(v) STATE.xMarkThickness = v end, 1, 10)
-    Sli("Visual", "X Duration x10", function() return math.floor((STATE.xMarkDuration or 0.5) * 10 + 0.5) end, function(v) STATE.xMarkDuration = math.clamp(v, 1, 20) / 10 end, 1, 20)
-    Sli("Visual", "X Color R", function() return STATE.xMarkColorR end, function(v) STATE.xMarkColorR = v end, 0, 255)
-    Sli("Visual", "X Color G", function() return STATE.xMarkColorG end, function(v) STATE.xMarkColorG = v end, 0, 255)
-    Sli("Visual", "X Color B", function() return STATE.xMarkColorB end, function(v) STATE.xMarkColorB = v end, 0, 255)
+    STATE._Sec("Visual", "X Mark")
+    STATE._Tog("Visual", "X Mark On Click", function() return STATE.xMarkEnabled end, function(v) STATE.xMarkEnabled = v end)
+    STATE._Sli("Visual", "X Scale", function() return STATE.xMarkScale end, function(v) STATE.xMarkScale = v end, 5, 50)
+    STATE._Sli("Visual", "X Thickness", function() return STATE.xMarkThickness end, function(v) STATE.xMarkThickness = v end, 1, 10)
+    STATE._Sli("Visual", "X Duration x10", function() return math.floor((STATE.xMarkDuration or 0.5) * 10 + 0.5) end, function(v) STATE.xMarkDuration = math.clamp(v, 1, 20) / 10 end, 1, 20)
+    STATE._Sli("Visual", "X Color R", function() return STATE.xMarkColorR end, function(v) STATE.xMarkColorR = v end, 0, 255)
+    STATE._Sli("Visual", "X Color G", function() return STATE.xMarkColorG end, function(v) STATE.xMarkColorG = v end, 0, 255)
+    STATE._Sli("Visual", "X Color B", function() return STATE.xMarkColorB end, function(v) STATE.xMarkColorB = v end, 0, 255)
 
     STATE._chDot = STATE._chDot or Drawing.new("Circle")
     STATE._chH = STATE._chH or Drawing.new("Line")
@@ -4946,11 +5623,11 @@ do
         end)
     end
 end
-Sec("Visual", "World")
-Tog("Visual", "Bầu trời cầu vồng",
+STATE._Sec("Visual", "World")
+STATE._Tog("Visual", "Bầu trời cầu vồng",
     function() return STATE.rainbowSky end,
     function(v) STATE.rainbowSky = v end)
-Info("Visual", "  Cycles Lighting Ambient through rainbow colors")
+STATE._Info("Visual", "  Cycles Lighting Ambient through rainbow colors")
 STATE._rainbowHue = STATE._rainbowHue or 0
 RunService.Heartbeat:Connect(function(dt)
     if not STATE.rainbowSky then return end
@@ -4962,55 +5639,55 @@ end)
 -- ============================
 -- WORLD TAB
 -- ============================
-Sec("World", "Performance")
-Tog("World", "Anti-AFK",
+STATE._Sec("World", "Performance")
+STATE._Tog("World", "Anti-AFK",
     function() return STATE.antiAFK end,
     function(v) STATE.antiAFK = v end)
-Info("World", "  Pings input every 60s so you never get kicked.")
-Tog("World", "Xóa hiệu ứng",
+STATE._Info("World", "  Pings input every 60s so you never get kicked.")
+STATE._Tog("World", "Xóa hiệu ứng",
     function() return STATE.lowPoly end,
     function(v) STATE.lowPoly = v; if v then applyLowPoly() else removeLowPoly() end end)
-Info("World", "  Makes all textures flat. Removes effects.")
-Info("World", "  Big FPS boost on low-end devices.")
-Sec("World", "Sound")
-Tog("World", "Xóa nhạc",
+STATE._Info("World", "  Makes all textures flat. Removes effects.")
+STATE._Info("World", "  Big FPS boost on low-end devices.")
+STATE._Sec("World", "Sound")
+STATE._Tog("World", "Xóa nhạc",
     function() return STATE.antiMusic end,
     function(v) STATE.antiMusic = v; if v then muteAll() else unmuteAll() end end)
-Info("World", "  Silences all Sounds in workspace + SoundService.")
-Sec("World", "World Editing")
-Tog("World", "Xóa tường",
+STATE._Info("World", "  Silences all Sounds in workspace + SoundService.")
+STATE._Sec("World", "World Editing")
+STATE._Tog("World", "Xóa tường",
     function() return STATE.removeWalls end,
     function(v) STATE.removeWalls = v; applyWorldEdits() end)
-Info("World", "  Hides collidable visible parts.")
-Tog("World", "Xóa phần cố định",
+STATE._Info("World", "  Hides collidable visible parts.")
+STATE._Tog("World", "Xóa phần cố định",
     function() return STATE.removeAnchored end,
     function(v) STATE.removeAnchored = v; applyWorldEdits() end)
-Info("World", "  Hides all Anchored=true parts.")
-Tog("World", "Xóa phần không cố định",
+STATE._Info("World", "  Hides all Anchored=true parts.")
+STATE._Tog("World", "Xóa phần không cố định",
     function() return STATE.removeUnanchored end,
     function(v) STATE.removeUnanchored = v; applyWorldEdits() end)
-Info("World", "  Hides all Anchored=false collidable parts.")
+STATE._Info("World", "  Hides all Anchored=false collidable parts.")
 STATE._Act("World", "Restore All Parts", Color3.fromRGB(55, 35, 90), function()
     STATE.removeWalls      = false
     STATE.removeAnchored   = false
     STATE.removeUnanchored = false
     restoreAll()
-    notify("World", "All parts restored", 2)
+    notify(_tr("World"), (STATE.language == "jp") and "すべてのパーツを復元しました" or ((STATE.language == "en") and "All parts restored" or "Đã khôi phục mọi phần"), 2)
     showTab("World")
 end)
-Sec("World", "Lighting")
-Tog("World", "Không tối",
+STATE._Sec("World", "Lighting")
+STATE._Tog("World", "Không tối",
     function() return STATE.fullbright end,
     function(v) STATE.fullbright = v; applyFullbright(v) end)
-Info("World", "  Max ambient brightness. See in the dark.")
-Tog("World", "Không có sương mù",
+STATE._Info("World", "  Max ambient brightness. See in the dark.")
+STATE._Tog("World", "Không có sương mù",
     function() return STATE.noFog end,
     function(v) STATE.noFog = v; applyNoFog(v) end)
-Info("World", "  Removes all fog from the game.")
-Tog("World", "Đóng băng thời gian (đồng hồ)",
+STATE._Info("World", "  Removes all fog from the game.")
+STATE._Tog("World", "Đóng băng thời gian (đồng hồ)",
     function() return STATE.timeFreeze end,
     function(v) STATE.timeFreeze = v; applyTimeFreeze(v) end)
-Sli("World", "Thời gian đóng băng",
+STATE._Sli("World", "Thời gian đóng băng",
     function() return STATE.frozenTime end,
     function(v)
         STATE.frozenTime = v
@@ -5018,26 +5695,26 @@ Sli("World", "Thời gian đóng băng",
             Lighting.TimeOfDay = string.format("%02d:00:00", math.floor(v))
         end
     end, 0, 23)
-Info("World", "  0=midnight  6=sunrise  14=noon  20=night")
-Sec("World", "Screen Effects")
-Tog("World", "Xóa hiệu ứng màn hình",
+STATE._Info("World", "  0=midnight  6=sunrise  14=noon  20=night")
+STATE._Sec("World", "Screen Effects")
+STATE._Tog("World", "Xóa hiệu ứng màn hình",
     function() return STATE.noScreenFX end,
     function(v)
         STATE.noScreenFX = v
         if v then removeScreenFX() else restoreScreenFX() end
     end)
-Info("World", "  Removes blur, bloom, sun rays, color grade,")
-Info("World", "  depth of field. Cleaner visuals + FPS boost.")
-Sec("World", "Menu")
+STATE._Info("World", "  Removes blur, bloom, sun rays, color grade,")
+STATE._Info("World", "  depth of field. Cleaner visuals + FPS boost.")
+STATE._Sec("World", "Menu")
 STATE._Act("World", "Kick chính mình", Color3.fromRGB(200, 55, 55), function()
-    notify("World", "Disconnecting...", 2)
+    notify(_tr("World"), _tr("Disconnecting..."), 2)
     task.delay(0.15, function()
         plr:Kick("Kicked by CuongOutLook Admin System.")
     end)
 end)
-Info("World", "  Disconnects your own client from the current server.")
+STATE._Info("World", "  Disconnects your own client from the current server.")
 STATE._Act("World", "Rejoin Server", C.ACC, function()
-    notify("World", "Rejoining server...", 2)
+    notify(_tr("World"), _tr("Rejoining server..."), 2)
     task.spawn(function()
         local ok = pcall(function()
             TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, plr)
@@ -5049,9 +5726,9 @@ STATE._Act("World", "Rejoin Server", C.ACC, function()
         end
     end)
 end)
-Info("World", "  Rejoins your current game/server.")
+STATE._Info("World", "  Rejoins your current game/server.")
 STATE._Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
-    notify("World", "Searching least-populated server...", 2)
+    notify(_tr("World"), _tr("Searching least-populated server..."), 2)
     task.spawn(function()
         local placeId = game.PlaceId
         local currentJob = game.JobId
@@ -5091,35 +5768,35 @@ STATE._Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
             if cursor == "" then break end
         end
         if chosenServerId then
-            notify("World", "Hopping to least-populated server...", 2)
+            notify(_tr("World"), _tr("Hopping to least-populated server..."), 2)
             pcall(function()
                 TeleportService:TeleportToPlaceInstance(placeId, chosenServerId, plr)
             end)
         else
-            notify("World", "No suitable server found", 3)
+            notify(_tr("World"), _tr("No suitable server found"), 3)
         end
     end)
 end)
-Info("World", "  Jumps to another public server in this game.")
+STATE._Info("World", "  Jumps to another public server in this game.")
 STATE._Act("World", "Phá hủy Menu", Color3.fromRGB(150, 35, 35), function()
     if fxConn then
         fxConn:Disconnect()
         fxConn = nil
     end
-    notify("World", "Menu destroyed", 2)
+    notify(_tr("World"), _tr("Menu destroyed"), 2)
     pcall(function()
         sg:Destroy()
     end)
 end)
-Info("World", "  Closes the UI completely.")
+STATE._Info("World", "  Closes the UI completely.")
 -- ============================
 -- PLAYERS TAB
 -- ============================
-Sec("Players", "Hất văng người chơi (risk)")
+STATE._Sec("Players", "Hất văng người chơi (risk)")
 STATE._flingTgt = nil
 STATE._Drop("Players", "Target", function(p) STATE._flingTgt = p end)
 STATE._Act("Players", "Fling Once", Color3.fromRGB(150, 28, 28), function()
-    if not STATE._flingTgt then notify("Fling","Select a target first",2); return end
+    if not STATE._flingTgt then notify(_tr("Fling"), _tr("Select a target first"), 2); return end
     flingPlayer(STATE._flingTgt)
 end)
 STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", Color3.fromRGB(90, 18, 18), function()
@@ -5127,20 +5804,20 @@ STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", Color3.fromRGB(90, 
         stopChainFling()
         STATE._chainBtn.Text             = _tr("Chain Fling (OFF)")
         STATE._chainBtn.BackgroundColor3 = Color3.fromRGB(90,18,18)
-        notify("Fling","Chain fling stopped",2)
+        notify(_tr("Fling"), _tr("Chain fling stopped"), 2)
     else
         startChainFling(STATE._flingTgt)
         STATE._chainBtn.Text             = _tr("Chain Fling (ON)")
         STATE._chainBtn.BackgroundColor3 = Color3.fromRGB(200,20,20)
-        notify("Fling","Chain fling started - spins then launches, auto-switches!",3)
+        notify(_tr("Fling"), _tr("Chain fling started - spins then launches, auto-switches!"), 3)
     end
 end)
-Info("Players", "  Spins target ULTRA fast, launches them,")
-Info("Players", "  then auto-switches to next nearest player.")
-Sec("Players", "Chế độ xem")
+STATE._Info("Players", "  Spins target ULTRA fast, launches them,")
+STATE._Info("Players", "  then auto-switches to next nearest player.")
+STATE._Sec("Players", "Chế độ xem")
 STATE._Drop("Players", "Watch", function(p) spectate(p) end)
 STATE._Act("Players", "Stop Spectate", Color3.fromRGB(45, 35, 75), stopSpectate)
-Sec("Players", "Dịch chuyển (risk)")
+STATE._Sec("Players", "Dịch chuyển (risk)")
 STATE._tpTgt = nil
 STATE._Drop("Players", "TP to", function(p) STATE._tpTgt = p end)
 STATE._Act("Players", "Teleport", C.ACC, function()
@@ -5152,7 +5829,7 @@ STATE._Act("Players", "Teleport", C.ACC, function()
         if tr then
             markOwnTP()
             hrp.CFrame = tr.CFrame * CFrame.new(4, 0, 0)
-            notify("TP", "Teleported to " .. STATE._tpTgt.Name, 2)
+            notify(_tr("Teleport"), _tr("Teleported to ") .. STATE._tpTgt.Name, 2)
         end
     end
 end)
@@ -5160,9 +5837,9 @@ end)
 -- ============================
 -- SETTING TAB
 -- ============================
-Sec("Setting", "Setting")
-Info("Setting", "  General menu settings area.")
-Tog("Setting", "Save Config",
+STATE._Sec("Setting", "Setting")
+STATE._Info("Setting", "  General menu settings area.")
+STATE._Tog("Setting", "Save Config",
     function() return STATE.saveConfig end,
     function(v) STATE.saveConfig = v end,
     function()
@@ -5170,7 +5847,13 @@ Tog("Setting", "Save Config",
             saveState(true)
         end)
     end)
-Info("Setting", "  Auto save all toggle and slider values.")
+STATE._Info("Setting", "  Auto save all toggle and slider values.")
+STATE._Tog("Setting", "Low- Menu Graphic",
+    function() return STATE.lowMenuGraphic end,
+    function(v) STATE.lowMenuGraphic = v end,
+    function()
+        applyLowMenuGraphicMode()
+    end)
 
 pcall(function()
     local CREDIT_USER_ID = 9930783751
@@ -5333,6 +6016,7 @@ end
 -- were ON when the script was last closed.
 -- ============================================================
 function STATE._applyRestoredState()
+    pcall(applyLowMenuGraphicMode)
     -- Fly
     if STATE.fly then
         pcall(startFly)
@@ -5381,6 +6065,8 @@ function STATE._applyRestoredState()
     -- Rainbow sky handled by heartbeat (STATE.rainbowSky = true is enough)
 end
 showTab("Protect")
-notify("CuongOutLook", (STATE.language == "en")
+notify("CuongOutLook", (STATE.language == "jp")
+    and ("読み込み完了" .. (STATE._hadSave and " - 設定を復元しました" or " - すべての機能はOFFで開始"))
+    or ((STATE.language == "en")
     and ("Loaded" .. (STATE._hadSave and " - settings restored" or " - all features start OFF"))
-    or ("Đã tải" .. (STATE._hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF")), 4)
+    or ("Đã tải" .. (STATE._hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF"))), 4)
