@@ -941,34 +941,24 @@ v1.9.0
 - 1週間キーの取得イベントを追加。
 - 背景エフェクトを追加。]]
 
-local updateHistoryLayoutVersion = 0
-
 local function refreshUpdateHistoryLayout()
-    updateHistoryLayoutVersion = updateHistoryLayoutVersion + 1
-    local layoutVersion = updateHistoryLayoutVersion
     local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 10
     if contentWidth <= 0 then
         task.defer(refreshUpdateHistoryLayout)
         return
     end
 
-    updateBody.Size = UDim2.new(0, contentWidth, 0, 0)
-    task.spawn(function()
-        RunService.Heartbeat:Wait()
-        RunService.Heartbeat:Wait()
-        if layoutVersion ~= updateHistoryLayoutVersion then
-            return
-        end
-        if not updateBody.Parent or not updateScroll.Parent then
-            return
-        end
-
-        local bottomPadding = isMobileUpdateLayout and 28 or 22
-        local measured = math.max(updateBody.TextBounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
-        updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
-        updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + bottomPadding)
-        updateScroll.CanvasPosition = Vector2.new(0, 0)
-    end)
+    local bounds = TextService:GetTextSize(
+        updateBody.Text,
+        updateBody.TextSize,
+        updateBody.Font,
+        Vector2.new(contentWidth, 10000)
+    )
+    local bottomPadding = isMobileUpdateLayout and 36 or 24
+    local measured = math.max(bounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
+    updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
+    updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + bottomPadding)
+    updateScroll.CanvasPosition = Vector2.new(0, 0)
 end
 
 local function updateHistoryContent()
@@ -1032,7 +1022,6 @@ end
 
 updateHistoryContent()
 updateScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshUpdateHistoryLayout)
-updateBody:GetPropertyChangedSignal("TextBounds"):Connect(refreshUpdateHistoryLayout)
 
 local helpOverlay = Instance.new("Frame", bg)
 helpOverlay.Size = UDim2.new(1,0,1,0)
