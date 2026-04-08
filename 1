@@ -1341,7 +1341,14 @@ local function mobileClearLockState()
     STATE._camlockMobileAimPos = nil
     STATE._camlockMobileLookVector = nil
     STATE._camlockMobileLostAt = nil
+    STATE._camlockMobileHoldUntil = nil
     mobileRestoreCharacterTurn()
+end
+local function mobileReleaseTargetKeepCamera(holdTime)
+    STATE._camlockMobileTargetModel = nil
+    STATE._camlockMobilePlayer = nil
+    STATE._camlockMobileLostAt = nil
+    STATE._camlockMobileHoldUntil = tick() + math.max(0.12, tonumber(holdTime) or 0.35)
 end
 local function tbGetTargetHumanoid(target)
     if not target then return nil, nil end
@@ -1462,8 +1469,9 @@ local function camlockFindMobileTargetPart()
     local cam = Camera
     local center = Vector2.new(cam.ViewportSize.X * 0.5, cam.ViewportSize.Y * 0.5)
     local maxFov = math.max(5, tonumber(STATE.camlockMobileFov) or 40)
-    local lockReleaseFov = math.max(maxFov * 2.25, maxFov + 70)
-    local lockGraceTime = 0.18
+    local lockReleaseFov = math.max(maxFov * 3.0, maxFov + 110)
+    local lockGraceTime = 0.42
+    local cameraHoldTime = 0.48
     local bestPlayer, bestPart, bestDist = nil, nil, math.huge
     local function getCandidate(model, targetPlayer, allowedFov)
         if not model or not model.Parent then return nil, nil, nil end
@@ -1487,6 +1495,7 @@ local function camlockFindMobileTargetPart()
         if lockedPart then
             if lockedDist <= lockReleaseFov then
                 STATE._camlockMobileLostAt = nil
+                STATE._camlockMobileHoldUntil = nil
                 return lockedPart, lockedAimPos
             end
             local now = tick()
@@ -1499,7 +1508,7 @@ local function camlockFindMobileTargetPart()
                 return lockedPart, lockedAimPos
             end
         end
-        mobileClearLockState()
+        mobileReleaseTargetKeepCamera(cameraHoldTime)
     end
 
     for _, targetPlayer in ipairs(Players:GetPlayers()) do
@@ -1531,10 +1540,15 @@ local function camlockFindMobileTargetPart()
         STATE._camlockMobileTargetModel = bestPart.Parent
         STATE._camlockMobilePlayer = bestPlayer
         STATE._camlockMobileLostAt = nil
+        STATE._camlockMobileHoldUntil = nil
         return bestPart, STATE._abPredictPos(bestPart, STATE.camlockMobilePrediction) or bestPart.Position
     end
 
-    mobileClearLockState()
+    if STATE._camlockMobileLookVector then
+        mobileReleaseTargetKeepCamera(cameraHoldTime)
+    else
+        mobileClearLockState()
+    end
     return nil, nil
 end
 if STATE._camlockStepConn then
@@ -1556,7 +1570,17 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
     if STATE.camlockMobile then
         local targetPart, aimPos = camlockFindMobileTargetPart()
         if not targetPart then
+            local holdUntil = STATE._camlockMobileHoldUntil
+            local heldLook = STATE._camlockMobileLookVector
+            if holdUntil and heldLook and tick() <= holdUntil then
+                local camPos = Camera.CFrame.Position
+                Camera.CFrame = CFrame.new(camPos, camPos + heldLook)
+                mobileApplyCharacterTurn(heldLook, (dt or 0.016))
+                return
+            end
             STATE._camlockMobileLookVector = nil
+            STATE._camlockMobileAimPos = nil
+            STATE._camlockMobileHoldUntil = nil
             mobileRestoreCharacterTurn()
             return
         end
@@ -4193,6 +4217,13 @@ do
         STATE._chatBindInputLocalization(inputRow, chatBox, sendBtn)
         STATE._chatAttachSendHandlers(chatBox, sendBtn)
     end
+    function STATE._chatBuildSlotRows()
+        for _ = 1, STATE._chatSlotsMax do
+            local row = STATE._chatCreateSlotRow()
+            table.insert(STATE._chatSlots, row)
+            table.insert(tabPages["Chat"], row)
+        end
+    end
 -- Chat tab GUI
 Sec("Chat", "CuongOutLook User Chat")
 Tog("Chat", "Shared Relay Chat",
@@ -4215,11 +4246,7 @@ Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
 end)
 STATE._chatBuildInfoRow()
 -- Message slots (scrollable via the existing ScrollingFrame)
-for _ = 1, STATE._chatSlotsMax do
-    local row = STATE._chatCreateSlotRow()
-    table.insert(STATE._chatSlots, row)
-    table.insert(tabPages["Chat"], row)
-end
+STATE._chatBuildSlotRows()
 -- Refresh visible slots from chatLog (newest at bottom)
 STATE._refreshChat = function()
     if activeTab ~= "Chat" then return end
