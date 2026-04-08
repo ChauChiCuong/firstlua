@@ -27,7 +27,13 @@ local CARD_W = 300
 local CARD_H = 376
 local CARD_GAP = 8
 local CARD_EFFECTIVE_W = CARD_W * LOADER_SCALE
+local CARD_EFFECTIVE_H = CARD_H * LOADER_SCALE
 local currentLang = "en"
+local LANGUAGE_LABELS = {
+    en = "English",
+    vi = "Tiếng Việt",
+    jp = "日本語"
+}
 local UI_TEXTS = {
     en = {
         creditTitle = "CuongOutLook Credit",
@@ -106,6 +112,10 @@ local UI_TEXTS = {
 local function getUiText(key)
     local langPack = UI_TEXTS[currentLang] or UI_TEXTS.en
     return langPack[key] or UI_TEXTS.en[key] or key
+end
+
+local function getCurrentLanguageLabel()
+    return LANGUAGE_LABELS[currentLang] or LANGUAGE_LABELS.en
 end
 
 local playerGui = localPlayer:WaitForChild("PlayerGui")
@@ -252,7 +262,7 @@ end
 
 local card = Instance.new("Frame", bg)
 card.Size = UDim2.new(0,CARD_W,0,CARD_H)
-card.Position = UDim2.new(0.5,-(CARD_EFFECTIVE_W + CARD_GAP/2),0.5,-CARD_H/2)
+card.Position = UDim2.new(0.5,-(CARD_EFFECTIVE_W + CARD_GAP/2),0.5,-CARD_EFFECTIVE_H/2)
 card.BackgroundColor3 = Color3.fromRGB(18,24,38)
 card.BorderSizePixel = 0
 Instance.new("UIScale", card).Scale = LOADER_SCALE
@@ -263,7 +273,7 @@ cardStroke.Thickness = 1.8
 
 local creditCard = Instance.new("Frame", bg)
 creditCard.Size = UDim2.new(0,CARD_W,0,CARD_H)
-creditCard.Position = UDim2.new(0.5,CARD_GAP/2,0.5,-CARD_H/2)
+creditCard.Position = UDim2.new(0.5,CARD_GAP/2,0.5,-CARD_EFFECTIVE_H/2)
 creditCard.BackgroundColor3 = Color3.fromRGB(18,24,38)
 creditCard.BorderSizePixel = 0
 Instance.new("UIScale", creditCard).Scale = LOADER_SCALE
@@ -380,21 +390,47 @@ sub.TextSize = 12
 sub.TextColor3 = Color3.fromRGB(132,148,178)
 sub.TextXAlignment = Enum.TextXAlignment.Center
 
-local btnMenuLangEN = Instance.new("TextButton", card)
-btnMenuLangEN.Size = UDim2.new(0,80,0,24)
-btnMenuLangEN.Position = UDim2.new(0,20,0,76)
-btnMenuLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+local btnMenuLang = Instance.new("TextButton", card)
+btnMenuLang.Size = UDim2.new(1,-40,0,26)
+btnMenuLang.Position = UDim2.new(0,20,0,76)
+btnMenuLang.BackgroundColor3 = Color3.fromRGB(24,31,47)
+btnMenuLang.BorderSizePixel = 0
+btnMenuLang.Text = getCurrentLanguageLabel()
+btnMenuLang.Font = Enum.Font.GothamBold
+btnMenuLang.TextSize = 12
+btnMenuLang.TextColor3 = Color3.new(1,1,1)
+btnMenuLang.AutoButtonColor = false
+btnMenuLang.ZIndex = 5
+Instance.new("UICorner", btnMenuLang).CornerRadius = UDim.new(0,8)
+
+local menuLangList = Instance.new("Frame", card)
+menuLangList.Size = UDim2.new(1,-40,0,84)
+menuLangList.Position = UDim2.new(0,20,0,106)
+menuLangList.BackgroundColor3 = Color3.fromRGB(13,18,30)
+menuLangList.BorderSizePixel = 0
+menuLangList.Visible = false
+menuLangList.ZIndex = 6
+Instance.new("UICorner", menuLangList).CornerRadius = UDim.new(0,10)
+local menuLangStroke = Instance.new("UIStroke", menuLangList)
+menuLangStroke.Color = Color3.fromRGB(56,92,148)
+menuLangStroke.Thickness = 1.2
+
+local btnMenuLangEN = Instance.new("TextButton", menuLangList)
+btnMenuLangEN.Size = UDim2.new(1,-12,0,22)
+btnMenuLangEN.Position = UDim2.new(0,6,0,6)
+btnMenuLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnMenuLangEN.BorderSizePixel = 0
 btnMenuLangEN.Text = "English"
 btnMenuLangEN.Font = Enum.Font.GothamBold
 btnMenuLangEN.TextSize = 11
 btnMenuLangEN.TextColor3 = Color3.new(1,1,1)
 btnMenuLangEN.AutoButtonColor = false
+btnMenuLangEN.ZIndex = 7
 Instance.new("UICorner", btnMenuLangEN).CornerRadius = UDim.new(0,8)
 
-local btnMenuLangVI = Instance.new("TextButton", card)
-btnMenuLangVI.Size = UDim2.new(0,80,0,24)
-btnMenuLangVI.Position = UDim2.new(0,110,0,76)
+local btnMenuLangVI = Instance.new("TextButton", menuLangList)
+btnMenuLangVI.Size = UDim2.new(1,-12,0,22)
+btnMenuLangVI.Position = UDim2.new(0,6,0,31)
 btnMenuLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnMenuLangVI.BorderSizePixel = 0
 btnMenuLangVI.Text = "Tiếng Việt"
@@ -402,11 +438,12 @@ btnMenuLangVI.Font = Enum.Font.GothamBold
 btnMenuLangVI.TextSize = 11
 btnMenuLangVI.TextColor3 = Color3.new(1,1,1)
 btnMenuLangVI.AutoButtonColor = false
+btnMenuLangVI.ZIndex = 7
 Instance.new("UICorner", btnMenuLangVI).CornerRadius = UDim.new(0,8)
 
-local btnMenuLangJP = Instance.new("TextButton", card)
-btnMenuLangJP.Size = UDim2.new(0,80,0,24)
-btnMenuLangJP.Position = UDim2.new(0,200,0,76)
+local btnMenuLangJP = Instance.new("TextButton", menuLangList)
+btnMenuLangJP.Size = UDim2.new(1,-12,0,22)
+btnMenuLangJP.Position = UDim2.new(0,6,0,56)
 btnMenuLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnMenuLangJP.BorderSizePixel = 0
 btnMenuLangJP.Text = "日本語"
@@ -414,6 +451,7 @@ btnMenuLangJP.Font = Enum.Font.GothamBold
 btnMenuLangJP.TextSize = 11
 btnMenuLangJP.TextColor3 = Color3.new(1,1,1)
 btnMenuLangJP.AutoButtonColor = false
+btnMenuLangJP.ZIndex = 7
 Instance.new("UICorner", btnMenuLangJP).CornerRadius = UDim.new(0,8)
 
 local inputBg = Instance.new("Frame", card)
@@ -772,13 +810,8 @@ updatePanelStroke.Color = Color3.fromRGB(56,92,148)
 updatePanelStroke.Thickness = 1.3
 
 local updateTitle = Instance.new("TextLabel", updatePanel)
-if isMobileUpdateLayout then
-    updateTitle.Size = UDim2.new(1,-56,0,28)
-    updateTitle.Position = UDim2.new(0,14,0,10)
-else
-    updateTitle.Size = UDim2.new(1,-338,0,32)
-    updateTitle.Position = UDim2.new(0,14,0,10)
-end
+updateTitle.Size = UDim2.new(1,-28,0,32)
+updateTitle.Position = UDim2.new(0,14,0,10)
 updateTitle.BackgroundTransparency = 1
 updateTitle.Font = Enum.Font.GothamBold
 updateTitle.TextSize = 18
@@ -787,66 +820,12 @@ updateTitle.TextColor3 = Color3.fromRGB(238,244,255)
 updateTitle.TextXAlignment = Enum.TextXAlignment.Left
 updateTitle.ZIndex = 32
 
-local btnUpdateLangEN = Instance.new("TextButton", updatePanel)
-if isMobileUpdateLayout then
-    btnUpdateLangEN.Size = UDim2.new(1/3,-20,0,26)
-    btnUpdateLangEN.Position = UDim2.new(0,14,0,48)
-else
-    btnUpdateLangEN.Size = UDim2.new(0,82,0,24)
-    btnUpdateLangEN.Position = UDim2.new(1,-302,0,12)
-end
-btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
-btnUpdateLangEN.BorderSizePixel = 0
-btnUpdateLangEN.Text = "English"
-btnUpdateLangEN.Font = Enum.Font.GothamBold
-btnUpdateLangEN.TextSize = 11
-btnUpdateLangEN.TextColor3 = Color3.new(1,1,1)
-btnUpdateLangEN.AutoButtonColor = false
-btnUpdateLangEN.ZIndex = 32
-Instance.new("UICorner", btnUpdateLangEN).CornerRadius = UDim.new(0,8)
-
-local btnUpdateLangVI = Instance.new("TextButton", updatePanel)
-if isMobileUpdateLayout then
-    btnUpdateLangVI.Size = UDim2.new(1/3,-20,0,26)
-    btnUpdateLangVI.Position = UDim2.new(1/3,7,0,48)
-else
-    btnUpdateLangVI.Size = UDim2.new(0,82,0,24)
-    btnUpdateLangVI.Position = UDim2.new(1,-214,0,12)
-end
-btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-btnUpdateLangVI.BorderSizePixel = 0
-btnUpdateLangVI.Text = "Tiếng Việt"
-btnUpdateLangVI.Font = Enum.Font.GothamBold
-btnUpdateLangVI.TextSize = 11
-btnUpdateLangVI.TextColor3 = Color3.new(1,1,1)
-btnUpdateLangVI.AutoButtonColor = false
-btnUpdateLangVI.ZIndex = 32
-Instance.new("UICorner", btnUpdateLangVI).CornerRadius = UDim.new(0,8)
-
-local btnUpdateLangJP = Instance.new("TextButton", updatePanel)
-if isMobileUpdateLayout then
-    btnUpdateLangJP.Size = UDim2.new(1/3,-20,0,26)
-    btnUpdateLangJP.Position = UDim2.new(2/3,0,0,48)
-else
-    btnUpdateLangJP.Size = UDim2.new(0,82,0,24)
-    btnUpdateLangJP.Position = UDim2.new(1,-126,0,12)
-end
-btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
-btnUpdateLangJP.BorderSizePixel = 0
-btnUpdateLangJP.Text = "日本語"
-btnUpdateLangJP.Font = Enum.Font.GothamBold
-btnUpdateLangJP.TextSize = 11
-btnUpdateLangJP.TextColor3 = Color3.new(1,1,1)
-btnUpdateLangJP.AutoButtonColor = false
-btnUpdateLangJP.ZIndex = 32
-Instance.new("UICorner", btnUpdateLangJP).CornerRadius = UDim.new(0,8)
-
 local updateScroll = Instance.new("ScrollingFrame", updatePanel)
 if isMobileUpdateLayout then
-    updateScroll.Size = UDim2.new(1,-28,1,-148)
-    updateScroll.Position = UDim2.new(0,14,0,86)
+    updateScroll.Size = UDim2.new(1,-28,1,-104)
+    updateScroll.Position = UDim2.new(0,14,0,48)
 else
-    updateScroll.Size = UDim2.new(1,-28,1,-96)
+    updateScroll.Size = UDim2.new(1,-28,1,-92)
     updateScroll.Position = UDim2.new(0,14,0,48)
 end
 updateScroll.BackgroundTransparency = 1
@@ -878,7 +857,22 @@ updateBody.LineHeight = 1.2
 updateBody.ZIndex = 32
 
 local btnUpdateClose
-local UPDATE_TEXT_VI = [[v2.0.0
+local UPDATE_TEXT_VI = [[Bản update gần đây
+
+v3.0.0
+
+- Thêm ngôn ngữ tiếng Nhật.
+- Kết hợp Aimbot Mobile OP, Auto HeadShot OP và Crosshair Advanced thành một menu duy nhất.
+- Thay đổi tất cả logic Aimbot PC.
+- Thay logic cảnh báo Exploit hoàn toàn mới.
+- Thay CuongOutLook Server Chat thành CuongOutLook Private Chat (đang bảo trì).
+- Thay giao diện Items, tránh gây lag.
+- Thêm ServerHop.
+- Thêm tab Setting bao gồm: Lưu script và Đồ họa menu thấp.
+
+Bản update cũ hơn
+
+v2.0.0
 
 - Thêm AimBot Mobile OP.
 - Thêm CrossHair OP.
@@ -891,7 +885,22 @@ v1.9.0
 - Thêm Event Cách lấy Key 1 Tuần.
 - Thêm Hiệu ứng nền.]]
 
-local UPDATE_TEXT_EN = [[v2.0.0
+local UPDATE_TEXT_EN = [[Latest update
+
+v3.0.0
+
+- Added Japanese language support.
+- Combined AimBot Mobile OP, Auto HeadShot OP, and Crosshair Advanced into a single menu.
+- Reworked all PC Aimbot logic.
+- Replaced the Exploit warning logic with a completely new system.
+- Replaced CuongOutLook Server Chat with CuongOutLook Private Chat (under maintenance).
+- Reworked the Items interface to reduce lag.
+- Added ServerHop.
+- Added a Setting tab including: Save Script and Low Menu Graphics.
+
+Older updates
+
+v2.0.0
 
 - Added AimBot Mobile OP.
 - Added CrossHair OP.
@@ -904,7 +913,22 @@ v1.9.0
 - Added event: How to get 1 Week Key.
 - Added background effects.]]
 
-local UPDATE_TEXT_JP = [[v2.0.0
+local UPDATE_TEXT_JP = [[最新のアップデート
+
+v3.0.0
+
+- 日本語を追加。
+- AimBot Mobile OP、Auto HeadShot OP、Crosshair Advanced を1つのメニューに統合。
+- PC版 Aimbot のロジックを全面変更。
+- Exploit 警告ロジックを完全に新しい方式へ変更。
+- CuongOutLook Server Chat を CuongOutLook Private Chat に変更（現在メンテナンス中）。
+- ラグを避けるため Items UI を変更。
+- ServerHop を追加。
+- Setting タブを追加: スクリプト保存 と 低負荷メニューグラフィック を含む。
+
+以前のアップデート
+
+v2.0.0
 
 - AimBot Mobile OP を追加。
 - CrossHair OP を追加。
@@ -924,39 +948,31 @@ local function refreshUpdateHistoryLayout()
         return
     end
 
-    local measured = TextService:GetTextSize(
-        updateBody.Text,
-        updateBody.TextSize,
-        updateBody.Font,
-        Vector2.new(contentWidth, 10000)
-    )
-    local contentHeight = math.max(measured.Y + 8, updateScroll.AbsoluteSize.Y)
-    updateBody.Size = UDim2.new(0, contentWidth, 0, contentHeight)
-    updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured.Y + 12)
-    updateScroll.CanvasPosition = Vector2.new(0, 0)
+    updateBody.Size = UDim2.new(0, contentWidth, 0, 0)
+    task.defer(function()
+        if not updateBody.Parent or not updateScroll.Parent then
+            return
+        end
+
+        local measured = math.max(updateBody.TextBounds.Y + 16, updateScroll.AbsoluteSize.Y)
+        updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
+        updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + 8)
+        updateScroll.CanvasPosition = Vector2.new(0, 0)
+    end)
 end
 
 local function updateHistoryContent()
     if currentLang == "vi" then
         updateTitle.Text = "Lịch sử cập nhật"
         updateBody.Text = UPDATE_TEXT_VI
-        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
-        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateClose.Text = "Đã hiểu"
     elseif currentLang == "jp" then
         updateTitle.Text = "更新履歴"
         updateBody.Text = UPDATE_TEXT_JP
-        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(0,220,255)
         btnUpdateClose.Text = "了解"
     else
         updateTitle.Text = "Update History"
         updateBody.Text = UPDATE_TEXT_EN
-        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
-        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateClose.Text = "Got it"
     end
     refreshUpdateHistoryLayout()
@@ -995,6 +1011,7 @@ Instance.new("UICorner", btnUpdateX).CornerRadius = UDim.new(0,8)
 
 local function openUpdateHistory()
     if terminated then return end
+    menuLangList.Visible = false
     refreshUpdateHistoryLayout()
     updateOverlay.Visible = true
 end
@@ -1026,7 +1043,7 @@ helpPanelStroke.Color = Color3.fromRGB(56,92,148)
 helpPanelStroke.Thickness = 1.3
 
 local helpTitle = Instance.new("TextLabel", helpPanel)
-helpTitle.Size = UDim2.new(1,-300,0,30)
+helpTitle.Size = UDim2.new(1,-28,0,30)
 helpTitle.Position = UDim2.new(0,14,0,10)
 helpTitle.BackgroundTransparency = 1
 helpTitle.Font = Enum.Font.GothamBold
@@ -1034,45 +1051,6 @@ helpTitle.TextSize = 18
 helpTitle.TextColor3 = Color3.fromRGB(238,244,255)
 helpTitle.TextXAlignment = Enum.TextXAlignment.Left
 helpTitle.ZIndex = 22
-
-local btnLangEN = Instance.new("TextButton", helpPanel)
-btnLangEN.Size = UDim2.new(0,82,0,24)
-btnLangEN.Position = UDim2.new(1,-266,0,12)
-btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
-btnLangEN.BorderSizePixel = 0
-btnLangEN.Text = "English"
-btnLangEN.Font = Enum.Font.GothamBold
-btnLangEN.TextSize = 11
-btnLangEN.TextColor3 = Color3.new(1,1,1)
-btnLangEN.AutoButtonColor = false
-btnLangEN.ZIndex = 22
-Instance.new("UICorner", btnLangEN).CornerRadius = UDim.new(0,8)
-
-local btnLangVI = Instance.new("TextButton", helpPanel)
-btnLangVI.Size = UDim2.new(0,82,0,24)
-btnLangVI.Position = UDim2.new(1,-178,0,12)
-btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-btnLangVI.BorderSizePixel = 0
-btnLangVI.Text = "Tiếng Việt"
-btnLangVI.Font = Enum.Font.GothamBold
-btnLangVI.TextSize = 11
-btnLangVI.TextColor3 = Color3.new(1,1,1)
-btnLangVI.AutoButtonColor = false
-btnLangVI.ZIndex = 22
-Instance.new("UICorner", btnLangVI).CornerRadius = UDim.new(0,8)
-
-local btnLangJP = Instance.new("TextButton", helpPanel)
-btnLangJP.Size = UDim2.new(0,82,0,24)
-btnLangJP.Position = UDim2.new(1,-90,0,12)
-btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
-btnLangJP.BorderSizePixel = 0
-btnLangJP.Text = "日本語"
-btnLangJP.Font = Enum.Font.GothamBold
-btnLangJP.TextSize = 11
-btnLangJP.TextColor3 = Color3.new(1,1,1)
-btnLangJP.AutoButtonColor = false
-btnLangJP.ZIndex = 22
-Instance.new("UICorner", btnLangJP).CornerRadius = UDim.new(0,8)
 
 local helpText = Instance.new("TextLabel", helpPanel)
 helpText.Size = UDim2.new(1,-28,1,-96)
@@ -1152,27 +1130,19 @@ local function updateHelpContent()
     if currentLang == "vi" then
         helpTitle.Text = "Cách lấy key 1 tuần"
         helpText.Text = HELP_TEXT_VI
-        btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
-        btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
     elseif currentLang == "jp" then
         helpTitle.Text = "1週間キーの取得方法"
         helpText.Text = HELP_TEXT_JP
-        btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnLangJP.BackgroundColor3 = Color3.fromRGB(0,220,255)
     else
         helpTitle.Text = "How to get 1 Week Key?"
         helpText.Text = HELP_TEXT_EN
-        btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
-        btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
-        btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
     end
 end
 
 local function updateMenuLanguageButtons()
     local active = Color3.fromRGB(0,220,255)
     local inactive = Color3.fromRGB(38,52,78)
+    btnMenuLang.Text = getCurrentLanguageLabel()
     btnMenuLangEN.BackgroundColor3 = currentLang == "en" and active or inactive
     btnMenuLangVI.BackgroundColor3 = currentLang == "vi" and active or inactive
     btnMenuLangJP.BackgroundColor3 = currentLang == "jp" and active or inactive
@@ -1201,6 +1171,7 @@ end
 
 local function setUiLanguage(lang)
     currentLang = UI_TEXTS[lang] and lang or "en"
+    menuLangList.Visible = false
     applyUiLanguage()
 end
 
@@ -1306,6 +1277,7 @@ btnHowTo.MouseLeave:Connect(function()
 end)
 btnHowTo.MouseButton1Click:Connect(function()
     if terminated then return end
+    menuLangList.Visible = false
     updateHelpContent()
     helpOverlay.Visible = true
 end)
@@ -1330,16 +1302,9 @@ btnUpdateX.MouseButton1Click:Connect(function()
     closeUpdateHistory()
 end)
 
-btnUpdateLangEN.MouseButton1Click:Connect(function()
-    setUiLanguage("en")
-end)
-
-btnUpdateLangVI.MouseButton1Click:Connect(function()
-    setUiLanguage("vi")
-end)
-
-btnUpdateLangJP.MouseButton1Click:Connect(function()
-    setUiLanguage("jp")
+btnMenuLang.MouseButton1Click:Connect(function()
+    if terminated then return end
+    menuLangList.Visible = not menuLangList.Visible
 end)
 
 btnMenuLangEN.MouseButton1Click:Connect(function()
@@ -1351,16 +1316,6 @@ btnMenuLangVI.MouseButton1Click:Connect(function()
 end)
 
 btnMenuLangJP.MouseButton1Click:Connect(function()
-    setUiLanguage("jp")
-end)
-
-btnLangEN.MouseButton1Click:Connect(function()
-    setUiLanguage("en")
-end)
-btnLangVI.MouseButton1Click:Connect(function()
-    setUiLanguage("vi")
-end)
-btnLangJP.MouseButton1Click:Connect(function()
     setUiLanguage("jp")
 end)
 
