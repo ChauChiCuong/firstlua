@@ -22,6 +22,7 @@ end
 local mobileTouchCount = 0
 local mobileTouchMoveAt = 0
 local mobileTouchMoveMag = 0
+local mobileTouchReleasedAt = 0
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.UserInputType == Enum.UserInputType.Touch then
@@ -48,6 +49,7 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
         mobileTouchCount = math.max(0, mobileTouchCount - 1)
         mobileTouchMoveAt = tick()
+        mobileTouchReleasedAt = tick()
         if mobileTouchCount == 0 then
             mobileTouchMoveMag = 0
         end
@@ -1313,6 +1315,15 @@ local function mobileApplyCharacterTurn(lookVector, dt)
         yawSharpness = math.max(10, rawHardness * 1.25)
     end
     local yawAlpha = math.clamp(1 - math.exp(-yawSharpness * (dt or 0.016)), 0.08, 0.35)
+    local cameraDepth = (Camera.CFrame.Position - Camera.Focus.Position).Magnitude
+    local isFirstPersonLike = (plr.CameraMode == Enum.CameraMode.LockFirstPerson) or (cameraDepth < 1.2)
+    local turnDot = math.clamp(currentFlat:Dot(flatLook), -1, 1)
+    if mobileTouchCount <= 0 and isFirstPersonLike then
+        yawAlpha = math.max(yawAlpha, 0.42)
+        if turnDot < 0.985 then
+            yawAlpha = math.max(yawAlpha, 0.58)
+        end
+    end
     local smoothFlat = currentFlat:Lerp(flatLook, yawAlpha)
     if smoothFlat.Magnitude <= 0.001 then
         smoothFlat = flatLook
@@ -1363,6 +1374,10 @@ local function mobileUserTurningCamera()
     local moveAge = tick() - mobileTouchMoveAt
     if moveAge > 0.18 then return false end
     return (mobileTouchMoveMag or 0) >= 2.5
+end
+local function mobileRecentlyReleasedTouch()
+    if mobileTouchCount > 0 then return false end
+    return (tick() - mobileTouchReleasedAt) <= 0.18
 end
 local function mobileReleaseManualControl(clearTarget)
     STATE._camlockMobileAimPos = nil
@@ -1549,6 +1564,10 @@ local function camlockFindMobileTargetPart()
             end
         end
         mobileReleaseTargetKeepCamera(cameraHoldTime)
+    end
+
+    if mobileRecentlyReleasedTouch() then
+        return nil, nil
     end
 
     for _, targetPlayer in ipairs(Players:GetPlayers()) do
@@ -3527,7 +3546,7 @@ local function Sli(tab, label, getV, setV, mn, mx)
     end)
     table.insert(tabPages[tab], row)
 end
-local function Act(tab, label, col, fn)
+function STATE._Act(tab, label, col, fn)
     local b = Instance.new("TextButton", sf)
     b.Size             = UDim2.new(1, 0, 0, 36)
     b.BackgroundColor3 = col or C.ACC
@@ -3554,7 +3573,7 @@ local function Act(tab, label, col, fn)
     table.insert(tabPages[tab], b)
     return b
 end
-local function Drop(tab, label, onSel)
+function STATE._Drop(tab, label, onSel)
     local row = Instance.new("Frame", sf)
     row.Size             = UDim2.new(1, 0, 0, 42)
     row.BackgroundColor3 = C.PANEL
@@ -3858,7 +3877,7 @@ Sli("Aimbot", "Aimbot FOV",
 Sli("Aimbot", "Aim Smoothness",
     function() return STATE.aimSmooth end,
     function(v) STATE.aimSmooth = v end, 0, 40)
-STATE._aimBoneBtn = Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head"), Color3.fromRGB(0, 170, 255), function()
+STATE._aimBoneBtn = STATE._Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head"), Color3.fromRGB(0, 170, 255), function()
     local bones = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
     local idx = 1
     for i, b in ipairs(bones) do
@@ -3921,7 +3940,7 @@ Tog("Aimbot", "Dự đoán aim Mobile",
     function() return STATE.camlockMobilePrediction end,
     function(v) STATE.camlockMobilePrediction = v end)
 Info("Aimbot", "  Predicts enemy movement")
-STATE._camlockMobileTargetBtn = Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
+STATE._camlockMobileTargetBtn = STATE._Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     STATE.camlockMobileTarget = (STATE.camlockMobileTarget == "Head") and "Torso" or "Head"
     mobileClearLockState()
     if STATE._camlockMobileTargetBtn then
@@ -4281,11 +4300,11 @@ Tog("Chat", "Shared Relay Chat",
     end)
 Info("Chat", "  ON: whisper/all chat cho user cùng script (cần relay).")
 Info("Chat", "  OFF: chỉ local chat trên máy bạn.")
-Drop("Chat", "Whisper To", function(p)
+STATE._Drop("Chat", "Whisper To", function(p)
     STATE._chatTarget = p
     notify("Chat", "Target: " .. p.Name, 2)
 end)
-Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
+STATE._Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
     STATE._chatTarget = nil
     notify("Chat", "Target: ALL", 2)
 end)
@@ -4550,7 +4569,7 @@ function STATE._buildItemSlots()
     end
 end
 Sec("Items", "Game Items")
-Act("Items", "Refresh Items", C.ACC, function()
+STATE._Act("Items", "Refresh Items", C.ACC, function()
     STATE._itemPage = 1
     STATE._scanForTools()
     STATE._buildItemSlots()
@@ -4667,7 +4686,7 @@ Sli("Visual", "Field of View",
     function() return math.floor(Camera.FieldOfView) end,
     function(v) STATE._setFOV(v) end, 30, 120)
 Info("Visual", "  Default is 70. Higher = wider view.")
-Act("Visual", "Reset FOV", C.ACC, function()
+STATE._Act("Visual", "Reset FOV", C.ACC, function()
     STATE._setFOV(70, true)
     notify("Visual","FOV reset to 70", 2)
 end)
@@ -4682,7 +4701,7 @@ Sli("Visual", "Camera Distance",
         end)
     end, 1, 100)
 Info("Visual", "  Lock camera zoom distance. 1=first person.")
-Act("Visual", "Reset Camera", C.ACC, function()
+STATE._Act("Visual", "Reset Camera", C.ACC, function()
     pcall(function()
         Players.LocalPlayer.CameraMaxZoomDistance = 128
         Players.LocalPlayer.CameraMinZoomDistance = 0.5
@@ -4968,7 +4987,7 @@ Tog("World", "Xóa phần không cố định",
     function() return STATE.removeUnanchored end,
     function(v) STATE.removeUnanchored = v; applyWorldEdits() end)
 Info("World", "  Hides all Anchored=false collidable parts.")
-Act("World", "Restore All Parts", Color3.fromRGB(55, 35, 90), function()
+STATE._Act("World", "Restore All Parts", Color3.fromRGB(55, 35, 90), function()
     STATE.removeWalls      = false
     STATE.removeAnchored   = false
     STATE.removeUnanchored = false
@@ -5007,14 +5026,14 @@ Tog("World", "Xóa hiệu ứng màn hình",
 Info("World", "  Removes blur, bloom, sun rays, color grade,")
 Info("World", "  depth of field. Cleaner visuals + FPS boost.")
 Sec("World", "Menu")
-Act("World", "Kick chính mình", Color3.fromRGB(200, 55, 55), function()
+STATE._Act("World", "Kick chính mình", Color3.fromRGB(200, 55, 55), function()
     notify("World", "Disconnecting...", 2)
     task.delay(0.15, function()
         plr:Kick("Kicked by CuongOutLook Admin System.")
     end)
 end)
 Info("World", "  Disconnects your own client from the current server.")
-Act("World", "Rejoin Server", C.ACC, function()
+STATE._Act("World", "Rejoin Server", C.ACC, function()
     notify("World", "Rejoining server...", 2)
     task.spawn(function()
         local ok = pcall(function()
@@ -5028,7 +5047,7 @@ Act("World", "Rejoin Server", C.ACC, function()
     end)
 end)
 Info("World", "  Rejoins your current game/server.")
-Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
+STATE._Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
     notify("World", "Searching least-populated server...", 2)
     task.spawn(function()
         local placeId = game.PlaceId
@@ -5079,7 +5098,7 @@ Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
     end)
 end)
 Info("World", "  Jumps to another public server in this game.")
-Act("World", "Phá hủy Menu", Color3.fromRGB(150, 35, 35), function()
+STATE._Act("World", "Phá hủy Menu", Color3.fromRGB(150, 35, 35), function()
     if fxConn then
         fxConn:Disconnect()
         fxConn = nil
@@ -5095,12 +5114,12 @@ Info("World", "  Closes the UI completely.")
 -- ============================
 Sec("Players", "Hất văng người chơi (risk)")
 STATE._flingTgt = nil
-Drop("Players", "Target", function(p) STATE._flingTgt = p end)
-Act("Players", "Fling Once", Color3.fromRGB(150, 28, 28), function()
+STATE._Drop("Players", "Target", function(p) STATE._flingTgt = p end)
+STATE._Act("Players", "Fling Once", Color3.fromRGB(150, 28, 28), function()
     if not STATE._flingTgt then notify("Fling","Select a target first",2); return end
     flingPlayer(STATE._flingTgt)
 end)
-STATE._chainBtn = Act("Players", "Chain Fling (OFF)", Color3.fromRGB(90, 18, 18), function()
+STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", Color3.fromRGB(90, 18, 18), function()
     if chainFlingActive then
         stopChainFling()
         STATE._chainBtn.Text             = _tr("Chain Fling (OFF)")
@@ -5116,12 +5135,12 @@ end)
 Info("Players", "  Spins target ULTRA fast, launches them,")
 Info("Players", "  then auto-switches to next nearest player.")
 Sec("Players", "Chế độ xem")
-Drop("Players", "Watch", function(p) spectate(p) end)
-Act("Players", "Stop Spectate", Color3.fromRGB(45, 35, 75), stopSpectate)
+STATE._Drop("Players", "Watch", function(p) spectate(p) end)
+STATE._Act("Players", "Stop Spectate", Color3.fromRGB(45, 35, 75), stopSpectate)
 Sec("Players", "Dịch chuyển (risk)")
 STATE._tpTgt = nil
-Drop("Players", "TP to", function(p) STATE._tpTgt = p end)
-Act("Players", "Teleport", C.ACC, function()
+STATE._Drop("Players", "TP to", function(p) STATE._tpTgt = p end)
+STATE._Act("Players", "Teleport", C.ACC, function()
     if not STATE._tpTgt then return end
     local tc  = STATE._tpTgt.Character
     local hrp = getHRP()
