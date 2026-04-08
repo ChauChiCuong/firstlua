@@ -24,9 +24,90 @@ local localPlayer = PlayersService.LocalPlayer
 local CREDIT_USER_ID = 9930783751
 local LOADER_SCALE = 0.88
 local CARD_W = 300
-local CARD_H = 338
+local CARD_H = 376
 local CARD_GAP = 8
 local CARD_EFFECTIVE_W = CARD_W * LOADER_SCALE
+local currentLang = "en"
+local UI_TEXTS = {
+    en = {
+        creditTitle = "CuongOutLook Credit",
+        creditSub = "Official Profile",
+        loaderTitle = "CuongOutLook Loader",
+        loaderSubtitle = "Enter your key to continue",
+        keyPlaceholder = "Enter key here...",
+        validateKey = "Validate Key",
+        emptyKey = "Please enter a key!",
+        checking = "Checking...",
+        success = "Success!",
+        invalidKey = "Invalid Key!",
+        getFreeKey = "Get key free (1 day)",
+        freeKeyOpening = "Opening...",
+        freeKeyCopied = "Link copied!",
+        foreverKey = "Forever Key - 1000 Robux",
+        foreverKeyCopied = "Copied link!",
+        howToKey = "How to get 1 Week Key?",
+        updateHistory = "Update History",
+        facebookLink = "Facebook Link",
+        facebookOpening = "Opening...",
+        facebookCopied = "Copied link!",
+        copyLink = "Copy Link",
+        copied = "Copied!"
+    },
+    vi = {
+        creditTitle = "Credit CuongOutLook",
+        creditSub = "Hồ sơ chính thức",
+        loaderTitle = "Trình tải CuongOutLook",
+        loaderSubtitle = "Nhập key để tiếp tục",
+        keyPlaceholder = "Nhập key tại đây...",
+        validateKey = "Xác nhận key",
+        emptyKey = "Vui lòng nhập key!",
+        checking = "Đang kiểm tra...",
+        success = "Thành công!",
+        invalidKey = "Key không hợp lệ!",
+        getFreeKey = "Nhận key miễn phí (1 ngày)",
+        freeKeyOpening = "Đang mở...",
+        freeKeyCopied = "Đã sao chép link!",
+        foreverKey = "Key vĩnh viễn - 1000 Robux",
+        foreverKeyCopied = "Đã sao chép link!",
+        howToKey = "Cách lấy key 1 tuần?",
+        updateHistory = "Lịch sử cập nhật",
+        facebookLink = "Link Facebook",
+        facebookOpening = "Đang mở...",
+        facebookCopied = "Đã sao chép link!",
+        copyLink = "Sao chép link",
+        copied = "Đã sao chép!"
+    },
+    jp = {
+        creditTitle = "CuongOutLook クレジット",
+        creditSub = "公式プロフィール",
+        loaderTitle = "CuongOutLook ローダー",
+        loaderSubtitle = "続行するにはキーを入力してください",
+        keyPlaceholder = "ここにキーを入力...",
+        validateKey = "キーを確認",
+        emptyKey = "キーを入力してください!",
+        checking = "確認中...",
+        success = "成功!",
+        invalidKey = "無効なキーです!",
+        getFreeKey = "無料キーを取得 (1日)",
+        freeKeyOpening = "開いています...",
+        freeKeyCopied = "リンクをコピーしました!",
+        foreverKey = "永久キー - 1000 Robux",
+        foreverKeyCopied = "リンクをコピーしました!",
+        howToKey = "1週間キーの取得方法",
+        updateHistory = "更新履歴",
+        facebookLink = "Facebook リンク",
+        facebookOpening = "開いています...",
+        facebookCopied = "リンクをコピーしました!",
+        copyLink = "リンクをコピー",
+        copied = "コピーしました!"
+    }
+}
+
+local function getUiText(key)
+    local langPack = UI_TEXTS[currentLang] or UI_TEXTS.en
+    return langPack[key] or UI_TEXTS.en[key] or key
+end
+
 local playerGui = localPlayer:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "JunkieLoaderUI"
@@ -195,7 +276,7 @@ local creditTitle = Instance.new("TextLabel", creditCard)
 creditTitle.Size = UDim2.new(1,0,0,48)
 creditTitle.Position = UDim2.new(0,0,0,12)
 creditTitle.BackgroundTransparency = 1
-creditTitle.Text = "CuongOutLook Credit"
+creditTitle.Text = getUiText("creditTitle")
 creditTitle.Font = Enum.Font.GothamBold
 creditTitle.TextSize = 21
 creditTitle.TextColor3 = Color3.fromRGB(238,244,255)
@@ -205,7 +286,7 @@ local creditSub = Instance.new("TextLabel", creditCard)
 creditSub.Size = UDim2.new(1,0,0,18)
 creditSub.Position = UDim2.new(0,0,0,46)
 creditSub.BackgroundTransparency = 1
-creditSub.Text = "Official Profile"
+creditSub.Text = getUiText("creditSub")
 creditSub.Font = Enum.Font.Gotham
 creditSub.TextSize = 12
 creditSub.TextColor3 = Color3.fromRGB(132,148,178)
@@ -260,7 +341,7 @@ creditFacebookBtn.Size = UDim2.new(1,-36,0,30)
 creditFacebookBtn.Position = UDim2.new(0,18,0,252)
 creditFacebookBtn.BackgroundColor3 = Color3.fromRGB(24,31,47)
 creditFacebookBtn.BorderSizePixel = 0
-creditFacebookBtn.Text = "Facebook Link"
+creditFacebookBtn.Text = getUiText("facebookLink")
 creditFacebookBtn.Font = Enum.Font.GothamBold
 creditFacebookBtn.TextSize = 12
 creditFacebookBtn.TextColor3 = Color3.fromRGB(238,244,255)
@@ -283,7 +364,7 @@ local title = Instance.new("TextLabel", card)
 title.Size = UDim2.new(1,0,0,48)
 title.Position = UDim2.new(0,0,0,12)
 title.BackgroundTransparency = 1
-title.Text = "CuongOutLook Loader"
+title.Text = getUiText("loaderTitle")
 title.Font = Enum.Font.GothamBold
 title.TextSize = 21
 title.TextColor3 = Color3.fromRGB(238,244,255)
@@ -293,15 +374,51 @@ local sub = Instance.new("TextLabel", card)
 sub.Size = UDim2.new(1,0,0,20)
 sub.Position = UDim2.new(0,0,0,46)
 sub.BackgroundTransparency = 1
-sub.Text = "Enter your key to continue"
+sub.Text = getUiText("loaderSubtitle")
 sub.Font = Enum.Font.Gotham
 sub.TextSize = 12
 sub.TextColor3 = Color3.fromRGB(132,148,178)
 sub.TextXAlignment = Enum.TextXAlignment.Center
 
+local btnMenuLangEN = Instance.new("TextButton", card)
+btnMenuLangEN.Size = UDim2.new(0,80,0,24)
+btnMenuLangEN.Position = UDim2.new(0,20,0,76)
+btnMenuLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
+btnMenuLangEN.BorderSizePixel = 0
+btnMenuLangEN.Text = "English"
+btnMenuLangEN.Font = Enum.Font.GothamBold
+btnMenuLangEN.TextSize = 11
+btnMenuLangEN.TextColor3 = Color3.new(1,1,1)
+btnMenuLangEN.AutoButtonColor = false
+Instance.new("UICorner", btnMenuLangEN).CornerRadius = UDim.new(0,8)
+
+local btnMenuLangVI = Instance.new("TextButton", card)
+btnMenuLangVI.Size = UDim2.new(0,80,0,24)
+btnMenuLangVI.Position = UDim2.new(0,110,0,76)
+btnMenuLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnMenuLangVI.BorderSizePixel = 0
+btnMenuLangVI.Text = "Tiếng Việt"
+btnMenuLangVI.Font = Enum.Font.GothamBold
+btnMenuLangVI.TextSize = 11
+btnMenuLangVI.TextColor3 = Color3.new(1,1,1)
+btnMenuLangVI.AutoButtonColor = false
+Instance.new("UICorner", btnMenuLangVI).CornerRadius = UDim.new(0,8)
+
+local btnMenuLangJP = Instance.new("TextButton", card)
+btnMenuLangJP.Size = UDim2.new(0,80,0,24)
+btnMenuLangJP.Position = UDim2.new(0,200,0,76)
+btnMenuLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnMenuLangJP.BorderSizePixel = 0
+btnMenuLangJP.Text = "日本語"
+btnMenuLangJP.Font = Enum.Font.GothamBold
+btnMenuLangJP.TextSize = 11
+btnMenuLangJP.TextColor3 = Color3.new(1,1,1)
+btnMenuLangJP.AutoButtonColor = false
+Instance.new("UICorner", btnMenuLangJP).CornerRadius = UDim.new(0,8)
+
 local inputBg = Instance.new("Frame", card)
 inputBg.Size = UDim2.new(1,-40,0,40)
-inputBg.Position = UDim2.new(0,20,0,86)
+inputBg.Position = UDim2.new(0,20,0,116)
 inputBg.BackgroundColor3 = Color3.fromRGB(13,18,30)
 inputBg.BorderSizePixel = 0
 inputBg.ClipsDescendants = true
@@ -314,7 +431,7 @@ local txt = Instance.new("TextBox", inputBg)
 txt.Size = UDim2.new(1,-20,1,0)
 txt.Position = UDim2.new(0,10,0,0)
 txt.BackgroundTransparency = 1
-txt.PlaceholderText = "Enter key here..."
+txt.PlaceholderText = getUiText("keyPlaceholder")
 txt.PlaceholderColor3 = Color3.fromRGB(132,148,178)
 txt.Text = ""
 txt.Font = Enum.Font.GothamBold
@@ -334,7 +451,7 @@ local txtFx = Instance.new("TextLabel", inputBg)
 txtFx.Size = UDim2.new(1,-20,1,0)
 txtFx.Position = UDim2.new(0,10,0,0)
 txtFx.BackgroundTransparency = 1
-txtFx.Text = "Enter key here..."
+txtFx.Text = getUiText("keyPlaceholder")
 txtFx.Font = txt.Font
 txtFx.TextSize = txt.TextSize
 txtFx.TextColor3 = Color3.fromRGB(132,148,178)
@@ -396,7 +513,7 @@ local function startContinuousKeyFx()
 
         local clean = tostring(txt.Text or "")
         if clean == "" then
-            txtFx.Text = "Enter key here..."
+            txtFx.Text = getUiText("keyPlaceholder")
             txtFx.TextColor3 = placeholder
             txtFxStroke.Transparency = 1
             txtFx.Position = fxBasePos
@@ -570,10 +687,10 @@ end
 
 local btn = Instance.new("TextButton", card)
 btn.Size = UDim2.new(1,-40,0,30)
-btn.Position = UDim2.new(0,20,0,142)
+btn.Position = UDim2.new(0,20,0,172)
 btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
 btn.BorderSizePixel = 0
-btn.Text = "Validate Key"
+btn.Text = getUiText("validateKey")
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 14
 btn.TextColor3 = Color3.new(1,1,1)
@@ -582,10 +699,10 @@ Instance.new("UICorner", btn).CornerRadius = UDim.new(0,10)
 
 local btnClear = Instance.new("TextButton", card)
 btnClear.Size = UDim2.new(1,-40,0,30)
-btnClear.Position = UDim2.new(0,20,0,180)
+btnClear.Position = UDim2.new(0,20,0,210)
 btnClear.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnClear.BorderSizePixel = 0
-btnClear.Text = "Get key free (1 day)"
+btnClear.Text = getUiText("getFreeKey")
 btnClear.Font = Enum.Font.GothamBold
 btnClear.TextSize = 12
 btnClear.TextColor3 = Color3.new(1,1,1)
@@ -594,10 +711,10 @@ Instance.new("UICorner", btnClear).CornerRadius = UDim.new(0,10)
 
 local btnGetKey = Instance.new("TextButton", card)
 btnGetKey.Size = UDim2.new(1,-40,0,30)
-btnGetKey.Position = UDim2.new(0,20,0,218)
+btnGetKey.Position = UDim2.new(0,20,0,248)
 btnGetKey.BackgroundColor3 = Color3.fromRGB(13,18,30)
 btnGetKey.BorderSizePixel = 0
-btnGetKey.Text = "Forever Key - 1000 Robux"
+btnGetKey.Text = getUiText("foreverKey")
 btnGetKey.Font = Enum.Font.GothamBold
 btnGetKey.TextSize = 14
 btnGetKey.TextColor3 = Color3.fromRGB(238,244,255)
@@ -606,10 +723,10 @@ Instance.new("UICorner", btnGetKey).CornerRadius = UDim.new(0,10)
 
 local btnHowTo = Instance.new("TextButton", card)
 btnHowTo.Size = UDim2.new(1,-40,0,30)
-btnHowTo.Position = UDim2.new(0,20,0,256)
+btnHowTo.Position = UDim2.new(0,20,0,286)
 btnHowTo.BackgroundColor3 = Color3.fromRGB(24,31,47)
 btnHowTo.BorderSizePixel = 0
-btnHowTo.Text = "How to get 1 Week Key?"
+btnHowTo.Text = getUiText("howToKey")
 btnHowTo.Font = Enum.Font.GothamBold
 btnHowTo.TextSize = 12
 btnHowTo.TextColor3 = Color3.fromRGB(238,244,255)
@@ -618,10 +735,10 @@ Instance.new("UICorner", btnHowTo).CornerRadius = UDim.new(0,10)
 
 local btnUpdateHistory = Instance.new("TextButton", card)
 btnUpdateHistory.Size = UDim2.new(1,-40,0,30)
-btnUpdateHistory.Position = UDim2.new(0,20,0,294)
+btnUpdateHistory.Position = UDim2.new(0,20,0,324)
 btnUpdateHistory.BackgroundColor3 = Color3.fromRGB(24,31,47)
 btnUpdateHistory.BorderSizePixel = 0
-btnUpdateHistory.Text = "Update History"
+btnUpdateHistory.Text = getUiText("updateHistory")
 btnUpdateHistory.Font = Enum.Font.GothamBold
 btnUpdateHistory.TextSize = 12
 btnUpdateHistory.TextColor3 = Color3.fromRGB(238,244,255)
@@ -659,7 +776,7 @@ if isMobileUpdateLayout then
     updateTitle.Size = UDim2.new(1,-56,0,28)
     updateTitle.Position = UDim2.new(0,14,0,10)
 else
-    updateTitle.Size = UDim2.new(1,-248,0,32)
+    updateTitle.Size = UDim2.new(1,-338,0,32)
     updateTitle.Position = UDim2.new(0,14,0,10)
 end
 updateTitle.BackgroundTransparency = 1
@@ -672,11 +789,11 @@ updateTitle.ZIndex = 32
 
 local btnUpdateLangEN = Instance.new("TextButton", updatePanel)
 if isMobileUpdateLayout then
-    btnUpdateLangEN.Size = UDim2.new(0.5,-21,0,26)
+    btnUpdateLangEN.Size = UDim2.new(1/3,-20,0,26)
     btnUpdateLangEN.Position = UDim2.new(0,14,0,48)
 else
     btnUpdateLangEN.Size = UDim2.new(0,82,0,24)
-    btnUpdateLangEN.Position = UDim2.new(1,-214,0,12)
+    btnUpdateLangEN.Position = UDim2.new(1,-302,0,12)
 end
 btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
 btnUpdateLangEN.BorderSizePixel = 0
@@ -690,11 +807,11 @@ Instance.new("UICorner", btnUpdateLangEN).CornerRadius = UDim.new(0,8)
 
 local btnUpdateLangVI = Instance.new("TextButton", updatePanel)
 if isMobileUpdateLayout then
-    btnUpdateLangVI.Size = UDim2.new(0.5,-21,0,26)
-    btnUpdateLangVI.Position = UDim2.new(0.5,7,0,48)
+    btnUpdateLangVI.Size = UDim2.new(1/3,-20,0,26)
+    btnUpdateLangVI.Position = UDim2.new(1/3,7,0,48)
 else
     btnUpdateLangVI.Size = UDim2.new(0,82,0,24)
-    btnUpdateLangVI.Position = UDim2.new(1,-126,0,12)
+    btnUpdateLangVI.Position = UDim2.new(1,-214,0,12)
 end
 btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnUpdateLangVI.BorderSizePixel = 0
@@ -705,6 +822,24 @@ btnUpdateLangVI.TextColor3 = Color3.new(1,1,1)
 btnUpdateLangVI.AutoButtonColor = false
 btnUpdateLangVI.ZIndex = 32
 Instance.new("UICorner", btnUpdateLangVI).CornerRadius = UDim.new(0,8)
+
+local btnUpdateLangJP = Instance.new("TextButton", updatePanel)
+if isMobileUpdateLayout then
+    btnUpdateLangJP.Size = UDim2.new(1/3,-20,0,26)
+    btnUpdateLangJP.Position = UDim2.new(2/3,0,0,48)
+else
+    btnUpdateLangJP.Size = UDim2.new(0,82,0,24)
+    btnUpdateLangJP.Position = UDim2.new(1,-126,0,12)
+end
+btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnUpdateLangJP.BorderSizePixel = 0
+btnUpdateLangJP.Text = "日本語"
+btnUpdateLangJP.Font = Enum.Font.GothamBold
+btnUpdateLangJP.TextSize = 11
+btnUpdateLangJP.TextColor3 = Color3.new(1,1,1)
+btnUpdateLangJP.AutoButtonColor = false
+btnUpdateLangJP.ZIndex = 32
+Instance.new("UICorner", btnUpdateLangJP).CornerRadius = UDim.new(0,8)
 
 local updateScroll = Instance.new("ScrollingFrame", updatePanel)
 if isMobileUpdateLayout then
@@ -743,32 +878,44 @@ updateBody.LineHeight = 1.2
 updateBody.ZIndex = 32
 
 local btnUpdateClose
-local updateLang = "vi"
-local UPDATE_TEXT_VI = [[v1.9.0
-
-- Thêm Event Cách lấy Key 1 Tuần.
-- Thêm Hiệu ứng nền.
-
-v2.0.0
+local UPDATE_TEXT_VI = [[v2.0.0
 
 - Thêm AimBot Mobile OP.
 - Thêm CrossHair OP.
 - Thêm Auto HeadShot OP.
 - Fix lỗi Aimbot PC bị giựt lên trời.
-- Tối ưu hóa ESP tăng hiệu năng thiết bị.]]
+- Tối ưu hóa ESP tăng hiệu năng thiết bị.
 
-local UPDATE_TEXT_EN = [[v1.9.0
+v1.9.0
 
-- Added event: How to get 1 Week Key.
-- Added background effects.
+- Thêm Event Cách lấy Key 1 Tuần.
+- Thêm Hiệu ứng nền.]]
 
-v2.0.0
+local UPDATE_TEXT_EN = [[v2.0.0
 
 - Added AimBot Mobile OP.
 - Added CrossHair OP.
 - Added Auto HeadShot OP.
 - Fixed PC Aimbot jitter launching upward.
-- Optimized ESP for better device performance.]]
+- Optimized ESP for better device performance.
+
+v1.9.0
+
+- Added event: How to get 1 Week Key.
+- Added background effects.]]
+
+local UPDATE_TEXT_JP = [[v2.0.0
+
+- AimBot Mobile OP を追加。
+- CrossHair OP を追加。
+- Auto HeadShot OP を追加。
+- PC版 Aimbot の上方向へのブレを修正。
+- ESP を最適化し、端末性能を改善。
+
+v1.9.0
+
+- 1週間キーの取得イベントを追加。
+- 背景エフェクトを追加。]]
 
 local function refreshUpdateHistoryLayout()
     local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 6
@@ -790,17 +937,26 @@ local function refreshUpdateHistoryLayout()
 end
 
 local function updateHistoryContent()
-    if updateLang == "vi" then
+    if currentLang == "vi" then
         updateTitle.Text = "Lịch sử cập nhật"
         updateBody.Text = UPDATE_TEXT_VI
         btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateClose.Text = "Đã hiểu"
+    elseif currentLang == "jp" then
+        updateTitle.Text = "更新履歴"
+        updateBody.Text = UPDATE_TEXT_JP
+        btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnUpdateClose.Text = "了解"
     else
         updateTitle.Text = "Update History"
         updateBody.Text = UPDATE_TEXT_EN
         btnUpdateLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
         btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnUpdateLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateClose.Text = "Got it"
     end
     refreshUpdateHistoryLayout()
@@ -870,7 +1026,7 @@ helpPanelStroke.Color = Color3.fromRGB(56,92,148)
 helpPanelStroke.Thickness = 1.3
 
 local helpTitle = Instance.new("TextLabel", helpPanel)
-helpTitle.Size = UDim2.new(1,-120,0,30)
+helpTitle.Size = UDim2.new(1,-300,0,30)
 helpTitle.Position = UDim2.new(0,14,0,10)
 helpTitle.BackgroundTransparency = 1
 helpTitle.Font = Enum.Font.GothamBold
@@ -881,7 +1037,7 @@ helpTitle.ZIndex = 22
 
 local btnLangEN = Instance.new("TextButton", helpPanel)
 btnLangEN.Size = UDim2.new(0,82,0,24)
-btnLangEN.Position = UDim2.new(1,-178,0,12)
+btnLangEN.Position = UDim2.new(1,-266,0,12)
 btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
 btnLangEN.BorderSizePixel = 0
 btnLangEN.Text = "English"
@@ -894,7 +1050,7 @@ Instance.new("UICorner", btnLangEN).CornerRadius = UDim.new(0,8)
 
 local btnLangVI = Instance.new("TextButton", helpPanel)
 btnLangVI.Size = UDim2.new(0,82,0,24)
-btnLangVI.Position = UDim2.new(1,-90,0,12)
+btnLangVI.Position = UDim2.new(1,-178,0,12)
 btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
 btnLangVI.BorderSizePixel = 0
 btnLangVI.Text = "Tiếng Việt"
@@ -904,6 +1060,19 @@ btnLangVI.TextColor3 = Color3.new(1,1,1)
 btnLangVI.AutoButtonColor = false
 btnLangVI.ZIndex = 22
 Instance.new("UICorner", btnLangVI).CornerRadius = UDim.new(0,8)
+
+local btnLangJP = Instance.new("TextButton", helpPanel)
+btnLangJP.Size = UDim2.new(0,82,0,24)
+btnLangJP.Position = UDim2.new(1,-90,0,12)
+btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
+btnLangJP.BorderSizePixel = 0
+btnLangJP.Text = "日本語"
+btnLangJP.Font = Enum.Font.GothamBold
+btnLangJP.TextSize = 11
+btnLangJP.TextColor3 = Color3.new(1,1,1)
+btnLangJP.AutoButtonColor = false
+btnLangJP.ZIndex = 22
+Instance.new("UICorner", btnLangJP).CornerRadius = UDim.new(0,8)
 
 local helpText = Instance.new("TextLabel", helpPanel)
 helpText.Size = UDim2.new(1,-28,1,-96)
@@ -944,10 +1113,7 @@ btnHelpClose.AutoButtonColor = false
 btnHelpClose.ZIndex = 22
 Instance.new("UICorner", btnHelpClose).CornerRadius = UDim.new(0,8)
 
-local helpLang = "en"
-local HELP_TEXT_EN = [[How to get 1 Week Key?
-
-1) Share this script on social media:
+local HELP_TEXT_EN = [[1) Share this script on social media:
     Facebook, YouTube, X, TikTok, etc.
 
 2) Send your post link to Facebook AD Cuong Ba Vien
@@ -958,9 +1124,7 @@ local HELP_TEXT_EN = [[How to get 1 Week Key?
 
 4) CuongOutLook will send your key.
     Enjoy your reward.]]
-local HELP_TEXT_VI = [[How to get 1 Week Key?
-
-1) Chia sẻ script này lên mạng xã hội:
+local HELP_TEXT_VI = [[1) Chia sẻ script này lên mạng xã hội:
     Facebook, YouTube, X, TikTok, ...
 
 2) Gửi link bài đăng vào Facebook AD Cuong Ba Vien
@@ -972,21 +1136,75 @@ local HELP_TEXT_VI = [[How to get 1 Week Key?
 4) CuongOutLook sẽ gửi key cho bạn.
     Chúc bạn chơi vui.]]
 
+local HELP_TEXT_JP = [[1) このスクリプトをSNSで共有してください:
+    Facebook、YouTube、X、TikTok など。
+
+2) 投稿リンクを Facebook の AD Cuong Ba Vien に送信してください
+    （下の Copy Link ボタンを使用）。
+
+3) 確認後、あなたの Roblox UserID を送ってください。
+    Roblox のプロフィールURLから確認できます。
+
+4) CuongOutLook がキーを送信します。
+    お楽しみください。]]
+
 local function updateHelpContent()
-    if helpLang == "vi" then
+    if currentLang == "vi" then
         helpTitle.Text = "Cách lấy key 1 tuần"
         helpText.Text = HELP_TEXT_VI
         btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnLangVI.BackgroundColor3 = Color3.fromRGB(0,220,255)
+        btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
+    elseif currentLang == "jp" then
+        helpTitle.Text = "1週間キーの取得方法"
+        helpText.Text = HELP_TEXT_JP
+        btnLangEN.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnLangJP.BackgroundColor3 = Color3.fromRGB(0,220,255)
     else
         helpTitle.Text = "How to get 1 Week Key?"
         helpText.Text = HELP_TEXT_EN
         btnLangEN.BackgroundColor3 = Color3.fromRGB(0,220,255)
         btnLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
+        btnLangJP.BackgroundColor3 = Color3.fromRGB(38,52,78)
     end
 end
 
-updateHelpContent()
+local function updateMenuLanguageButtons()
+    local active = Color3.fromRGB(0,220,255)
+    local inactive = Color3.fromRGB(38,52,78)
+    btnMenuLangEN.BackgroundColor3 = currentLang == "en" and active or inactive
+    btnMenuLangVI.BackgroundColor3 = currentLang == "vi" and active or inactive
+    btnMenuLangJP.BackgroundColor3 = currentLang == "jp" and active or inactive
+end
+
+local function applyUiLanguage()
+    creditTitle.Text = getUiText("creditTitle")
+    creditSub.Text = getUiText("creditSub")
+    creditFacebookBtn.Text = getUiText("facebookLink")
+    title.Text = getUiText("loaderTitle")
+    sub.Text = getUiText("loaderSubtitle")
+    txt.PlaceholderText = getUiText("keyPlaceholder")
+    if txt.Text == "" then
+        txtFx.Text = getUiText("keyPlaceholder")
+    end
+    btn.Text = getUiText("validateKey")
+    btnClear.Text = getUiText("getFreeKey")
+    btnGetKey.Text = getUiText("foreverKey")
+    btnHowTo.Text = getUiText("howToKey")
+    btnUpdateHistory.Text = getUiText("updateHistory")
+    btnCopyLink.Text = getUiText("copyLink")
+    updateMenuLanguageButtons()
+    updateHistoryContent()
+    updateHelpContent()
+end
+
+local function setUiLanguage(lang)
+    currentLang = UI_TEXTS[lang] and lang or "en"
+    applyUiLanguage()
+end
+
+applyUiLanguage()
 
 closeBtn.MouseEnter:Connect(function()
     closeBtn.BackgroundColor3 = Color3.fromRGB(185,45,45)
@@ -1000,13 +1218,13 @@ end)
 
 btn.MouseEnter:Connect(function()
     if terminated then return end
-    if btn.Text ~= "Success!" then
+    if btn.Text ~= getUiText("success") then
         btn.BackgroundColor3 = Color3.fromRGB(40,235,255)
     end
 end)
 btn.MouseLeave:Connect(function()
     if terminated then return end
-    if btn.Text ~= "Success!" then
+    if btn.Text ~= getUiText("success") then
         btn.BackgroundColor3 = Color3.fromRGB(0,220,255)
     end
 end)
@@ -1027,10 +1245,10 @@ btnClear.MouseButton1Click:Connect(function()
     if not opened then
         pcall(function() setclipboard(FREE_KEY_URL) end)
     end
-    btnClear.Text = opened and "Opening..." or "Link copied!"
+    btnClear.Text = opened and getUiText("freeKeyOpening") or getUiText("freeKeyCopied")
     task.delay(1.2, function()
         if btnClear and btnClear.Parent then
-            btnClear.Text = "Get key free (1 day)"
+            btnClear.Text = getUiText("getFreeKey")
         end
     end)
 end)
@@ -1046,10 +1264,10 @@ end)
 btnGetKey.MouseButton1Click:Connect(function()
     if terminated then return end
     pcall(function() setclipboard(FACEBOOK_URL) end)
-    btnGetKey.Text = "Copied link!"
+    btnGetKey.Text = getUiText("foreverKeyCopied")
     task.delay(1.2, function()
         if btnGetKey and btnGetKey.Parent then
-            btnGetKey.Text = "Buy Forever Key on Facebook"
+            btnGetKey.Text = getUiText("foreverKey")
         end
     end)
 end)
@@ -1070,10 +1288,10 @@ creditFacebookBtn.MouseButton1Click:Connect(function()
     if not opened then
         pcall(function() setclipboard(FACEBOOK_URL) end)
     end
-    creditFacebookBtn.Text = opened and "Opening..." or "Copied link!"
+    creditFacebookBtn.Text = opened and getUiText("facebookOpening") or getUiText("facebookCopied")
     task.delay(1.2, function()
         if creditFacebookBtn and creditFacebookBtn.Parent then
-            creditFacebookBtn.Text = "Facebook Link"
+            creditFacebookBtn.Text = getUiText("facebookLink")
         end
     end)
 end)
@@ -1088,7 +1306,6 @@ btnHowTo.MouseLeave:Connect(function()
 end)
 btnHowTo.MouseButton1Click:Connect(function()
     if terminated then return end
-    helpLang = "en"
     updateHelpContent()
     helpOverlay.Visible = true
 end)
@@ -1114,30 +1331,45 @@ btnUpdateX.MouseButton1Click:Connect(function()
 end)
 
 btnUpdateLangEN.MouseButton1Click:Connect(function()
-    updateLang = "en"
-    updateHistoryContent()
+    setUiLanguage("en")
 end)
 
 btnUpdateLangVI.MouseButton1Click:Connect(function()
-    updateLang = "vi"
-    updateHistoryContent()
+    setUiLanguage("vi")
+end)
+
+btnUpdateLangJP.MouseButton1Click:Connect(function()
+    setUiLanguage("jp")
+end)
+
+btnMenuLangEN.MouseButton1Click:Connect(function()
+    setUiLanguage("en")
+end)
+
+btnMenuLangVI.MouseButton1Click:Connect(function()
+    setUiLanguage("vi")
+end)
+
+btnMenuLangJP.MouseButton1Click:Connect(function()
+    setUiLanguage("jp")
 end)
 
 btnLangEN.MouseButton1Click:Connect(function()
-    helpLang = "en"
-    updateHelpContent()
+    setUiLanguage("en")
 end)
 btnLangVI.MouseButton1Click:Connect(function()
-    helpLang = "vi"
-    updateHelpContent()
+    setUiLanguage("vi")
+end)
+btnLangJP.MouseButton1Click:Connect(function()
+    setUiLanguage("jp")
 end)
 
 btnCopyLink.MouseButton1Click:Connect(function()
     pcall(function() setclipboard(FACEBOOK_URL) end)
-    btnCopyLink.Text = "Copied!"
+    btnCopyLink.Text = getUiText("copied")
     task.delay(1, function()
         if btnCopyLink and btnCopyLink.Parent then
-            btnCopyLink.Text = "Copy Link"
+            btnCopyLink.Text = getUiText("copyLink")
         end
     end)
 end)
@@ -1191,29 +1423,29 @@ btn.MouseButton1Click:Connect(function()
     local inputKey = txt.Text
     
     if inputKey == "" then
-        btn.Text = "Please enter a key!"
+        btn.Text = getUiText("emptyKey")
         task.wait(1)
-        btn.Text = "Validate Key"
+        btn.Text = getUiText("validateKey")
         return
     end
 
-    btn.Text = "Checking..."
+    btn.Text = getUiText("checking")
     
     local success, isValid = pcall(function()
         return Junkie.check_key(inputKey)
     end)
 
     if success and isValid then
-        btn.Text = "Checking!"
+        btn.Text = getUiText("success")
         btn.BackgroundColor3 = Color3.fromRGB(46, 204, 113)
         task.wait(0.5)
         -- Gá»i hÃ m onValid Ä‘á»ƒ báº¯t Ä‘áº§u cháº¡y script chÃ­nh
         onValid(inputKey)
     else
-        btn.Text = "Invalid Key!"
+        btn.Text = getUiText("invalidKey")
         btn.BackgroundColor3 = Color3.fromRGB(231, 76, 60)
         task.wait(1)
-        btn.Text = "Validate Key"
+        btn.Text = getUiText("validateKey")
         btn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
     end
 end)
