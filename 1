@@ -16,6 +16,7 @@ Junkie.identifier = "1056706"
 -- Táº¡o UI
 local PlayersService = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
@@ -639,13 +640,14 @@ local updatePanel = Instance.new("Frame", updateOverlay)
 local isMobileUpdateLayout = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 updatePanel.AnchorPoint = Vector2.new(0.5, 0.5)
 if isMobileUpdateLayout then
-    updatePanel.Size = UDim2.new(0.9, 0, 0.76, 0)
+    updatePanel.Size = UDim2.new(0.92, 0, 0.82, 0)
 else
     updatePanel.Size = UDim2.new(0,460,0,300)
 end
 updatePanel.Position = UDim2.new(0.5,0,0.5,0)
 updatePanel.BackgroundColor3 = Color3.fromRGB(18,24,38)
 updatePanel.BorderSizePixel = 0
+updatePanel.ClipsDescendants = true
 updatePanel.ZIndex = 31
 Instance.new("UICorner", updatePanel).CornerRadius = UDim.new(0,12)
 local updatePanelStroke = Instance.new("UIStroke", updatePanel)
@@ -706,7 +708,7 @@ Instance.new("UICorner", btnUpdateLangVI).CornerRadius = UDim.new(0,8)
 
 local updateScroll = Instance.new("ScrollingFrame", updatePanel)
 if isMobileUpdateLayout then
-    updateScroll.Size = UDim2.new(1,-28,1,-140)
+    updateScroll.Size = UDim2.new(1,-28,1,-148)
     updateScroll.Position = UDim2.new(0,14,0,86)
 else
     updateScroll.Size = UDim2.new(1,-28,1,-96)
@@ -716,19 +718,20 @@ updateScroll.BackgroundTransparency = 1
 updateScroll.BorderSizePixel = 0
 updateScroll.Active = true
 updateScroll.CanvasSize = UDim2.new(0,0,0,0)
-updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.None
 updateScroll.ScrollingEnabled = true
 updateScroll.ScrollingDirection = Enum.ScrollingDirection.Y
 updateScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
 updateScroll.ScrollBarThickness = 6
 updateScroll.ScrollBarImageColor3 = Color3.fromRGB(90,130,188)
+updateScroll.ClipsDescendants = true
 updateScroll.ZIndex = 32
 
 local updateBody = Instance.new("TextLabel", updateScroll)
-updateBody.Size = UDim2.new(1,-8,0,0)
+updateBody.Size = UDim2.new(1,-12,0,0)
 updateBody.Position = UDim2.new(0,0,0,0)
 updateBody.Active = false
-updateBody.AutomaticSize = Enum.AutomaticSize.Y
+updateBody.AutomaticSize = Enum.AutomaticSize.None
 updateBody.BackgroundTransparency = 1
 updateBody.Font = Enum.Font.Gotham
 updateBody.TextSize = isMobileUpdateLayout and 13 or 14
@@ -767,6 +770,25 @@ v2.0.0
 - Fixed PC Aimbot jitter launching upward.
 - Optimized ESP for better device performance.]]
 
+local function refreshUpdateHistoryLayout()
+    local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 6
+    if contentWidth <= 0 then
+        task.defer(refreshUpdateHistoryLayout)
+        return
+    end
+
+    local measured = TextService:GetTextSize(
+        updateBody.Text,
+        updateBody.TextSize,
+        updateBody.Font,
+        Vector2.new(contentWidth, 10000)
+    )
+    local contentHeight = math.max(measured.Y + 8, updateScroll.AbsoluteSize.Y)
+    updateBody.Size = UDim2.new(0, contentWidth, 0, contentHeight)
+    updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured.Y + 12)
+    updateScroll.CanvasPosition = Vector2.new(0, 0)
+end
+
 local function updateHistoryContent()
     if updateLang == "vi" then
         updateTitle.Text = "Lịch sử cập nhật"
@@ -781,6 +803,7 @@ local function updateHistoryContent()
         btnUpdateLangVI.BackgroundColor3 = Color3.fromRGB(38,52,78)
         btnUpdateClose.Text = "Got it"
     end
+    refreshUpdateHistoryLayout()
 end
 
 btnUpdateClose = Instance.new("TextButton", updatePanel)
@@ -816,6 +839,7 @@ Instance.new("UICorner", btnUpdateX).CornerRadius = UDim.new(0,8)
 
 local function openUpdateHistory()
     if terminated then return end
+    refreshUpdateHistoryLayout()
     updateOverlay.Visible = true
 end
 
@@ -824,6 +848,7 @@ local function closeUpdateHistory()
 end
 
 updateHistoryContent()
+updateScroll:GetPropertyChangedSignal("AbsoluteSize"):Connect(refreshUpdateHistoryLayout)
 
 local helpOverlay = Instance.new("Frame", bg)
 helpOverlay.Size = UDim2.new(1,0,1,0)
