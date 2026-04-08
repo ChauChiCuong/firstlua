@@ -1364,6 +1364,17 @@ local function mobileUserTurningCamera()
     if moveAge > 0.18 then return false end
     return (mobileTouchMoveMag or 0) >= 2.5
 end
+local function mobileReleaseManualControl(clearTarget)
+    STATE._camlockMobileAimPos = nil
+    STATE._camlockMobileLookVector = nil
+    STATE._camlockMobileHoldUntil = nil
+    STATE._camlockMobileLostAt = nil
+    if clearTarget then
+        STATE._camlockMobileTargetModel = nil
+        STATE._camlockMobilePlayer = nil
+    end
+    mobileRestoreCharacterTurn()
+end
 local function mobileClearLockState()
     STATE._camlockMobileTargetModel = nil
     STATE._camlockMobilePlayer = nil
@@ -1600,10 +1611,7 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
         local targetPart, aimPos = camlockFindMobileTargetPart()
         if not targetPart then
             if mobileUserTurningCamera() then
-                STATE._camlockMobileLookVector = nil
-                STATE._camlockMobileAimPos = nil
-                STATE._camlockMobileHoldUntil = nil
-                mobileRestoreCharacterTurn()
+                mobileReleaseManualControl(true)
                 return
             end
             local holdUntil = STATE._camlockMobileHoldUntil
@@ -1616,6 +1624,10 @@ STATE._camlockStepConn = RunService.RenderStepped:Connect(function(dt)
             STATE._camlockMobileAimPos = nil
             STATE._camlockMobileHoldUntil = nil
             mobileRestoreCharacterTurn()
+            return
+        end
+        if mobileUserTurningCamera() then
+            mobileReleaseManualControl(false)
             return
         end
         local smoothValue = tonumber(STATE.camlockMobileHardness) or 20
@@ -4010,7 +4022,7 @@ STATE._chatRelay = STATE._chatRelay or nil
 STATE._chatRelayBound = STATE._chatRelayBound or false
 STATE._chatRelayScanBound = STATE._chatRelayScanBound or false
 
-local function addChatMsg(name, msg, mine, tag, msgId)
+function STATE._addChatMsg(name, msg, mine, tag, msgId)
     if msgId and STATE._chatSeenIds[msgId] then return end
     if msgId then STATE._chatSeenIds[msgId] = true end
     table.insert(STATE._chatLog, {
@@ -4060,7 +4072,7 @@ function STATE._chatTryBindRelay()
                 else
                     tag = "all"
                 end
-                addChatMsg(fromName, payload.msg, mine, tag, payload.id)
+                STATE._addChatMsg(fromName, payload.msg, mine, tag, payload.id)
             end)
         end
         return true
@@ -4101,13 +4113,13 @@ function STATE._chatSend(msg)
             })
         end)
         if ok then
-            addChatMsg(plr.Name, msg, true, tag, msgId)
+            STATE._addChatMsg(plr.Name, msg, true, tag, msgId)
             return
         end
     end
 
     -- Fallback local-only
-    addChatMsg(plr.Name, msg, true, "local", msgId)
+    STATE._addChatMsg(plr.Name, msg, true, "local", msgId)
 end
 do
     function STATE._chatBuildInfoRow()
