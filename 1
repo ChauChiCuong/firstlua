@@ -795,7 +795,7 @@ local updatePanel = Instance.new("Frame", updateOverlay)
 local isMobileUpdateLayout = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 updatePanel.AnchorPoint = Vector2.new(0.5, 0.5)
 if isMobileUpdateLayout then
-    updatePanel.Size = UDim2.new(0.92, 0, 0.86, 0)
+    updatePanel.Size = UDim2.new(0.94, 0, 0.9, 0)
 else
     updatePanel.Size = UDim2.new(0,460,0,300)
 end
@@ -822,7 +822,7 @@ updateTitle.ZIndex = 32
 
 local updateScroll = Instance.new("ScrollingFrame", updatePanel)
 if isMobileUpdateLayout then
-    updateScroll.Size = UDim2.new(1,-28,1,-102)
+    updateScroll.Size = UDim2.new(1,-28,1,-96)
     updateScroll.Position = UDim2.new(0,14,0,48)
 else
     updateScroll.Size = UDim2.new(1,-28,1,-92)
@@ -853,7 +853,6 @@ updateBody.TextColor3 = Color3.fromRGB(210,224,246)
 updateBody.TextWrapped = true
 updateBody.TextXAlignment = Enum.TextXAlignment.Left
 updateBody.TextYAlignment = Enum.TextYAlignment.Top
-updateBody.LineHeight = 1.2
 updateBody.ZIndex = 32
 
 local btnUpdateClose
@@ -964,9 +963,8 @@ local function refreshUpdateHistoryLayout()
             return
         end
 
-        local lineHeightScale = math.max(updateBody.LineHeight, 1)
-        local bottomPadding = isMobileUpdateLayout and 40 or 26
-        local renderedHeight = math.ceil(updateBody.TextBounds.Y * lineHeightScale) + bottomPadding
+        local bottomPadding = isMobileUpdateLayout and 120 or 40
+        local renderedHeight = math.ceil(updateBody.TextBounds.Y) + bottomPadding
         local measuredHeight = math.max(renderedHeight, updateScroll.AbsoluteSize.Y)
 
         updateBody.Size = UDim2.new(0, contentWidth, 0, measuredHeight)
