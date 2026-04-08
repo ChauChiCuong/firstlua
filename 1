@@ -941,7 +941,11 @@ v1.9.0
 - 1週間キーの取得イベントを追加。
 - 背景エフェクトを追加。]]
 
+local updateHistoryLayoutToken = 0
+
 local function refreshUpdateHistoryLayout()
+    updateHistoryLayoutToken = updateHistoryLayoutToken + 1
+    local layoutToken = updateHistoryLayoutToken
     local contentWidth = updateScroll.AbsoluteSize.X - updateScroll.ScrollBarThickness - 10
     if contentWidth <= 0 then
         task.defer(refreshUpdateHistoryLayout)
@@ -959,6 +963,23 @@ local function refreshUpdateHistoryLayout()
     updateBody.Size = UDim2.new(0, contentWidth, 0, measured)
     updateScroll.CanvasSize = UDim2.new(0, 0, 0, measured + bottomPadding)
     updateScroll.CanvasPosition = Vector2.new(0, 0)
+
+    task.spawn(function()
+        RunService.Heartbeat:Wait()
+        RunService.Heartbeat:Wait()
+        if layoutToken ~= updateHistoryLayoutToken then
+            return
+        end
+        if not updateBody.Parent or not updateScroll.Parent then
+            return
+        end
+
+        local renderedHeight = math.max(updateBody.TextBounds.Y + bottomPadding, updateScroll.AbsoluteSize.Y)
+        if renderedHeight > measured then
+            updateBody.Size = UDim2.new(0, contentWidth, 0, renderedHeight)
+            updateScroll.CanvasSize = UDim2.new(0, 0, 0, renderedHeight + bottomPadding)
+        end
+    end)
 end
 
 local function updateHistoryContent()
