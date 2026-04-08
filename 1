@@ -714,9 +714,12 @@ else
 end
 updateScroll.BackgroundTransparency = 1
 updateScroll.BorderSizePixel = 0
+updateScroll.Active = true
 updateScroll.CanvasSize = UDim2.new(0,0,0,0)
 updateScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+updateScroll.ScrollingEnabled = true
 updateScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+updateScroll.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
 updateScroll.ScrollBarThickness = 6
 updateScroll.ScrollBarImageColor3 = Color3.fromRGB(90,130,188)
 updateScroll.ZIndex = 32
@@ -724,6 +727,7 @@ updateScroll.ZIndex = 32
 local updateBody = Instance.new("TextLabel", updateScroll)
 updateBody.Size = UDim2.new(1,-8,0,0)
 updateBody.Position = UDim2.new(0,0,0,0)
+updateBody.Active = false
 updateBody.AutomaticSize = Enum.AutomaticSize.Y
 updateBody.BackgroundTransparency = 1
 updateBody.Font = Enum.Font.Gotham
