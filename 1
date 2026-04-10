@@ -1433,6 +1433,21 @@ local function getCamlockPointer()
     local mousePos = UserInputService:GetMouseLocation()
     return mousePos.X, mousePos.Y
 end
+local function getHighestTargetPart(model)
+    if not model then return nil end
+    local bestPart = nil
+    local bestY = -math.huge
+    for _, obj in ipairs(model:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            local posY = obj.Position.Y
+            if posY > bestY then
+                bestY = posY
+                bestPart = obj
+            end
+        end
+    end
+    return bestPart
+end
 local function getTargetPartByMode(model, mode)
     if not model then return nil end
     if mode == "HumanoidRootPart" then
@@ -1470,10 +1485,11 @@ local function getTargetPartByMode(model, mode)
     end
     return model:FindFirstChild("Head")
         or model:FindFirstChild("head")
+            or model:FindFirstChild("UpperTorso")
+            or model:FindFirstChild("Torso")
+            or getHighestTargetPart(model)
         or model:FindFirstChild("HumanoidRootPart")
-        or model:FindFirstChild("UpperTorso")
         or model:FindFirstChild("LowerTorso")
-        or model:FindFirstChild("Torso")
         or espGetTrackingPart(model)
 end
 local function abGetBone(c)
