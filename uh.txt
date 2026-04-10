@@ -1,0 +1,7 @@
+return {
+    updateHistory = {
+        vi = "Noi dung tieng Viet",
+        en = "English content",
+        jp = "日本語の内容"
+    }
+}
