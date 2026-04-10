@@ -1,7 +1,22 @@
 return {
     updateHistory = {
-        vi = "Noi dung tieng Viet",
-        en = "English content",
-        jp = "日本語の内容"
+        vi = [[Lần cập nhật mới nhất:
+v3.0.1
+
+ - Thêm CuongOutLook Aimbot vào tựa game Phantom Force
+ - Fix logic Aimbot Mobile
+ - Thêm nút bật tắt Micro (đang bảo trì)]],
+     en = [[Latest update:
+v3.0.1
+
+ - Added CuongOutLook Aimbot to Phantom Force
+ - Fixed Mobile Aimbot logic
+ - Added a Micro toggle button (under maintenance)]],
+     jp = [[最新のアップデート:
+v3.0.1
+
+ - Phantom Force に CuongOutLook Aimbot を追加
+ - Mobile Aimbot のロジックを修正
+ - マイクのオン/オフボタンを追加（メンテナンス中）]]
     }
 }
