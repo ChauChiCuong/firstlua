@@ -1,7 +1,6 @@
 return {
     updateHistory = {
-        vi = [[Lần cập nhật mới nhất:
-v3.1.0
+        vi = [[v3.1.0
 
 - Đã xóa ESP Box để tránh gây lag và không cần thiết
 - Tối ưu hóa menu gây lag sau thời gian sử dụng
@@ -14,7 +13,6 @@ v3.0.2
 - Thêm Target nếu người chơi không phải là nhân vật
 - Thêm nút Đăng xuất key
 
-Lần cập nhật gần đây:
 v3.0.1
 
  - Thêm CuongOutLook Aimbot vào tựa game Phantom Force
@@ -27,8 +25,7 @@ v3.0.0
  - Thay đổi logic Aimbot PC
  - Tối ưu hóa ESP làm giảm fps, gây lag
  - Đã xóa ESP: Tracer, Name, Health, Distance]],
-    en = [[Latest update:
-v3.1.0
+    en = [[v3.1.0
 
 - Removed ESP Box to avoid unnecessary lag
 - Optimized the menu that caused lag after extended use
@@ -41,7 +38,6 @@ v3.0.2
 - Added Target when the player is not a character
 - Added a Log out key button
 
-Recent updates:
 v3.0.1
 
  - Added CuongOutLook Aimbot to Phantom Force
@@ -54,8 +50,7 @@ v3.0.0
  - Changed the PC Aimbot logic
  - Optimized ESP to reduce FPS drops and lag
  - Removed ESP: Tracer, Name, Health, Distance]],
-    jp = [[最新のアップデート:
-v3.1.0
+    jp = [[v3.1.0
 
 - 不要でラグの原因になる ESP Box を削除
 - 長時間使用後にラグを引き起こすメニューを最適化
@@ -68,7 +63,6 @@ v3.0.2
 - プレイヤーがキャラクターではない場合の Target を追加
 - キーをログアウトするボタンを追加
 
-最近のアップデート:
 v3.0.1
 
  - Phantom Force に CuongOutLook Aimbot を追加
