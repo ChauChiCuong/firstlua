@@ -1,6 +1,13 @@
 return {
     updateHistory = {
-        vi = [[v3.1.0
+    vi = [[v3.2.0
+
+- Thêm Tab Âm thanh: MP3 Player, Click Sound
+- Đổi logic Đầu to OP thành Đạn Phép Thuật
+- Tối ưu giảm lag khi sử dụng menu
+- Chỉnh sửa Menu tab kích thước đều nhau
+
+v3.1.0
 
 - Đã xóa ESP Box để tránh gây lag và không cần thiết
 - Tối ưu hóa menu gây lag sau thời gian sử dụng
@@ -25,7 +32,14 @@ v3.0.0
  - Thay đổi logic Aimbot PC
  - Tối ưu hóa ESP làm giảm fps, gây lag
  - Đã xóa ESP: Tracer, Name, Health, Distance]],
-    en = [[v3.1.0
+    en = [[v3.2.0
+
+- Added Audio tab: MP3 Player, Click Sound
+- Changed Big Head OP logic to Magic Bullet
+- Optimized to reduce lag when using the menu
+- Adjusted menu tabs to have uniform sizes
+
+v3.1.0
 
 - Removed ESP Box to avoid unnecessary lag
 - Optimized the menu that caused lag after extended use
@@ -50,7 +64,14 @@ v3.0.0
  - Changed the PC Aimbot logic
  - Optimized ESP to reduce FPS drops and lag
  - Removed ESP: Tracer, Name, Health, Distance]],
-    jp = [[v3.1.0
+    jp = [[v3.2.0
+
+- 音声タブを追加: MP3 Player、Click Sound
+- Big Head OP のロジックを Magic Bullet に変更
+- メニュー使用時のラグを減らすよう最適化
+- メニュータブのサイズを均一に調整
+
+v3.1.0
 
 - 不要でラグの原因になる ESP Box を削除
 - 長時間使用後にラグを引き起こすメニューを最適化
