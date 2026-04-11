@@ -1,22 +1,70 @@
 return {
     updateHistory = {
         vi = [[Lần cập nhật mới nhất:
+v3.0.2
+
+- Đã sửa hệ thống key bị lỗi nghiêm trọng
+- Tối ưu hóa CuongOutLook Menu làm giảm fps, gây lag
+- Thay thế toàn bộ logic Auto HeadShot
+- Thêm Target nếu người chơi không phải là nhân vật
+- Thêm nút Đăng xuất key
+
+Lần cập nhật gần đây:
 v3.0.1
 
  - Thêm CuongOutLook Aimbot vào tựa game Phantom Force
  - Fix logic Aimbot Mobile
- - Thêm nút bật tắt Micro (đang bảo trì)]],
+ - Thêm nút bật tắt Micro (đang bảo trì)
+
+v3.0.0
+
+ - Kết hợp Crosshair Advanced OP, AutoHeadShot OP, Aimbot Mobile OP thành một menu duy nhất
+ - Thay đổi logic Aimbot PC
+ - Tối ưu hóa ESP làm giảm fps, gây lag
+ - Đã xóa ESP: Tracer, Name, Health, Distance]],
      en = [[Latest update:
+v3.0.2
+
+- Fixed a critical issue in the key system
+- Optimized the CuongOutLook Menu to reduce FPS drops and lag
+- Replaced the entire Auto HeadShot logic
+- Added Target when the player is not a character
+- Added a Log out key button
+
+Recent updates:
 v3.0.1
 
  - Added CuongOutLook Aimbot to Phantom Force
  - Fixed Mobile Aimbot logic
- - Added a Micro toggle button (under maintenance)]],
+ - Added a Micro toggle button (under maintenance)
+
+v3.0.0
+
+ - Combined Crosshair Advanced OP, AutoHeadShot OP, and Aimbot Mobile OP into a single menu
+ - Changed the PC Aimbot logic
+ - Optimized ESP to reduce FPS drops and lag
+ - Removed ESP: Tracer, Name, Health, Distance]],
      jp = [[最新のアップデート:
+v3.0.2
+
+- 深刻な不具合があったキーシステムを修正
+- FPS低下やラグを引き起こしていた CuongOutLook Menu を最適化
+- Auto HeadShot のロジックを全面的に置き換え
+- プレイヤーがキャラクターではない場合の Target を追加
+- キーをログアウトするボタンを追加
+
+最近のアップデート:
 v3.0.1
 
  - Phantom Force に CuongOutLook Aimbot を追加
  - Mobile Aimbot のロジックを修正
- - マイクのオン/オフボタンを追加（メンテナンス中）]]
+ - マイクのオン/オフボタンを追加（メンテナンス中）
+
+v3.0.0
+
+ - Crosshair Advanced OP、AutoHeadShot OP、Aimbot Mobile OP を1つのメニューに統合
+ - PC Aimbot のロジックを変更
+ - FPS低下やラグを抑えるために ESP を最適化
+ - ESP から Tracer、Name、Health、Distance を削除]]
     }
 }
