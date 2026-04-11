@@ -1,6 +1,11 @@
 return {
     updateHistory = {
         vi = [[Lần cập nhật mới nhất:
+v3.1.0
+
+- Đã xóa ESP Box để tránh gây lag và không cần thiết
+- Tối ưu hóa menu gây lag sau thời gian sử dụng
+
 v3.0.2
 
 - Đã sửa hệ thống key bị lỗi nghiêm trọng
@@ -22,7 +27,12 @@ v3.0.0
  - Thay đổi logic Aimbot PC
  - Tối ưu hóa ESP làm giảm fps, gây lag
  - Đã xóa ESP: Tracer, Name, Health, Distance]],
-     en = [[Latest update:
+    en = [[Latest update:
+v3.1.0
+
+- Removed ESP Box to avoid unnecessary lag
+- Optimized the menu that caused lag after extended use
+
 v3.0.2
 
 - Fixed a critical issue in the key system
@@ -44,7 +54,12 @@ v3.0.0
  - Changed the PC Aimbot logic
  - Optimized ESP to reduce FPS drops and lag
  - Removed ESP: Tracer, Name, Health, Distance]],
-     jp = [[最新のアップデート:
+    jp = [[最新のアップデート:
+v3.1.0
+
+- 不要でラグの原因になる ESP Box を削除
+- 長時間使用後にラグを引き起こすメニューを最適化
+
 v3.0.2
 
 - 深刻な不具合があったキーシステムを修正
