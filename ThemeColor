@@ -3,17 +3,17 @@
 # Color format supports: #RRGGBB or R,G,B
 
 # Menu base colors
-bg=#0A0E18
-panel=#121826
-acc=#00DCFF
-on=#26BE4E
-off=#A02020
-txt=#EEF4FF
-txtm=#8494B2
+bg=#0A1A3A
+panel=#1A2A4A
+acc=#1976D2
+on=#1976D2
+off=#D32F2F
+txt=#E3F2FD
+txtm=#90A4AE
 wht=#FFFFFF
-warn=#E6A014
-red=#C82828
-dark=#0D121E
+warn=#FF5252
+red=#D32F2F
+dark=#102040
 
 # Extra menu/effect colors
 menu_stroke=#385C94
