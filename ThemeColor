@@ -3,17 +3,17 @@
 # Color format supports: #RRGGBB or R,G,B
 
 # Menu base colors
-bg=#0A1A3A
-panel=#1A2A4A
-acc=#1976D2
-on=#1976D2
-off=#D32F2F
-txt=#E3F2FD
-txtm=#90A4AE
+bg=#0A1A3A         # xanh dương
+panel=#B71C1C      # đỏ
+acc=#1976D2        # xanh dương
+on=#D32F2F         # đỏ
+off=#1976D2        # xanh dương
+txt=#E3F2FD        # xanh dương nhạt
+txtm=#FFCDD2       # đỏ nhạt
 wht=#FFFFFF
-warn=#FF5252
-red=#D32F2F
-dark=#102040
+warn=#FF5252       # đỏ
+red=#D32F2F        # đỏ
+dark=#102040       # xanh dương đậm
 
 # Extra menu/effect colors
 menu_stroke=#385C94
