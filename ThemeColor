@@ -1,1 +1,32 @@
+# ThemeColor config for COL.lua
+# Format: key=value
+# Color format supports: #RRGGBB or R,G,B
 
+# Menu base colors
+bg=#0A0E18
+panel=#121826
+acc=#00DCFF
+on=#26BE4E
+off=#A02020
+txt=#EEF4FF
+txtm=#8494B2
+wht=#FFFFFF
+warn=#E6A014
+red=#C82828
+dark=#0D121E
+
+# Extra menu/effect colors
+menu_stroke=#385C94
+menu_shade=#060C14
+fx_cyan=#00F0FF
+fx_soft=#6EF5FF
+fx_deep=#008CA5
+small_btn_bg=#000000
+small_btn_hover_bg=#181C1C
+
+# ESP (optional)
+esp_enemy=#00FFFF
+esp_team=#00FFFF
+
+# Menu background image URL
+menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
