@@ -1,6 +1,13 @@
 return {
     updateHistory = {
-    vi = [[v4.0.0
+    vi = [[v4.0.1
+
+- Fix lag cấp bậc Ultra khi mở menu
+- Thêm cập nhật màu Theme (sắp tới)
+- Fix logic Aimbot PC bị lag
+- Fix Click Sound không phát âm thanh
+
+v4.0.0
 
 - Thiết kế UI đẹp hơn
 - Thêm hiệu ứng cho menu
@@ -45,7 +52,14 @@ v3.0.0
  - Tối ưu hóa ESP làm giảm fps, gây lag
  - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-    en = [[v4.0.0
+    en = [[v4.0.1
+
+- Fixed Ultra-level lag when opening the menu
+- Added Theme color update (coming soon)
+- Fixed lag in PC Aimbot logic
+- Fixed Click Sound not playing
+
+v4.0.0
 
 - Redesigned UI for a more modern look
 - Added visual effects to the menu
@@ -90,7 +104,14 @@ v3.0.0
  - Optimized ESP to reduce FPS drops and lag
  - Removed ESP: Tracer, Name, Health, Distance]],
 
-    jp = [[v4.0.0
+    jp = [[v4.0.1
+
+- メニュー起動時のUltraレベルのラグを修正
+- テーマカラー更新を追加（近日公開）
+- PC Aimbotロジックのラグを修正
+- クリックサウンドが再生されない問題を修正
+
+v4.0.0
 
 - UIデザインをより美しく改善
 - メニューに視覚効果を追加
