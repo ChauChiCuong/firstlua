@@ -1,6 +1,18 @@
 return {
     updateHistory = {
-    vi = [[v4.0.1
+        vi = [[v4.1.0
+
+- Thêm Anti Ban
+- Thêm chức năng Auto Chat
+- Fix lag cấp độ Ultra lần 2 khi mở COL Menu
+- Fix ESP chams bị lệch và không hiện cho một số người chơi
+- Fix Đạn Ma Thuật không hoạt động
+- Fix Ngôn ngữ bị dịch không đúng, lệch ngôn ngữ
+- Fix chữ trong Menu Tab khó nhìn
+- Fix logic khi cập nhật mở Menu lần 2-3 sẽ không bị lag
+- Fix cơ chế phát nhạc ngẫu nhiên không hoạt động trong MP3 Player
+
+v4.0.1
 
 - Fix lag cấp bậc Ultra khi mở menu
 - Thêm cập nhật màu Theme (sắp tới)
@@ -52,7 +64,19 @@ v3.0.0
  - Tối ưu hóa ESP làm giảm fps, gây lag
  - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-    en = [[v4.0.1
+        en = [[v4.1.0
+
+- Added Anti-Ban feature
+- Added Auto Chat feature
+- Fixed Ultra-level lag (second occurrence) when opening COL Menu
+- Fixed ESP Chams misalignment and not showing for some players
+- Fixed Magic Bullet not working
+- Fixed incorrect/misaligned language translations
+- Fixed hard-to-read text in Menu Tabs
+- Fixed logic so reopening Menu (2nd–3rd time) no longer causes lag
+- Fixed random music playback not working in MP3 Player
+
+v4.0.1
 
 - Fixed Ultra-level lag when opening the menu
 - Added Theme color update (coming soon)
@@ -104,7 +128,19 @@ v3.0.0
  - Optimized ESP to reduce FPS drops and lag
  - Removed ESP: Tracer, Name, Health, Distance]],
 
-    jp = [[v4.0.1
+        jp = [[v4.1.0
+
+- Anti-Ban機能を追加
+- Auto Chat機能を追加
+- COLメニューを2回目以降に開く際のUltraレベルのラグを修正
+- ESP Chamsのズレや一部プレイヤーに表示されない問題を修正
+- Magic Bulletが動作しない問題を修正
+- 言語の誤翻訳・表示ズレを修正
+- メニュータブの文字が見づらい問題を修正
+- メニューを2〜3回目に開いてもラグが発生しないようロジックを修正
+- MP3プレイヤーのランダム再生が動作しない問題を修正
+
+v4.0.1
 
 - メニュー起動時のUltraレベルのラグを修正
 - テーマカラー更新を追加（近日公開）
