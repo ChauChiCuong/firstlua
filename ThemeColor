@@ -1,4 +1,4 @@
-# ThemeColor config for COL.lua
+-- [[# ThemeColor config for COL.lua
 # Format: key=value
 # Color format supports: #RRGGBB or R,G,B
 
@@ -99,4 +99,110 @@ esp_enemy=#00FFFF
 esp_team=#00FFFF
 
 # Menu background image URL
-menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
+menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png ]]
+
+
+
+
+
+
+
+
+
+
+
+# Menu base colors
+bg=#140808
+panel=#1E0D0D
+acc=#FF1A1A
+on=#FF3B3B
+off=#8B0000
+txt=#FFECEC
+txtm=#C9A0A0
+wht=#FFFFFF
+warn=#FFAA33
+red=#FF0000
+dark=#0F0606
+
+# Extra menu/effect colors
+menu_stroke=#8B1A1A
+menu_shade=#0A0404
+
+# Main FX palette
+fx_cyan=#FF1A1A
+fx_soft=#FF6B6B
+fx_deep=#990000
+fx_white=#FFFFFF
+
+# Falling background digits
+fx_digit=#FF2A2A
+fx_digit_stroke=#FF2A2A
+
+# Flame/glow particles around menu
+fx_flame=#FF1A1A
+fx_flame_highlight=#FFFFFF
+
+# Sweep light effect across menu
+fx_sweep_glow=#FF1A1A
+fx_sweep_core=#FF4D4D
+fx_sweep_highlight=#FFFFFF
+
+# Language button and language menu
+lang_btn_bg=#2A0C0C
+lang_btn_hover_bg=#3E1414
+lang_btn_text=#FFECEC
+lang_menu_bg=#140808
+lang_option_bg=#1E0D0D
+lang_option_hover_bg=#2A1414
+lang_option_text=#FFD6D6
+lang_option_stroke=#5A1E1E
+
+# Tab menu and function panels
+tab_bg=#2A0C0C
+tab_hover_bg=#3E1414
+tab_text=#FFD6D6
+tab_stroke=#990000
+tab_hint_bg=#140808
+tab_hint_text=#FF2A2A
+content_stroke=#5A1E1E
+function_row_stroke=#4A1A1A
+slider_track=#2A1414
+
+# UI button presets
+btn_primary=#FF1A1A
+btn_primary_soft=#CC0000
+btn_primary_hover=#FF4D4D
+btn_secondary=#CC3333
+btn_chat_target=#803333
+btn_warning=#FF8800
+btn_logout=#FF5A1A
+btn_danger=#FF0000
+btn_danger_dark=#990000
+btn_danger_soft=#660000
+btn_chain_off=#3A0A0A
+btn_chain_on=#FF1A1A
+btn_purple=#4A1A3A
+btn_purple_dark=#3A142E
+btn_disabled=#3A2A2A
+
+# Chat colors
+chat_mine_accent=#FF1A1A
+chat_other_accent=#FF6666
+chat_mine_text=#FF8080
+chat_other_text=#FFB3B3
+
+# Credit admin panel
+credit_avatar_bg=#140808
+credit_row_bg=#1E0D0D
+credit_row_stroke=#5A1E1E
+credit_donate_bg=#1A0A0A
+
+# Collapsed COL button background
+small_btn_bg=#000000
+small_btn_hover_bg=#1A0A0A
+collapsed_text=#FFFFFF
+collapsed_text_stroke=#000000
+
+# ESP (optional)
+esp_enemy=#FF0000
+esp_team=#FF4D4D
