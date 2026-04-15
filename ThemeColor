@@ -38,51 +38,50 @@ menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png ]]
 
 # ThemeColor config for COL.lua
 # Format: key=value
-# Color format supports: #RRGGBB or R,G,B
 
 # Menu base colors
-bg=#0A0E18
-panel=#121826
-acc=#00DCFF
-on=#26BE4E
-off=#A02020
-txt=#EEF4FF
-txtm=#8494B2
+bg=#140808
+panel=#1F0D0D
+acc=#FF2A2A
+on=#FF3B3B
+off=#7A1A1A
+txt=#FFF1F1
+txtm=#C48A8A
 wht=#FFFFFF
-warn=#E6A014
-red=#C82828
-dark=#0D121E
+warn=#FF6A00
+red=#FF2A2A
+dark=#0F0505
 
 # Extra menu/effect colors
-menu_stroke=#385C94
-menu_shade=#060C14
+menu_stroke=#8F2A2A
+menu_shade=#0A0303
 
 # Main FX palette
-fx_cyan=#00F0FF
-fx_soft=#6EF5FF
-fx_deep=#008CA5
+fx_cyan=#FF2A2A
+fx_soft=#FF6B6B
+fx_deep=#A80000
 fx_white=#FFFFFF
 
 # Falling background digits
-fx_digit=#00F0FF
-fx_digit_stroke=#00F0FF
+fx_digit=#FF2A2A
+fx_digit_stroke=#FF2A2A
 
 # Flame/glow particles around menu
-fx_flame=#00F0FF
+fx_flame=#FF2A2A
 fx_flame_highlight=#FFFFFF
 
 # Sweep light effect across menu
-fx_sweep_glow=#00F0FF
-fx_sweep_core=#6EF5FF
+fx_sweep_glow=#FF2A2A
+fx_sweep_core=#FF6B6B
 fx_sweep_highlight=#FFFFFF
 
 # Collapsed COL button background
 small_btn_bg=#000000
-small_btn_hover_bg=#181C1C
+small_btn_hover_bg=#2A0F0F
 
 # ESP (optional)
-esp_enemy=#00FFFF
-esp_team=#00FFFF
+esp_enemy=#FF3B3B
+esp_team=#FF3B3B
 
 # Menu background image URL
 menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
