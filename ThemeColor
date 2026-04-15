@@ -1,60 +1,102 @@
 # ThemeColor config for COL.lua
+# Format: key=value
+# Color format supports: #RRGGBB or R,G,B
 
 # Menu base colors
-bg=#180A0A
-panel=#261212
-acc=#FF2A2A
-on=#FF3B3B
-off=#8B0000
-txt=#FFF0F0
-txtm=#B28484
+bg=#0A0E18
+panel=#121826
+acc=#00DCFF
+on=#26BE4E
+off=#A02020
+txt=#EEF4FF
+txtm=#8494B2
 wht=#FFFFFF
-warn=#FF9A3C
-red=#FF2A2A
-dark=#1E0D0D
+warn=#E6A014
+red=#C82828
+dark=#0D121E
 
 # Extra menu/effect colors
-menu_stroke=#943838
-menu_shade=#140606
+menu_stroke=#385C94
+menu_shade=#060C14
 
 # Main FX palette
-fx_cyan=#FF2A2A
-fx_soft=#FF6E6E
-fx_deep=#A50000
+fx_cyan=#00F0FF
+fx_soft=#6EF5FF
+fx_deep=#008CA5
 fx_white=#FFFFFF
 
 # Falling background digits
-fx_digit=#FF2A2A
-fx_digit_stroke=#FF2A2A
+fx_digit=#00F0FF
+fx_digit_stroke=#00F0FF
 
 # Flame/glow particles around menu
-fx_flame=#FF2A2A
+fx_flame=#00F0FF
 fx_flame_highlight=#FFFFFF
 
 # Sweep light effect across menu
-fx_sweep_glow=#FF2A2A
-fx_sweep_core=#FF6E6E
+fx_sweep_glow=#00F0FF
+fx_sweep_core=#6EF5FF
 fx_sweep_highlight=#FFFFFF
 
 # Language button and language menu
-lang_btn_bg=#360C0C
-lang_btn_hover_bg=#4E1212
-lang_btn_text=#FFF0F0
-lang_menu_bg=#1C0A0A
-lang_option_bg=#2A1010
-lang_option_hover_bg=#3C1818
-lang_option_text=#E6CDCD
-lang_option_stroke=#622A2A
+lang_btn_bg=#0C2A36
+lang_btn_hover_bg=#123E4E
+lang_btn_text=#F0F3F7
+lang_menu_bg=#0A121C
+lang_option_bg=#101C2A
+lang_option_hover_bg=#182A3C
+lang_option_text=#CDD2DA
+lang_option_stroke=#2A4662
+
+# Tab menu and function panels
+tab_bg=#0C2A36
+tab_hover_bg=#123E4E
+tab_text=#CDD2DA
+tab_stroke=#008CA5
+tab_hint_bg=#08121C
+tab_hint_text=#00DCFF
+content_stroke=#273A5C
+function_row_stroke=#23324E
+slider_track=#1D283E
+
+# UI button presets
+btn_primary=#00AAFF
+btn_primary_soft=#0096D2
+btn_primary_hover=#23BEFF
+btn_secondary=#5591DC
+btn_chat_target=#2D6078
+btn_warning=#D28C28
+btn_logout=#DC781E
+btn_danger=#C83737
+btn_danger_dark=#962323
+btn_danger_soft=#821E1E
+btn_chain_off=#5A1212
+btn_chain_on=#C81414
+btn_purple=#37235A
+btn_purple_dark=#2D234B
+btn_disabled=#2D2D37
+
+# Chat colors
+chat_mine_accent=#6E16E6
+chat_other_accent=#3CB4FF
+chat_mine_text=#B464FF
+chat_other_text=#3CC8FF
+
+# Credit admin panel
+credit_avatar_bg=#081622
+credit_row_bg=#0C1522
+credit_row_stroke=#204C62
+credit_donate_bg=#0A1A28
 
 # Collapsed COL button background
 small_btn_bg=#000000
-small_btn_hover_bg=#1C1818
+small_btn_hover_bg=#181C1C
 collapsed_text=#FFFFFF
 collapsed_text_stroke=#000000
 
 # ESP (optional)
-esp_enemy=#FF0000
-esp_team=#FF4D4D
+esp_enemy=#00FFFF
+esp_team=#00FFFF
 
 # Menu background image URL
 menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
