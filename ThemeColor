@@ -112,79 +112,79 @@ menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png ]]
 
 
 # ThemeColor config for COL.lua
-# ===== RED THEME (FULL) =====
+# ===== BRIGHT RED THEME (ENHANCED) =====
 
 # Menu base colors
-bg=#140000
-panel=#1E0A0A
-acc=#FF0000
-on=#FF3B3B
-off=#8B0000
-txt=#FFECEC
-txtm=#B28484
+bg=#1A0000
+panel=#2B0000
+acc=#FF1A1A
+on=#FF4D4D
+off=#990000
+txt=#FFFFFF
+txtm=#FFB3B3
 wht=#FFFFFF
-warn=#FF4D00
+warn=#FF3300
 red=#FF0000
-dark=#0D0000
+dark=#0A0000
 
 # Extra menu/effect colors
-menu_stroke=#8B2C2C
-menu_shade=#080000
+menu_stroke=#FF3333
+menu_shade=#0D0000
 
 # Main FX palette
-fx_cyan=#FF0000
+fx_cyan=#FF1A1A
 fx_soft=#FF6666
-fx_deep=#990000
+fx_deep=#B30000
 fx_white=#FFFFFF
 
 # Falling background digits
-fx_digit=#FF1A1A
+fx_digit=#FF3333
 fx_digit_stroke=#FF0000
 
 # Flame/glow particles around menu
-fx_flame=#FF0000
+fx_flame=#FF1A1A
 fx_flame_highlight=#FFFFFF
 
 # Sweep light effect across menu
-fx_sweep_glow=#FF0000
-fx_sweep_core=#FF4D4D
+fx_sweep_glow=#FF1A1A
+fx_sweep_core=#FF6666
 fx_sweep_highlight=#FFFFFF
 
 # Language button and language menu
-lang_btn_bg=#2A0C0C
-lang_btn_hover_bg=#401212
-lang_btn_text=#FFF0F0
-lang_menu_bg=#140808
-lang_option_bg=#1F1010
-lang_option_hover_bg=#2A1818
-lang_option_text=#FFDADA
-lang_option_stroke=#5A2A2A
+lang_btn_bg=#330000
+lang_btn_hover_bg=#4D0000
+lang_btn_text=#FFFFFF
+lang_menu_bg=#1A0000
+lang_option_bg=#2A0000
+lang_option_hover_bg=#3A0000
+lang_option_text=#FFD6D6
+lang_option_stroke=#FF3333
 
 # Tab menu and function panels
-tab_bg=#2A0C0C
-tab_hover_bg=#401212
-tab_text=#FFDADA
-tab_stroke=#990000
-tab_hint_bg=#140808
-tab_hint_text=#FF0000
-content_stroke=#4A1F1F
-function_row_stroke=#3A1818
-slider_track=#2A1414
+tab_bg=#330000
+tab_hover_bg=#4D0000
+tab_text=#FFD6D6
+tab_stroke=#FF1A1A
+tab_hint_bg=#1A0000
+tab_hint_text=#FF1A1A
+content_stroke=#662222
+function_row_stroke=#4D1A1A
+slider_track=#331111
 
 # UI button presets
-btn_primary=#FF0000
+btn_primary=#FF1A1A
 btn_primary_soft=#CC0000
-btn_primary_hover=#FF3333
-btn_secondary=#CC4444
-btn_chat_target=#662222
+btn_primary_hover=#FF4D4D
+btn_secondary=#FF6666
+btn_chat_target=#661111
 btn_warning=#FF6600
 btn_logout=#FF3300
 btn_danger=#FF0000
-btn_danger_dark=#800000
+btn_danger_dark=#990000
 btn_danger_soft=#661111
-btn_chain_off=#4A0F0F
-btn_chain_on=#FF1A1A
-btn_purple=#4A234A
+btn_chain_off=#4D0000
+btn_chain_on=#FF3333
+btn_purple=#552255
 btn_purple_dark=#3A1C3A
 btn_disabled=#2A2A2A
 
@@ -192,13 +192,20 @@ btn_disabled=#2A2A2A
 chat_mine_accent=#FF00FF
 chat_other_accent=#FF3333
 chat_mine_text=#FF66FF
-chat_other_text=#FF8080
+chat_other_text=#FF9999
 
 # Credit admin panel
-credit_avatar_bg=#140808
-credit_row_bg=#1A0C0C
-credit_row_stroke=#5A2A2A
-credit_donate_bg=#1A0A0A
+credit_avatar_bg=#1A0000
+credit_row_bg=#260000
+credit_row_stroke=#FF3333
+credit_donate_bg=#1A0000
+
+# Popup notification
+notify_bg=#1A0000
+notify_panel=#2B0000
+notify_acc=#FF1A1A
+notify_txt=#FFFFFF
+notify_txtm=#FFB3B3
 
 # Collapsed COL button background
 small_btn_bg=#000000
@@ -208,7 +215,7 @@ collapsed_text_stroke=#000000
 
 # ESP (optional)
 esp_enemy=#FF0000
-esp_team=#FF4D4D
+esp_team=#FF6666
 
-# Menu background image URL (giữ nguyên hoặc đổi nếu muốn)
+# Menu background image URL
 menu_background_url=https://i.postimg.cc/YSkhjMZm/Chat-GPT-Image-Apr-15-2026-09-40-11-PM.png
