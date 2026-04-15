@@ -41,38 +41,49 @@ menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png ]]
 # Color format supports: #RRGGBB or R,G,B
 
 # Menu base colors
-bg=#140A0A
-panel=#1F1212
-acc=#FF1A1A
-on=#FF3B3B
-off=#7A1A1A
-txt=#FFEDED
-txtm=#B28484
+bg=#0A0E18
+panel=#121826
+acc=#00DCFF
+on=#26BE4E
+off=#A02020
+txt=#EEF4FF
+txtm=#8494B2
 wht=#FFFFFF
-warn=#FF6A00
-red=#FF0000
-dark=#1A0D0D
+warn=#E6A014
+red=#C82828
+dark=#0D121E
 
 # Extra menu/effect colors
-menu_stroke=#943838
-menu_shade=#140606
-fx_cyan=#FF2A2A
-fx_soft=#FF6E6E
-fx_deep=#A50000
+menu_stroke=#385C94
+menu_shade=#060C14
+
+# Main FX palette
+fx_cyan=#00F0FF
+fx_soft=#6EF5FF
+fx_deep=#008CA5
 fx_white=#FFFFFF
-fx_digit=#FF3B3B
-fx_digit_stroke=#FF1A1A
-fx_flame=#FF2A2A
+
+# Falling background digits
+fx_digit=#00F0FF
+fx_digit_stroke=#00F0FF
+
+# Flame/glow particles around menu
+fx_flame=#00F0FF
 fx_flame_highlight=#FFFFFF
-fx_sweep_glow=#FF2A2A
-fx_sweep_core=#FF6E6E
+
+# Sweep light effect across menu
+fx_sweep_glow=#00F0FF
+fx_sweep_core=#6EF5FF
 fx_sweep_highlight=#FFFFFF
-small_btn_bg=#0A0000
-small_btn_hover_bg=#2A1A1A
+
+# Collapsed COL button background
+small_btn_bg=#000000
+small_btn_hover_bg=#181C1C
 
 # ESP (optional)
-esp_enemy=#FF0000
-esp_team=#FF6666
+esp_enemy=#00FFFF
+esp_team=#00FFFF
 
 # Menu background image URL
 menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
+
