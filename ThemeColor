@@ -213,9 +213,3 @@ esp_team=#00FFFF
 
 # Menu background image URL
 menu_background_url=https://i.postimg.cc/YSkhjMZm/Chat-GPT-Image-Apr-15-2026-09-40-11-PM.png
-
-collapsed_text_stroke=#000000
-
-# ESP (optional)
-esp_enemy=#FF0000
-esp_team=#FF4D4D
