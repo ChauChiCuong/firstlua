@@ -1,6 +1,14 @@
 return {
     updateHistory = {
-        vi = [[v4.1.0
+        vi = [[v4.2.0
+
+- Thông báo bảo trì đã được thêm vào COL Loader
+- Màu giao diện sẽ được cập nhật qua từng Event
+- Thay đổi toàn bộ logic Đạn Ma Thuật
+- Fix Menu bị lag khi cập nhật hình ảnh
+- Fix bug một số Excutor không chạy script
+
+v4.1.0
 
 - Thêm Anti Ban
 - Thêm chức năng Auto Chat
@@ -53,18 +61,26 @@ v3.0.2
 
 v3.0.1
 
- - Thêm CuongOutLook Aimbot vào tựa game Phantom Force
- - Fix logic Aimbot Mobile
- - Thêm nút bật tắt Micro (đang bảo trì)
+- Thêm CuongOutLook Aimbot vào tựa game Phantom Force
+- Fix logic Aimbot Mobile
+- Thêm nút bật tắt Micro (đang bảo trì)
 
 v3.0.0
 
- - Kết hợp Crosshair Advanced OP, AutoHeadShot OP, Aimbot Mobile OP thành một menu duy nhất
- - Thay đổi logic Aimbot PC
- - Tối ưu hóa ESP làm giảm fps, gây lag
- - Đã xóa ESP: Tracer, Name, Health, Distance]],
+- Kết hợp Crosshair Advanced OP, AutoHeadShot OP, Aimbot Mobile OP thành một menu duy nhất
+- Thay đổi logic Aimbot PC
+- Tối ưu hóa ESP làm giảm fps, gây lag
+- Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v4.1.0
+        en = [[v4.2.0
+
+- Maintenance notification added to COL Loader
+- UI colors will be updated through events
+- Completely reworked Magic Bullet logic
+- Fixed menu lag when updating images
+- Fixed bug where some executors could not run the script
+
+v4.1.0
 
 - Added Anti-Ban feature
 - Added Auto Chat feature
@@ -117,18 +133,26 @@ v3.0.2
 
 v3.0.1
 
- - Added CuongOutLook Aimbot to Phantom Force
- - Fixed Mobile Aimbot logic
- - Added a Micro toggle button (under maintenance)
+- Added CuongOutLook Aimbot to Phantom Force
+- Fixed Mobile Aimbot logic
+- Added a Micro toggle button (under maintenance)
 
 v3.0.0
 
- - Combined Crosshair Advanced OP, AutoHeadShot OP, and Aimbot Mobile OP into a single menu
- - Changed the PC Aimbot logic
- - Optimized ESP to reduce FPS drops and lag
- - Removed ESP: Tracer, Name, Health, Distance]],
+- Combined Crosshair Advanced OP, AutoHeadShot OP, and Aimbot Mobile OP into a single menu
+- Changed the PC Aimbot logic
+- Optimized ESP to reduce FPS drops and lag
+- Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v4.1.0
+        jp = [[v4.2.0
+
+- COL Loaderにメンテナンス通知を追加
+- UIカラーはイベントごとに更新されるようになります
+- Magic Bulletのロジックを全面的に変更
+- 画像更新時のメニューラグを修正
+- 一部Executorでスクリプトが実行できない問題を修正
+
+v4.1.0
 
 - Anti-Ban機能を追加
 - Auto Chat機能を追加
@@ -181,15 +205,15 @@ v3.0.2
 
 v3.0.1
 
- - Phantom Force に CuongOutLook Aimbot を追加
- - Mobile Aimbot のロジックを修正
- - マイクのオン/オフボタンを追加（メンテナンス中）
+- Phantom Force に CuongOutLook Aimbot を追加
+- Mobile Aimbot のロジックを修正
+- マイクのオン/オフボタンを追加（メンテナンス中）
 
 v3.0.0
 
- - Crosshair Advanced OP、AutoHeadShot OP、Aimbot Mobile OP を1つのメニューに統合
- - PC Aimbot のロジックを変更
- - FPS低下やラグを抑えるために ESP を最適化
- - ESP から Tracer、Name、Health、Distance を削除]]
+- Crosshair Advanced OP、AutoHeadShot OP、Aimbot Mobile OP を1つのメニューに統合
+- PC Aimbot のロジックを変更
+- FPS低下やラグを抑えるために ESP を最適化
+- ESP から Tracer、Name、Health、Distance を削除]]
     }
 }
