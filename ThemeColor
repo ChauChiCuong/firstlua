@@ -1,65 +1,26 @@
--- [[ # ThemeColor config for COL.lua
-# Format: key=value
-# Color format supports: #RRGGBB or R,G,B
-
-# Menu base colors
-bg=#0A0E18
-panel=#121826
-acc=#00DCFF
-on=#26BE4E
-off=#A02020
-txt=#EEF4FF
-txtm=#8494B2
-wht=#FFFFFF
-warn=#E6A014
-red=#C82828
-dark=#0D121E
-
-# Extra menu/effect colors
-menu_stroke=#385C94
-menu_shade=#060C14
-fx_cyan=#00F0FF
-fx_soft=#6EF5FF
-fx_deep=#008CA5
-small_btn_bg=#000000
-small_btn_hover_bg=#181C1C
-
-# ESP (optional)
-esp_enemy=#00FFFF
-esp_team=#00FFFF
-
-# Menu background image URL
-menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png ]]
-
-
-
-
-
-
 # ThemeColor config for COL.lua
-# Format: key=value
 
 # Menu base colors
-bg=#140808
-panel=#1F0D0D
+bg=#180A0A
+panel=#261212
 acc=#FF2A2A
 on=#FF3B3B
-off=#7A1A1A
-txt=#FFF1F1
-txtm=#C48A8A
+off=#8B0000
+txt=#FFF0F0
+txtm=#B28484
 wht=#FFFFFF
-warn=#FF6A00
+warn=#FF9A3C
 red=#FF2A2A
-dark=#0F0505
+dark=#1E0D0D
 
 # Extra menu/effect colors
-menu_stroke=#8F2A2A
-menu_shade=#0A0303
+menu_stroke=#943838
+menu_shade=#140606
 
 # Main FX palette
 fx_cyan=#FF2A2A
-fx_soft=#FF6B6B
-fx_deep=#A80000
+fx_soft=#FF6E6E
+fx_deep=#A50000
 fx_white=#FFFFFF
 
 # Falling background digits
@@ -72,17 +33,28 @@ fx_flame_highlight=#FFFFFF
 
 # Sweep light effect across menu
 fx_sweep_glow=#FF2A2A
-fx_sweep_core=#FF6B6B
+fx_sweep_core=#FF6E6E
 fx_sweep_highlight=#FFFFFF
+
+# Language button and language menu
+lang_btn_bg=#360C0C
+lang_btn_hover_bg=#4E1212
+lang_btn_text=#FFF0F0
+lang_menu_bg=#1C0A0A
+lang_option_bg=#2A1010
+lang_option_hover_bg=#3C1818
+lang_option_text=#E6CDCD
+lang_option_stroke=#622A2A
 
 # Collapsed COL button background
 small_btn_bg=#000000
-small_btn_hover_bg=#2A0F0F
+small_btn_hover_bg=#1C1818
+collapsed_text=#FFFFFF
+collapsed_text_stroke=#000000
 
 # ESP (optional)
-esp_enemy=#FF3B3B
-esp_team=#FF3B3B
+esp_enemy=#FF0000
+esp_team=#FF4D4D
 
 # Menu background image URL
 menu_background_url=https://i.postimg.cc/Vkfzywjv/3232.png
-
