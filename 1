@@ -28,6 +28,7 @@ local EXECUTOR_MOUSE1RELEASE = type(mouse1release) == "function" and mouse1relea
 local EXECUTOR_GETHUI = type(gethui) == "function" and gethui or nil
 local EXECUTOR_CLIPBOARD = type(setclipboard) == "function" and setclipboard
     or (type(toclipboard) == "function" and toclipboard or nil)
+local MOBILE_SAFE_MODE = UserInputService.TouchEnabled == true or EXECUTOR_LOADSTRING == nil
 
 local function safeLoadString(source)
     if type(source) ~= "string" or source == "" or not EXECUTOR_LOADSTRING then
@@ -994,7 +995,7 @@ bindTracked(RunService.Heartbeat, function()
 end)
 
 STATE._loaderSavedKeyFile = "CuongOutLook_saved_key.txt"
-STATE._queuedColReloadSource = [[
+STATE._queuedColReloadSource = MOBILE_SAFE_MODE and nil or [[
 local _ls = loadstring
 if type(_ls) == "function" then
     local _src = game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua")
@@ -1010,6 +1011,7 @@ STATE._themeSource = _themeSource or "remote"
 STATE._themeAutoReloadRunning = false
 STATE._themeAutoReloadingNow = false
 function STATE._startThemeAutoReloadWatcher()
+    if MOBILE_SAFE_MODE then return end
     if STATE._themeAutoReloadRunning then return end
     STATE._themeAutoReloadRunning = true
     task.spawn(function()
@@ -3835,7 +3837,7 @@ end
 -- ============================================================
 -- GUI
 -- ============================================================
-local C = {
+STATE._C = {
     BG    = themeColor("bg", Color3.fromRGB(10, 14, 24)),
     PANEL = themeColor("panel", Color3.fromRGB(18, 24, 38)),
     ACC   = themeColor("acc", Color3.fromRGB(0, 220, 255)),
@@ -3848,13 +3850,14 @@ local C = {
     RED   = themeColor("red", Color3.fromRGB(200, 40, 40)),
     DARK  = themeColor("dark", Color3.fromRGB(13, 18, 30)),
 }
+C = STATE._C
 STATE._THEME = {
     menuStroke = themeColor("menu_stroke", Color3.fromRGB(56, 92, 148)),
     menuShade = themeColor("menu_shade", Color3.fromRGB(6, 12, 20)),
-    fxCyan = themeColor("fx_cyan", C.ACC),
+    fxCyan = themeColor("fx_cyan", STATE._C.ACC),
     fxSoft = themeColor("fx_soft", Color3.fromRGB(110, 245, 255)),
     fxDeep = themeColor("fx_deep", Color3.fromRGB(0, 140, 165)),
-    fxWhite = themeColor("fx_white", C.WHT),
+    fxWhite = themeColor("fx_white", STATE._C.WHT),
     langBtnBg = themeColor("lang_btn_bg", Color3.fromRGB(12, 42, 54)),
     langBtnHoverBg = themeColor("lang_btn_hover_bg", Color3.fromRGB(18, 62, 78)),
     langBtnText = themeColor("lang_btn_text", Color3.fromRGB(240, 243, 247)),
@@ -3868,7 +3871,7 @@ STATE._THEME = {
     tabText = themeColor("tab_text", Color3.fromRGB(205, 210, 218)),
     tabStroke = themeColor("tab_stroke", Color3.fromRGB(0, 140, 165)),
     tabHintBg = themeColor("tab_hint_bg", Color3.fromRGB(8, 18, 28)),
-    tabHintText = themeColor("tab_hint_text", C.ACC),
+    tabHintText = themeColor("tab_hint_text", STATE._C.ACC),
     contentStroke = themeColor("content_stroke", Color3.fromRGB(39, 58, 92)),
     functionRowStroke = themeColor("function_row_stroke", Color3.fromRGB(35, 50, 78)),
     sliderTrack = themeColor("slider_track", Color3.fromRGB(29, 40, 62)),
@@ -3906,7 +3909,7 @@ STATE._THEME.fxSweepGlow = themeColor("fx_sweep_glow", STATE._THEME.fxCyan)
 STATE._THEME.fxSweepCore = themeColor("fx_sweep_core", STATE._THEME.fxSoft)
 STATE._THEME.fxSweepHighlight = themeColor("fx_sweep_highlight", STATE._THEME.fxWhite)
 STATE._THEME.collapsedText = themeColor("collapsed_text", STATE._THEME.fxWhite)
-STATE._THEME.collapsedTextStroke = themeColor("collapsed_text_stroke", C.DARK)
+STATE._THEME.collapsedTextStroke = themeColor("collapsed_text_stroke", STATE._C.DARK)
 if STATE.language ~= "en" and STATE.language ~= "vi" and STATE.language ~= "jp" then
     STATE.language = "vi"
 end
@@ -8758,6 +8761,9 @@ function STATE._clearSavedLoaderKey()
     end
 end
 function STATE._rejoinCurrentServer(queuedSource)
+    if MOBILE_SAFE_MODE then
+        queuedSource = nil
+    end
     if queuedSource and not STATE._queueScriptOnTeleport(queuedSource) then
         notify(_tr("Setting"), _tr("Teleport queue is not supported by this executor."), 3)
         return false
