@@ -10,7 +10,10 @@ local UserInputService = game:GetService("UserInputService")
 local Workspace        = game:GetService("Workspace")
 local Camera           = Workspace.CurrentCamera
 local plr              = Players.LocalPlayer
-local mouse            = plr:GetMouse()
+local mouse            = nil
+pcall(function()
+    mouse = plr:GetMouse()
+end)
 local function getChar() return plr.Character end
 local function getHRP()
     local c = getChar()
@@ -19,6 +22,18 @@ end
 local function getHum()
     local c = getChar()
     return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function hasConnectableSignal(signal)
+    return signal ~= nil and type(signal.Connect) == "function"
+end
+
+local function getMouseTarget()
+    return mouse and mouse.Target or nil
+end
+
+local function getMouseHit()
+    return mouse and mouse.Hit or nil
 end
 
 local EXECUTOR_LOADSTRING = type(loadstring) == "function" and loadstring or nil
@@ -2596,7 +2611,7 @@ local function tbGetTargetHumanoid(target)
     return hum, model
 end
 local function tbShouldFire()
-    local hum, model = tbGetTargetHumanoid(mouse.Target)
+    local hum, model = tbGetTargetHumanoid(getMouseTarget())
     local configTarget = model and STATE._isConfigTargetModel(model)
     if not model then return false end
     if hum and hum.Health <= 0 then return false end
@@ -3531,31 +3546,31 @@ end
 --   nearest player and does it again, repeating until stopped.
 -- ============================================================
 -- Spin toggle - spins YOUR character, walk freely
-local spinConn     = nil
-local selfSpinBAV  = nil
-local function startSpin()
-    if spinConn then return end
+STATE._spinConn = nil
+STATE._selfSpinBAV = nil
+function STATE._startSpin()
+    if STATE._spinConn then return end
     local hrp = getHRP()
     if not hrp then return end
-    selfSpinBAV = Instance.new("BodyAngularVelocity")
-    selfSpinBAV.AngularVelocity = Vector3.new(0, 9999, 0)
-    selfSpinBAV.MaxTorque       = Vector3.new(0, 1e9, 0)
-    selfSpinBAV.Parent          = hrp
+    STATE._selfSpinBAV = Instance.new("BodyAngularVelocity")
+    STATE._selfSpinBAV.AngularVelocity = Vector3.new(0, 9999, 0)
+    STATE._selfSpinBAV.MaxTorque       = Vector3.new(0, 1e9, 0)
+    STATE._selfSpinBAV.Parent          = hrp
     -- Re-parent to new HRP if character respawns
-    spinConn = trackConnection(RunService.Heartbeat:Connect(function()
+    STATE._spinConn = trackConnection(RunService.Heartbeat:Connect(function()
         if not STATE.spinToggle then
-            if selfSpinBAV then pcall(function() selfSpinBAV:Destroy() end); selfSpinBAV = nil end
-            spinConn:Disconnect(); spinConn = nil; return
+            if STATE._selfSpinBAV then pcall(function() STATE._selfSpinBAV:Destroy() end); STATE._selfSpinBAV = nil end
+            STATE._spinConn:Disconnect(); STATE._spinConn = nil; return
         end
         local h = getHRP()
-        if h and selfSpinBAV and selfSpinBAV.Parent ~= h then
-            selfSpinBAV.Parent = h
+        if h and STATE._selfSpinBAV and STATE._selfSpinBAV.Parent ~= h then
+            STATE._selfSpinBAV.Parent = h
         end
     end))
 end
-local function stopSpin()
-    if selfSpinBAV then pcall(function() selfSpinBAV:Destroy() end); selfSpinBAV = nil end
-    if spinConn    then spinConn:Disconnect(); spinConn = nil end
+function STATE._stopSpin()
+    if STATE._selfSpinBAV then pcall(function() STATE._selfSpinBAV:Destroy() end); STATE._selfSpinBAV = nil end
+    if STATE._spinConn then STATE._spinConn:Disconnect(); STATE._spinConn = nil end
 end
 -- Chain fling state
 STATE._chainFlingActive = false
@@ -3674,13 +3689,15 @@ end
 -- ============================================================
 -- CLICK-TP
 -- ============================================================
-bindTracked(mouse.Button1Down, function()
-    if not STATE.clickTP then return end
-    local hrp = getHRP()
-    if not hrp then return end
-    local hit = mouse.Hit
-    if hit then markOwnTP(); hrp.CFrame = hit * CFrame.new(0, 3, 0) end
-end)
+if hasConnectableSignal(mouse and mouse.Button1Down) then
+    bindTracked(mouse.Button1Down, function()
+        if not STATE.clickTP then return end
+        local hrp = getHRP()
+        if not hrp then return end
+        local hit = getMouseHit()
+        if hit then markOwnTP(); hrp.CFrame = hit * CFrame.new(0, 3, 0) end
+    end)
+end
 -- ============================================================
 -- SPEED / NOCLIP / REACH  (passive heartbeat loops)
 -- ============================================================
@@ -7258,7 +7275,7 @@ STATE._Tog("Movement", "Spin",
     function() return STATE.spinToggle end,
     function(v)
         STATE.spinToggle = v
-        if v then startSpin() else stopSpin() end
+        if v then STATE._startSpin() else STATE._stopSpin() end
     end)
 STATE._Info("Movement", "  Spins YOU at 9999 rad/s. Still walk freely.")
 -- ============================
@@ -8345,7 +8362,7 @@ do
         params.FilterType = Enum.RaycastFilterType.Exclude
         params.FilterDescendantsInstances = {getChar(), Camera}
         local hit = Workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
-        local part = hit and hit.Instance or mouse.Target
+        local part = hit and hit.Instance or getMouseTarget()
         local cur = part
         while cur and cur ~= Workspace do
             if cur:IsA("Model") then
@@ -8452,14 +8469,18 @@ do
 
     if not STATE._chInputBound then
         STATE._chInputBound = true
-        bindTracked(mouse.Button1Down, function()
-            STATE._chHoldMouse = true
-            if STATE.xMarkEnabled and STATE._chEnemyAtCrosshair() then
-                STATE._chXActive[#STATE._chXActive + 1] = {createdTime = tick()}
-                STATE._chLastSpawn = tick()
-            end
-        end)
-        bindTracked(mouse.Button1Up, function() STATE._chHoldMouse = false end)
+        if hasConnectableSignal(mouse and mouse.Button1Down) then
+            bindTracked(mouse.Button1Down, function()
+                STATE._chHoldMouse = true
+                if STATE.xMarkEnabled and STATE._chEnemyAtCrosshair() then
+                    STATE._chXActive[#STATE._chXActive + 1] = {createdTime = tick()}
+                    STATE._chLastSpawn = tick()
+                end
+            end)
+        end
+        if hasConnectableSignal(mouse and mouse.Button1Up) then
+            bindTracked(mouse.Button1Up, function() STATE._chHoldMouse = false end)
+        end
         bindTracked(UserInputService.TouchStarted, function(_, gp)
             if gp then return end
             STATE._chHoldTouch = true
@@ -9066,7 +9087,7 @@ function STATE._applyRestoredState()
     -- (handled by heartbeat)
     -- Spin
     if STATE.spinToggle then
-        pcall(startSpin)
+        pcall(STATE._startSpin)
     end
     -- Jump boost / infinite / bhop handled by heartbeat
     -- Anti-gravity
