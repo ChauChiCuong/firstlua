@@ -994,7 +994,16 @@ bindTracked(RunService.Heartbeat, function()
 end)
 
 STATE._loaderSavedKeyFile = "CuongOutLook_saved_key.txt"
-STATE._queuedColReloadSource = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"))()'
+STATE._queuedColReloadSource = [[
+local _ls = loadstring
+if type(_ls) == "function" then
+    local _src = game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua")
+    local _fn = _ls(_src)
+    if type(_fn) == "function" then
+        _fn()
+    end
+end
+]]
 STATE._themeRefreshInterval = THEME_AUTO_REFRESH_INTERVAL
 STATE._themeRawTextSnapshot = normalizeRemoteText(_themeRawText) or ""
 STATE._themeSource = _themeSource or "remote"
