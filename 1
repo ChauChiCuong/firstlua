@@ -939,6 +939,64 @@ local function loadState()
     end
     return true
 end
+local function sanitizeStateForCurrentClient()
+    local changed = false
+
+    STATE.aimTouch = (UserInputService.TouchEnabled == true)
+
+    if MOBILE_SAFE_MODE then
+        if STATE.camlock then
+            STATE.camlock = false
+            changed = true
+        end
+        if STATE.triggerbot then
+            STATE.triggerbot = false
+            changed = true
+        end
+        if STATE.aimAuto then
+            STATE.aimAuto = false
+            changed = true
+        end
+        if STATE.clickTP then
+            STATE.clickTP = false
+            changed = true
+        end
+    end
+
+    if not UserInputService.KeyboardEnabled then
+        local currentAimKey = type(STATE.aimKey) == "string" and STATE.aimKey or "NONE"
+        if currentAimKey ~= "NONE" then
+            STATE.aimKey = "NONE"
+            changed = true
+        end
+    end
+
+    if not UserInputService.MouseEnabled then
+        if STATE.clickTP then
+            STATE.clickTP = false
+            changed = true
+        end
+        if STATE.triggerbot then
+            STATE.triggerbot = false
+            changed = true
+        end
+    end
+
+    if not EXECUTOR_MOUSEMOVE and STATE.camlock then
+        STATE.camlock = false
+        changed = true
+    end
+    if (not EXECUTOR_MOUSE1PRESS or not EXECUTOR_MOUSE1RELEASE) and STATE.triggerbot then
+        STATE.triggerbot = false
+        changed = true
+    end
+    if not mouse and STATE.clickTP then
+        STATE.clickTP = false
+        changed = true
+    end
+
+    return changed
+end
 function STATE._getVoiceChatAudioInput()
     local audioInput = plr:FindFirstChild("AudioDeviceInput")
     if audioInput and audioInput.ClassName == "AudioDeviceInput" then
@@ -3785,13 +3843,16 @@ end)
 -- render with the correct ON/OFF state from the start)
 -- ============================================================
 STATE._hadSave = loadState()
-STATE.aimTouch = false
+STATE._mobileStateSanitized = sanitizeStateForCurrentClient()
 if STATE._hadSave then
     task.defer(function()
         if STATE._applyRestoredState then
             STATE._applyRestoredState()
         end
         notify("CuongOutLook", (STATE.language == "jp") and "設定を復元しました" or ((STATE.language == "en") and "Settings restored" or "Đã khôi phục cài đặt"), 3)
+        if STATE._mobileStateSanitized then
+            notify("CuongOutLook", (STATE.language == "jp") and "モバイル非対応のPC機能を無効化しました" or ((STATE.language == "en") and "Disabled PC-only features for mobile safety" or "Đã tắt tính năng PC-only để tránh lỗi trên mobile"), 3)
+        end
     end)
 end
 -- ============================================================
