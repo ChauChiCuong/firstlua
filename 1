@@ -247,20 +247,21 @@ local function resolveRemoteHeaderTitle(rawText)
     local trimmed = trimTextValue(rawText)
     if not trimmed then return nil end
 
-    local chunk = safeLoadString(rawText)
-    if type(chunk) == "function" then
-        local okResult, result = pcall(chunk)
-        if okResult then
-            if type(result) == "string" then
-                return trimTextValue(result)
-            end
-            if type(result) == "table" then
-                return trimTextValue(result.title)
-                    or trimTextValue(result.header)
-                    or trimTextValue(result.text)
-                    or trimTextValue(result[1])
-            end
-        end
+    local returned = trimTextValue(trimmed:match("^return%s+(.+)$"))
+    if returned then
+        trimmed = returned
+    end
+
+    local tableValue = trimmed:match('title%s*=%s*"(.-)"')
+        or trimmed:match("title%s*=%s*'(.-)'")
+        or trimmed:match('header%s*=%s*"(.-)"')
+        or trimmed:match("header%s*=%s*'(.-)'")
+        or trimmed:match('text%s*=%s*"(.-)"')
+        or trimmed:match("text%s*=%s*'(.-)'")
+        or trimmed:match('%[%s*1%s*%]%s*=%s*"(.-)"')
+        or trimmed:match("%[%s*1%s*%]%s*=%s*'(.-)'")
+    if tableValue then
+        return trimTextValue(tableValue)
     end
 
     local unquoted = trimmed:match('^"(.*)"$') or trimmed:match("^'(.*)'$")
