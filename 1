@@ -8735,7 +8735,7 @@ function STATE._queueScriptOnTeleport(source)
 end
 function STATE._clearSavedLoaderKey()
     pcall(function()
-        getgenv().SCRIPT_KEY = nil
+        runtimeEnv.SCRIPT_KEY = nil
     end)
 
     if type(isfile) == "function" and type(delfile) == "function" then
@@ -9153,4 +9153,3 @@ notify("CuongOutLook", (STATE.language == "jp")
     or ((STATE.language == "en")
     and ("Loaded" .. (STATE._hadSave and " - settings restored" or " - all features start OFF"))
     or ("Đã tải" .. (STATE._hadSave and " - khôi phục cài đặt" or " - tất cả tính năng OFF"))), 4)
-
