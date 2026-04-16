@@ -1,6 +1,12 @@
 return {
     updateHistory = {
-        vi = [[v4.2.0
+        vi = [[v4.2.1
+
+- Thêm màu UI cho cả COL Menu Loader và Thông báo bải trì
+- Fix kích thước giao diện Thông báo bảo trì trên Mobile bị lệch
+- Ẩn thông tin Credit Roblox User
+
+v4.2.0
 
 - Thông báo bảo trì đã được thêm vào COL Loader
 - Màu giao diện sẽ được cập nhật qua từng Event
@@ -72,7 +78,13 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v4.2.0
+        en = [[v4.2.1
+
+- Added UI colors for both the COL Menu Loader and maintenance notice
+- Fixed the maintenance notice UI size being misaligned on mobile
+- Hid Roblox User credit information
+
+v4.2.0
 
 - Maintenance notification added to COL Loader
 - UI colors will be updated through events
@@ -144,7 +156,13 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v4.2.0
+        jp = [[v4.2.1
+
+- COL Menu Loader とメンテナンス通知の両方にUIカラーを追加
+- Mobileでメンテナンス通知UIのサイズがずれる問題を修正
+- Roblox User のクレジット情報を非表示に変更
+
+v4.2.0
 
 - COL Loaderにメンテナンス通知を追加
 - UIカラーはイベントごとに更新されるようになります
