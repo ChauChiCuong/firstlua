@@ -995,72 +995,15 @@ bindTracked(RunService.Heartbeat, function()
 end)
 
 STATE._loaderSavedKeyFile = "CuongOutLook_saved_key.txt"
-STATE._queuedColReloadSource = MOBILE_SAFE_MODE and nil or [[
-local _ls = loadstring
-if type(_ls) == "function" then
-    local _src = game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua")
-    local _fn = _ls(_src)
-    if type(_fn) == "function" then
-        _fn()
-    end
-end
-]]
+STATE._queuedColReloadSource = nil
 STATE._themeRefreshInterval = THEME_AUTO_REFRESH_INTERVAL
 STATE._themeRawTextSnapshot = normalizeRemoteText(_themeRawText) or ""
 STATE._themeSource = _themeSource or "remote"
 STATE._themeAutoReloadRunning = false
 STATE._themeAutoReloadingNow = false
 function STATE._startThemeAutoReloadWatcher()
-    if MOBILE_SAFE_MODE then return end
-    if STATE._themeAutoReloadRunning then return end
-    STATE._themeAutoReloadRunning = true
-    task.spawn(function()
-        while isRuntimeAlive() do
-            task.wait(math.max(5, tonumber(STATE._themeRefreshInterval) or THEME_AUTO_REFRESH_INTERVAL))
-            if not isRuntimeAlive() then
-                break
-            end
-            if STATE._themeAutoReloadingNow then
-                break
-            end
-            local latestRaw, latestSource = fetchPreferredThemeRawText()
-            local latestNormalized = normalizeRemoteText(latestRaw)
-            if latestNormalized and latestNormalized ~= STATE._themeRawTextSnapshot then
-                STATE._themeRawTextSnapshot = latestNormalized
-                STATE._themeSource = latestSource or STATE._themeSource
-                STATE._themeAutoReloadingNow = true
-                pcall(function()
-                    notify("Theme", ((STATE._themeSource == "local") and "ThemeColor local changed. Reloading COL menu..." or "ThemeColor remote changed. Reloading COL menu..."), 3)
-                end)
-                task.wait(0.15)
-                local okReload = pcall(function()
-                    local src = STATE._queuedColReloadSource
-                    if type(src) == "string" and src ~= "" then
-                        local fn = safeLoadString(src)
-                        if type(fn) == "function" then
-                            fn()
-                            return
-                        end
-                    end
-                    local fallbackChunk = safeLoadString(game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"))
-                    if type(fallbackChunk) == "function" then
-                        fallbackChunk()
-                        return
-                    end
-                    error("reload loadstring unavailable")
-                end)
-                if not okReload then
-                    STATE._themeAutoReloadingNow = false
-                    pcall(function()
-                        notify("Theme", "Reload failed. Will retry on next check.", 3)
-                    end)
-                end
-            end
-        end
-        STATE._themeAutoReloadRunning = false
-    end)
+    return false
 end
-STATE._startThemeAutoReloadWatcher()
 local FLING_THRESH = 120
 function STATE._launchUniversalEmergencyExit(reason)
     local Players = game:GetService("Players")
