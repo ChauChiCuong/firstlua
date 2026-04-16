@@ -25,6 +25,9 @@ local EXECUTOR_LOADSTRING = type(loadstring) == "function" and loadstring or nil
 local EXECUTOR_MOUSEMOVE = type(mousemoverel) == "function" and mousemoverel or nil
 local EXECUTOR_MOUSE1PRESS = type(mouse1press) == "function" and mouse1press or nil
 local EXECUTOR_MOUSE1RELEASE = type(mouse1release) == "function" and mouse1release or nil
+local EXECUTOR_GETHUI = type(gethui) == "function" and gethui or nil
+local EXECUTOR_CLIPBOARD = type(setclipboard) == "function" and setclipboard
+    or (type(toclipboard) == "function" and toclipboard or nil)
 
 local function safeLoadString(source)
     if type(source) ~= "string" or source == "" or not EXECUTOR_LOADSTRING then
@@ -50,6 +53,20 @@ end
 local function safeMouse1Release()
     if not EXECUTOR_MOUSE1RELEASE then return false end
     return pcall(EXECUTOR_MOUSE1RELEASE)
+end
+
+local function safeGetHui()
+    if not EXECUTOR_GETHUI then return nil end
+    local ok, hui = pcall(EXECUTOR_GETHUI)
+    if ok and hui then
+        return hui
+    end
+    return nil
+end
+
+local function safeCopyToClipboard(text)
+    if not EXECUTOR_CLIPBOARD then return false end
+    return pcall(EXECUTOR_CLIPBOARD, text)
 end
 
 local STATE
@@ -131,8 +148,8 @@ local function cleanupRuntime()
 
     local function destroyNamedGui(guiName)
         if not guiName or guiName == "" then return end
-        local okHui, hui = pcall(function() return gethui() end)
-        if okHui and hui then
+        local hui = safeGetHui()
+        if hui then
             local found = hui:FindFirstChild(guiName)
             if found then
                 pcall(function() found:Destroy() end)
@@ -472,8 +489,8 @@ local NOTIFY_STYLE = {
 local notifyGui, notifyHolder = nil, nil
 local notifyStack = {}
 local function getNotifyParent()
-    local ok, hui = pcall(function() return gethui() end)
-    if ok and hui then return hui end
+    local hui = safeGetHui()
+    if hui then return hui end
     local pg = plr:FindFirstChildOfClass("PlayerGui")
     if pg then return pg end
     return plr:WaitForChild("PlayerGui", 10)
@@ -3298,8 +3315,7 @@ bindTracked(UserInputService.InputBegan, function(inp)
         if not ssBlind then
             local sg2 = Instance.new("ScreenGui")
             sg2.IgnoreGuiInset=true; sg2.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
-            local ok,hui = pcall(function() return gethui() end)
-            sg2.Parent = (ok and hui) or plr.PlayerGui
+            sg2.Parent = safeGetHui() or plr.PlayerGui
             ssBlind = Instance.new("Frame",sg2)
             ssBlind.Size=UDim2.new(1,0,1,0)
             ssBlind.BackgroundColor3=Color3.new(1,1,1)
@@ -3587,7 +3603,7 @@ local function stopSpin()
     if spinConn    then spinConn:Disconnect(); spinConn = nil end
 end
 -- Chain fling state
-local chainFlingActive = false
+STATE._chainFlingActive = false
 local function getNearestPlayer(excludeList)
     local hrp = getHRP()
     if not hrp then return nil end
@@ -3668,26 +3684,26 @@ local function flingOne(target, onDone)
     end)
 end
 -- Public fling: flings selected target once (no chain)
-local function flingPlayer(target)
+function STATE._flingPlayer(target)
     flingOne(target, nil)
 end
 -- Start chain fling: flings target, then nearest, then nearest...
-local function startChainFling(firstTarget)
-    if chainFlingActive then return end
-    chainFlingActive = true
+function STATE._startChainFling(firstTarget)
+    if STATE._chainFlingActive then return end
+    STATE._chainFlingActive = true
     STATE.chainFling = true
     local function doNext(target)
-        if not STATE.chainFling or not chainFlingActive then
-            chainFlingActive = false
+        if not STATE.chainFling or not STATE._chainFlingActive then
+            STATE._chainFlingActive = false
             return
         end
         if not target then
             -- No more players - wait and retry
             task.delay(0.5, function()
-                if STATE.chainFling and chainFlingActive then
+                if STATE.chainFling and STATE._chainFlingActive then
                     doNext(getNearestPlayer())
                 else
-                    chainFlingActive = false
+                    STATE._chainFlingActive = false
                 end
             end)
             return
@@ -3696,9 +3712,9 @@ local function startChainFling(firstTarget)
     end
     doNext(firstTarget or getNearestPlayer())
 end
-local function stopChainFling()
+function STATE._stopChainFling()
     STATE.chainFling  = false
-    chainFlingActive  = false
+    STATE._chainFlingActive  = false
 end
 -- ============================================================
 -- CLICK-TP
@@ -5186,8 +5202,8 @@ function _refreshLocalizedTexts()
 end
 function STATE._destroyExistingScreenGui()
     local oldScreenGui = nil
-    local okHui, hui = pcall(function() return gethui() end)
-    if okHui and hui then
+    local hui = safeGetHui()
+    if hui then
         oldScreenGui = hui:FindFirstChild("cuongoutlookUndetect")
     end
     if not oldScreenGui and plr:FindFirstChildOfClass("PlayerGui") then
@@ -5199,13 +5215,7 @@ function STATE._destroyExistingScreenGui()
 end
 function STATE._mountScreenGui(screenGui)
     if not screenGui then return end
-    local parent = nil
-    local okHui, hui = pcall(function() return gethui() end)
-    if okHui and hui then
-        parent = hui
-    else
-        parent = plr:WaitForChild("PlayerGui", 10)
-    end
+    local parent = safeGetHui() or plr:WaitForChild("PlayerGui", 10)
     pcall(function()
         screenGui.Parent = parent
     end)
@@ -6315,15 +6325,7 @@ function STATE._nxt()
     return STATE._ord
 end
 function STATE._copyToClipboard(text, label)
-    local ok = pcall(function()
-        if setclipboard then
-            setclipboard(text)
-        elseif toclipboard then
-            toclipboard(text)
-        else
-            error("clipboard unsupported")
-        end
-    end)
+    local ok = safeCopyToClipboard(text)
     if ok then
         notify(_tr("Copy"), _tr(label or "Link") .. " " .. _tr("copied"), 2)
     else
@@ -8843,16 +8845,16 @@ STATE._flingTgt = nil
 STATE._Drop("Players", "Target", function(p) STATE._flingTgt = p end)
 STATE._Act("Players", "Fling Once", STATE._THEME.btnDangerDark, function()
     if not STATE._flingTgt then notify(_tr("Fling"), _tr("Select a target first"), 2); return end
-    flingPlayer(STATE._flingTgt)
+    STATE._flingPlayer(STATE._flingTgt)
 end)
 STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", STATE._THEME.btnChainOff, function()
-    if chainFlingActive then
-        stopChainFling()
+    if STATE._chainFlingActive then
+        STATE._stopChainFling()
         STATE._chainBtn.Text             = _tr("Chain Fling (OFF)")
         STATE._chainBtn.BackgroundColor3 = STATE._THEME.btnChainOff
         notify(_tr("Fling"), _tr("Chain fling stopped"), 2)
     else
-        startChainFling(STATE._flingTgt)
+        STATE._startChainFling(STATE._flingTgt)
         STATE._chainBtn.Text             = _tr("Chain Fling (ON)")
         STATE._chainBtn.BackgroundColor3 = STATE._THEME.btnChainOn
         notify(_tr("Fling"), _tr("Chain fling started - spins then launches, auto-switches!"), 3)
