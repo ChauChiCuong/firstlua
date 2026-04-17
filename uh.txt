@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-        vi = [[v4.2.1
+        vi = [[v4.2.2
+
+- Script này hiện chỉ hỗ trợ trên PC. Phiên bản Mobile đang được bảo trì. Vui lòng chờ thông báo mới. (Lỗi chạy Menu trên Mobile cực kỳ nghiêm trọng)
+- Fix gây lag khi tắt chế độ đồ họa thấp trong Menu
+
+v4.2.1
 
 - Thêm màu UI cho cả COL Menu Loader và Thông báo bải trì
 - Fix kích thước giao diện Thông báo bảo trì trên Mobile bị lệch
@@ -78,7 +83,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v4.2.1
+        en = [[v4.2.2
+
+- This script is currently supported on PC only. The Mobile version is under maintenance. Please wait for a new announcement. (The Menu issue on Mobile is extremely serious)
+- Fixed lag when disabling Low Graphics mode in the Menu
+
+v4.2.1
 
 - Added UI colors for both the COL Menu Loader and maintenance notice
 - Fixed the maintenance notice UI size being misaligned on mobile
@@ -156,7 +166,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v4.2.1
+        jp = [[v4.2.2
+
+- このスクリプトは現在PCのみ対応しています。Mobile版はメンテナンス中です。新しいお知らせをお待ちください。（MobileでMenuが動作しない問題は非常に深刻です）
+- Menuで低グラフィックモードをオフにした際に発生するラグを修正
+
+v4.2.1
 
 - COL Menu Loader とメンテナンス通知の両方にUIカラーを追加
 - Mobileでメンテナンス通知UIのサイズがずれる問題を修正
