@@ -142,6 +142,7 @@ RUNTIME.cleanup = cleanupRuntime
 
 local HEADER_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/Header.txt"
 local CRE_HEADER_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/Cre%20Header.txt"
+local COL_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"
 local THEME_LOCAL_FILE = "ThemeColor.txt"
 local THEME_LOCAL_FILE_FALLBACK = "ThemeColor"
 local THEME_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/ThemeColor"
@@ -195,14 +196,65 @@ local function parseThemeConfig(rawText)
     end
     return data
 end
+local function compileStringChunk(source, chunkName)
+    if type(source) ~= "string" or source == "" then
+        return nil, "empty source"
+    end
+    if type(loadstring) ~= "function" then
+        return nil, "loadstring unavailable"
+    end
+    local okCompile, chunk = pcall(loadstring, source, chunkName)
+    if not okCompile then
+        return nil, chunk
+    end
+    if type(chunk) ~= "function" then
+        return nil, "compiled chunk is not callable"
+    end
+    return chunk, nil
+end
+local function runStringChunk(source, chunkName)
+    local chunk, compileErr = compileStringChunk(source, chunkName)
+    if not chunk then
+        return false, compileErr
+    end
+    local okRun, runErr = pcall(chunk)
+    if not okRun then
+        return false, runErr
+    end
+    return true, nil
+end
+local function buildSafeRemoteLoader(url)
+    local sourceUrl = tostring(url or "")
+    return ([[
+local __url = %q
+local __okBody, __body = pcall(function()
+    return game:HttpGet(__url)
+end)
+if not __okBody or type(__body) ~= "string" or __body == "" then
+    warn("CuongOutLook: HttpGet failed: " .. tostring(__body))
+    return
+end
+if type(loadstring) ~= "function" then
+    warn("CuongOutLook: loadstring unavailable in this executor")
+    return
+end
+local __okChunk, __chunk = pcall(loadstring, __body, "@CuongOutLookRemote")
+if not __okChunk or type(__chunk) ~= "function" then
+    warn("CuongOutLook: loadstring compile failed: " .. tostring(__chunk))
+    return
+end
+local __okRun, __runErr = pcall(__chunk)
+if not __okRun then
+    warn("CuongOutLook: remote script failed: " .. tostring(__runErr))
+end
+]]):format(sourceUrl)
+end
 local function resolveRemoteHeaderTitle(rawText)
     local trimmed = trimTextValue(rawText)
     if not trimmed then return nil end
 
-    local okLoad, chunk = pcall(function()
-        return loadstring(rawText)
-    end)
-    if okLoad and type(chunk) == "function" then
+    local chunk = select(1, compileStringChunk(rawText, "@CuongOutLookRemoteHeader"))
+    if type(chunk) == "function" then
         local okResult, result = pcall(chunk)
         if okResult then
             if type(result) == "string" then
@@ -632,30 +684,6 @@ local function updateMobileFovGui(visible, radius)
     mobileFovRing.Position = UDim2.fromOffset(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     mobileFovRing.Visible = (visible == true)
 end
-local function safeMouseMoveRel(dx, dy)
-    if type(mousemoverel) ~= "function" then
-        if STATE and not STATE._mouseMoveRelUnavailableNotified then
-            STATE._mouseMoveRelUnavailableNotified = true
-            STATE.camlock = false
-            STATE._abTarget = nil
-            pcall(function()
-                notify("Camlock", "Executor hien tai khong ho tro mousemoverel(). Da tat camlock de tranh loi.", 4)
-            end)
-        end
-        return false
-    end
-
-    local ok = pcall(mousemoverel, dx, dy)
-    if not ok and STATE and not STATE._mouseMoveRelUnavailableNotified then
-        STATE._mouseMoveRelUnavailableNotified = true
-        STATE.camlock = false
-        STATE._abTarget = nil
-        pcall(function()
-            notify("Camlock", "mousemoverel() bi loi tren executor hien tai. Da tat camlock.", 4)
-        end)
-    end
-    return ok
-end
 -- ============================================================
 -- WATERMARK  –  creator header (giữa trên cùng)
 -- ============================================================
@@ -971,41 +999,12 @@ bindTracked(RunService.Heartbeat, function()
 end)
 
 STATE._loaderSavedKeyFile = "CuongOutLook_saved_key.txt"
-STATE._queuedColReloadSource = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"))()'
+STATE._queuedColReloadSource = buildSafeRemoteLoader(COL_SOURCE_URL)
 STATE._themeRefreshInterval = THEME_AUTO_REFRESH_INTERVAL
 STATE._themeRawTextSnapshot = normalizeRemoteText(_themeRawText) or ""
 STATE._themeSource = _themeSource or "remote"
 STATE._themeAutoReloadRunning = false
 STATE._themeAutoReloadingNow = false
-STATE._reloadApiUnavailableNotified = false
-function STATE._reloadCurrentColScript(source)
-    if type(loadstring) ~= "function" then
-        if not STATE._reloadApiUnavailableNotified then
-            STATE._reloadApiUnavailableNotified = true
-            pcall(function()
-                notify("Theme", "Mobile executor hien tai khong ho tro loadstring(). Da tat auto reload de tranh loi nen.", 4)
-            end)
-        end
-        return false, "loadstring unavailable"
-    end
-
-    local src = source
-    if type(src) == "string" and src ~= "" then
-        local fn = loadstring(src)
-        if type(fn) == "function" then
-            fn()
-            return true
-        end
-    end
-
-    local fallback = loadstring(game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"))
-    if type(fallback) == "function" then
-        fallback()
-        return true
-    end
-
-    return false, "reload compile failed"
-end
 function STATE._startThemeAutoReloadWatcher()
     if STATE._themeAutoReloadRunning then return end
     STATE._themeAutoReloadRunning = true
@@ -1028,17 +1027,11 @@ function STATE._startThemeAutoReloadWatcher()
                     notify("Theme", ((STATE._themeSource == "local") and "ThemeColor local changed. Reloading COL menu..." or "ThemeColor remote changed. Reloading COL menu..."), 3)
                 end)
                 task.wait(0.15)
-                local okReload, reloadOk = pcall(function()
-                    return STATE._reloadCurrentColScript(STATE._queuedColReloadSource)
-                end)
-                if (not okReload) or (reloadOk ~= true) then
+                local okReload, reloadErr = runStringChunk(STATE._queuedColReloadSource, "@CuongOutLookReload")
+                if not okReload then
                     STATE._themeAutoReloadingNow = false
-                    if reloadOk == false then
-                        STATE._themeAutoReloadRunning = false
-                        break
-                    end
                     pcall(function()
-                        notify("Theme", "Reload failed. Will retry on next check.", 3)
+                        notify("Theme", "Reload failed: " .. tostring(reloadErr) .. ". Will retry on next check.", 3)
                     end)
                 end
             end
@@ -3192,6 +3185,10 @@ end)
 bindTracked(RunService.RenderStepped, function(dt)
     if not STATE.camlock then STATE._abTarget = nil; return end
     if not abKeyHeld()  then STATE._abTarget = nil; return end
+    if type(mousemoverel) ~= "function" then
+        STATE._abTarget = nil
+        return
+    end
 
     STATE._abNpcScanAccum = STATE._abNpcScanAccum + dt
     if STATE._abNpcScanAccum >= 0.6 or #STATE._abNpcModels == 0 then
@@ -3248,7 +3245,7 @@ bindTracked(RunService.RenderStepped, function(dt)
     -- When smooth=0, use a tiny deadzone to keep lock very tight.
     local deadzone = (smoothValue <= 0) and 0.05 or 0.5
     if math.abs(rawX) > deadzone or math.abs(rawY) > deadzone then
-        safeMouseMoveRel(moveX, moveY)
+        mousemoverel(moveX, moveY)
     end
 end)
 bindTracked(UserInputService.InputBegan, function(inp, gameProcessed)
@@ -5198,39 +5195,45 @@ function _refreshLocalizedTexts()
         end
     end
 end
-function STATE._createScreenGui()
-    local gui = Instance.new("ScreenGui")
-    local oldGui = nil
-    local okOld, huiOld = pcall(function() return gethui() end)
-    if okOld and huiOld then
-        oldGui = huiOld:FindFirstChild("cuongoutlookUndetect")
+function STATE._destroyExistingMainGui()
+    local existingGui = nil
+    local okHui, hui = pcall(function() return gethui() end)
+    if okHui and hui then
+        existingGui = hui:FindFirstChild("cuongoutlookUndetect")
     end
-    if not oldGui and plr:FindFirstChildOfClass("PlayerGui") then
-        oldGui = plr.PlayerGui:FindFirstChild("cuongoutlookUndetect")
+    if not existingGui and plr:FindFirstChildOfClass("PlayerGui") then
+        existingGui = plr.PlayerGui:FindFirstChild("cuongoutlookUndetect")
     end
-    if oldGui then
-        pcall(function() oldGui:Destroy() end)
+    if existingGui then
+        pcall(function() existingGui:Destroy() end)
     end
+end
+function STATE._createRootScreenGui()
+    STATE._destroyExistingMainGui()
 
-    gui.Name = "cuongoutlookUndetect"
-    gui.ResetOnSpawn = false
-    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "cuongoutlookUndetect"
+    screenGui.ResetOnSpawn = false
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
     local okHui, hui = pcall(function() return gethui() end)
     pcall(function()
-        gui.Parent = (okHui and hui) or plr:WaitForChild("PlayerGui", 10)
+        screenGui.Parent = (okHui and hui) or plr:WaitForChild("PlayerGui", 10)
     end)
-    if not gui.Parent then gui.Parent = plr.PlayerGui end
+    if not screenGui.Parent then
+        screenGui.Parent = plr.PlayerGui
+    end
 
-    RUNTIME.screenGui = gui
+    RUNTIME.screenGui = screenGui
+    STATE._screenGui = screenGui
     pcall(function()
-        gui.Destroying:Connect(function()
+        screenGui.Destroying:Connect(function()
             cleanupRuntime()
         end)
     end)
-    return gui
+    return screenGui
 end
-STATE._screenGui = STATE._createScreenGui()
+STATE._createRootScreenGui()
 -- Main window
 STATE._window = Instance.new("Frame", STATE._screenGui)
 STATE._window.Size             = UDim2.new(0, 600, 0, 350)
