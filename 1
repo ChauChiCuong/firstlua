@@ -140,15 +140,13 @@ local function cleanupRuntime()
 end
 RUNTIME.cleanup = cleanupRuntime
 
-local THEME_LOCAL_FILE = "ThemeColor.txt"
-local THEME_LOCAL_FILE_FALLBACK = "ThemeColor"
+local HEADER_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/Header.txt"
+local CRE_HEADER_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/Cre%20Header.txt"
+local THEME_SOURCE_URL = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/ThemeColor"
+local THEME_SOURCE_URL_FALLBACK = "https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/ThemeColor.txt"
 local THEME_AUTO_REFRESH_INTERVAL = 20
 local DEFAULT_MENU_BACKGROUND_URL = "https://i.postimg.cc/Vkfzywjv/3232.png"
 local MENU_BACKGROUND_FILE = "CuongOutLook_menu_background.png"
-local MENU_BACKGROUND_META_FILE = "CuongOutLook_menu_background_url.txt"
-local DEFAULT_CREDIT_AVATAR_URL = "https://i.postimg.cc/sDLdpjTx/Picsart-26-04-14-06-54-03-382.jpg"
-local CREDIT_AVATAR_FILE = "CuongOutLook_credit_avatar.jpg"
-local CREDIT_AVATAR_META_FILE = "CuongOutLook_credit_avatar_url.txt"
 local MENU_WINDOW_TRANSPARENCY = 0.42
 local MENU_PANEL_TRANSPARENCY = 0.48
 local MENU_DARK_TRANSPARENCY = 0.58
@@ -239,36 +237,18 @@ local function normalizeRemoteText(rawText)
     return rawText:gsub("\r\n", "\n"):gsub("\r", "\n"):gsub("%s+$", "")
 end
 local function fetchThemeRawText()
-    return nil
-end
-local function readLocalRawTextFile(path)
-    if type(path) ~= "string" or path == "" then return nil end
-    if type(isfile) ~= "function" or type(readfile) ~= "function" then return nil end
-    local okExists, exists = pcall(isfile, path)
-    if not okExists or not exists then return nil end
-    local okRead, rawText = pcall(readfile, path)
-    if okRead and type(rawText) == "string" and rawText ~= "" then
-        return rawText
+    local primary = fetchRemoteRawText(THEME_SOURCE_URL)
+    if type(primary) == "string" and primary ~= "" then
+        return primary
+    end
+    local fallback = fetchRemoteRawText(THEME_SOURCE_URL_FALLBACK)
+    if type(fallback) == "string" and fallback ~= "" then
+        return fallback
     end
     return nil
 end
-local function fetchLocalThemeRawText()
-    return readLocalRawTextFile(THEME_LOCAL_FILE)
-        or readLocalRawTextFile(THEME_LOCAL_FILE_FALLBACK)
-end
-local function fetchPreferredThemeRawText()
-    local localRaw = fetchLocalThemeRawText()
-    if type(localRaw) == "string" and localRaw ~= "" then
-        return localRaw, "local"
-    end
-    local remoteRaw = fetchThemeRawText()
-    if type(remoteRaw) == "string" and remoteRaw ~= "" then
-        return remoteRaw, "remote"
-    end
-    return nil, nil
-end
-local _themeRawText, _themeSource = fetchPreferredThemeRawText()
-local REMOTE_THEME = parseThemeConfig(_themeRawText or "")
+local _remoteThemeRawText = fetchThemeRawText() or ""
+local REMOTE_THEME = parseThemeConfig(_remoteThemeRawText)
 local function themeText(key, fallback)
     local value = REMOTE_THEME and REMOTE_THEME[tostring(key):lower()]
     return trimTextValue(value) or fallback
@@ -278,8 +258,8 @@ local function themeColor(key, fallback)
     return parseThemeColor(value) or fallback
 end
 local MENU_BACKGROUND_URL = themeText("menu_background_url", themeText("background_url", DEFAULT_MENU_BACKGROUND_URL))
-local REMOTE_MENU_HEADER_TITLE = nil
-local REMOTE_CRE_HEADER_TITLE = nil
+local REMOTE_MENU_HEADER_TITLE = fetchRemoteResolvedText(HEADER_SOURCE_URL)
+local REMOTE_CRE_HEADER_TITLE = fetchRemoteResolvedText(CRE_HEADER_SOURCE_URL)
 local function getHttpRequestFunction()
     if type(syn) == "table" and type(syn.request) == "function" then
         return syn.request
@@ -304,38 +284,16 @@ local function getCustomAssetFunction()
     end
     return nil
 end
-local function readCachedUrl(metaFile)
-    if type(metaFile) ~= "string" or metaFile == "" then return nil end
-    if type(isfile) ~= "function" or type(readfile) ~= "function" then return nil end
-    local okExists, exists = pcall(isfile, metaFile)
-    if not okExists or not exists then return nil end
-    local okRead, rawText = pcall(readfile, metaFile)
-    if okRead and type(rawText) == "string" and rawText ~= "" then
-        return trimTextValue(rawText)
-    end
-    return nil
-end
-local function writeCachedUrl(metaFile, url)
-    if type(metaFile) ~= "string" or metaFile == "" then return false end
-    if type(writefile) ~= "function" or type(url) ~= "string" or url == "" then return false end
-    return pcall(writefile, metaFile, url)
-end
-local function resolveRemoteImageAsset(url, imageFile, metaFile)
-    if type(url) ~= "string" or url == "" then return nil end
-    if type(imageFile) ~= "string" or imageFile == "" then return nil end
-
+local function resolveMenuBackgroundAsset()
     local customAsset = getCustomAssetFunction()
     if not customAsset then return nil end
 
     if type(isfile) == "function" then
-        local okExists, exists = pcall(isfile, imageFile)
+        local okExists, exists = pcall(isfile, MENU_BACKGROUND_FILE)
         if okExists and exists then
-            local cachedUrl = readCachedUrl(metaFile)
-            if cachedUrl and cachedUrl == url then
-                local okAsset, asset = pcall(customAsset, imageFile)
-                if okAsset and type(asset) == "string" and asset ~= "" then
-                    return asset
-                end
+            local okAsset, asset = pcall(customAsset, MENU_BACKGROUND_FILE)
+            if okAsset and type(asset) == "string" and asset ~= "" then
+                return asset
             end
         end
     end
@@ -346,7 +304,7 @@ local function resolveRemoteImageAsset(url, imageFile, metaFile)
     local requestFn = getHttpRequestFunction()
     if requestFn then
         local okRequest, response = pcall(requestFn, {
-            Url = url,
+            Url = MENU_BACKGROUND_URL,
             Method = "GET",
         })
         if okRequest and type(response) == "table" then
@@ -359,7 +317,7 @@ local function resolveRemoteImageAsset(url, imageFile, metaFile)
 
     if not body then
         local okFetch, rawBody = pcall(function()
-            return game:HttpGet(url)
+            return game:HttpGet(MENU_BACKGROUND_URL)
         end)
         if okFetch and type(rawBody) == "string" and rawBody ~= "" then
             body = rawBody
@@ -368,21 +326,16 @@ local function resolveRemoteImageAsset(url, imageFile, metaFile)
 
     if not body then return nil end
 
-    local okWrite = pcall(writefile, imageFile, body)
+    local okWrite = pcall(writefile, MENU_BACKGROUND_FILE, body)
     if not okWrite then return nil end
-    writeCachedUrl(metaFile, url)
 
-    local okAsset, asset = pcall(customAsset, imageFile)
+    local okAsset, asset = pcall(customAsset, MENU_BACKGROUND_FILE)
     if okAsset and type(asset) == "string" and asset ~= "" then
         return asset
     end
     return nil
 end
-local function resolveMenuBackgroundAsset()
-    return resolveRemoteImageAsset(MENU_BACKGROUND_URL, MENU_BACKGROUND_FILE, MENU_BACKGROUND_META_FILE)
-end
 local MENU_BACKGROUND_ASSET = resolveMenuBackgroundAsset()
-local CREDIT_AVATAR_ASSET = resolveRemoteImageAsset(DEFAULT_CREDIT_AVATAR_URL, CREDIT_AVATAR_FILE, CREDIT_AVATAR_META_FILE)
 do
 end
 local mobileTouchCount = 0
@@ -422,11 +375,11 @@ bindTracked(UserInputService.InputEnded, function(input)
     end
 end)
 local NOTIFY_STYLE = {
-    BG   = themeColor("notify_bg", themeColor("bg", Color3.fromRGB(10, 14, 24))),
-    PANEL= themeColor("notify_panel", themeColor("panel", Color3.fromRGB(18, 24, 38))),
-    ACC  = themeColor("notify_acc", themeColor("acc", Color3.fromRGB(0, 220, 255))),
-    TXT  = themeColor("notify_txt", themeColor("txt", Color3.fromRGB(238, 244, 255))),
-    TXTM = themeColor("notify_txtm", themeColor("txtm", Color3.fromRGB(132, 148, 178))),
+    BG   = Color3.fromRGB(10, 14, 24),
+    PANEL= Color3.fromRGB(18, 24, 38),
+    ACC  = Color3.fromRGB(0, 220, 255),
+    TXT  = Color3.fromRGB(238, 244, 255),
+    TXTM = Color3.fromRGB(132, 148, 178),
 }
 local notifyGui, notifyHolder = nil, nil
 local notifyStack = {}
@@ -937,8 +890,7 @@ end)
 STATE._loaderSavedKeyFile = "CuongOutLook_saved_key.txt"
 STATE._queuedColReloadSource = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ChauChiCuong/firstlua/refs/heads/main/COL.lua"))()'
 STATE._themeRefreshInterval = THEME_AUTO_REFRESH_INTERVAL
-STATE._themeRawTextSnapshot = normalizeRemoteText(_themeRawText) or ""
-STATE._themeSource = _themeSource or "remote"
+STATE._themeRawTextSnapshot = normalizeRemoteText(_remoteThemeRawText) or ""
 STATE._themeAutoReloadRunning = false
 STATE._themeAutoReloadingNow = false
 function STATE._startThemeAutoReloadWatcher()
@@ -953,14 +905,13 @@ function STATE._startThemeAutoReloadWatcher()
             if STATE._themeAutoReloadingNow then
                 break
             end
-            local latestRaw, latestSource = fetchPreferredThemeRawText()
+            local latestRaw = fetchThemeRawText()
             local latestNormalized = normalizeRemoteText(latestRaw)
             if latestNormalized and latestNormalized ~= STATE._themeRawTextSnapshot then
                 STATE._themeRawTextSnapshot = latestNormalized
-                STATE._themeSource = latestSource or STATE._themeSource
                 STATE._themeAutoReloadingNow = true
                 pcall(function()
-                    notify("Theme", ((STATE._themeSource == "local") and "ThemeColor local changed. Reloading COL menu..." or "ThemeColor remote changed. Reloading COL menu..."), 3)
+                    notify("Theme", "ThemeColor changed. Reloading COL menu...", 3)
                 end)
                 task.wait(0.15)
                 local okReload = pcall(function()
@@ -3775,65 +3726,13 @@ local C = {
     RED   = themeColor("red", Color3.fromRGB(200, 40, 40)),
     DARK  = themeColor("dark", Color3.fromRGB(13, 18, 30)),
 }
-local THEME = {
-    menuStroke = themeColor("menu_stroke", Color3.fromRGB(56, 92, 148)),
-    menuShade = themeColor("menu_shade", Color3.fromRGB(6, 12, 20)),
-    fxCyan = themeColor("fx_cyan", C.ACC),
-    fxSoft = themeColor("fx_soft", Color3.fromRGB(110, 245, 255)),
-    fxDeep = themeColor("fx_deep", Color3.fromRGB(0, 140, 165)),
-    fxWhite = themeColor("fx_white", C.WHT),
-    langBtnBg = themeColor("lang_btn_bg", Color3.fromRGB(12, 42, 54)),
-    langBtnHoverBg = themeColor("lang_btn_hover_bg", Color3.fromRGB(18, 62, 78)),
-    langBtnText = themeColor("lang_btn_text", Color3.fromRGB(240, 243, 247)),
-    langMenuBg = themeColor("lang_menu_bg", Color3.fromRGB(10, 18, 28)),
-    langOptionBg = themeColor("lang_option_bg", Color3.fromRGB(16, 28, 42)),
-    langOptionHoverBg = themeColor("lang_option_hover_bg", Color3.fromRGB(24, 42, 60)),
-    langOptionText = themeColor("lang_option_text", Color3.fromRGB(205, 210, 218)),
-    langOptionStroke = themeColor("lang_option_stroke", Color3.fromRGB(42, 70, 98)),
-    tabBg = themeColor("tab_bg", Color3.fromRGB(12, 42, 54)),
-    tabHoverBg = themeColor("tab_hover_bg", Color3.fromRGB(18, 62, 78)),
-    tabText = themeColor("tab_text", Color3.fromRGB(205, 210, 218)),
-    tabStroke = themeColor("tab_stroke", Color3.fromRGB(0, 140, 165)),
-    tabHintBg = themeColor("tab_hint_bg", Color3.fromRGB(8, 18, 28)),
-    tabHintText = themeColor("tab_hint_text", C.ACC),
-    contentStroke = themeColor("content_stroke", Color3.fromRGB(39, 58, 92)),
-    functionRowStroke = themeColor("function_row_stroke", Color3.fromRGB(35, 50, 78)),
-    sliderTrack = themeColor("slider_track", Color3.fromRGB(29, 40, 62)),
-    btnPrimary = themeColor("btn_primary", Color3.fromRGB(0, 170, 255)),
-    btnPrimarySoft = themeColor("btn_primary_soft", Color3.fromRGB(0, 150, 210)),
-    btnPrimaryHover = themeColor("btn_primary_hover", Color3.fromRGB(35, 190, 255)),
-    btnSecondary = themeColor("btn_secondary", Color3.fromRGB(85, 145, 220)),
-    btnChatTarget = themeColor("btn_chat_target", Color3.fromRGB(45, 96, 120)),
-    btnWarning = themeColor("btn_warning", Color3.fromRGB(210, 140, 40)),
-    btnLogout = themeColor("btn_logout", Color3.fromRGB(220, 120, 30)),
-    btnDanger = themeColor("btn_danger", Color3.fromRGB(200, 55, 55)),
-    btnDangerDark = themeColor("btn_danger_dark", Color3.fromRGB(150, 35, 35)),
-    btnDangerSoft = themeColor("btn_danger_soft", Color3.fromRGB(130, 45, 45)),
-    btnChainOff = themeColor("btn_chain_off", Color3.fromRGB(90, 18, 18)),
-    btnChainOn = themeColor("btn_chain_on", Color3.fromRGB(200, 20, 20)),
-    btnPurple = themeColor("btn_purple", Color3.fromRGB(55, 35, 90)),
-    btnPurpleDark = themeColor("btn_purple_dark", Color3.fromRGB(45, 35, 75)),
-    btnDisabled = themeColor("btn_disabled", Color3.fromRGB(45, 45, 55)),
-    chatMineAccent = themeColor("chat_mine_accent", Color3.fromRGB(110, 22, 230)),
-    chatOtherAccent = themeColor("chat_other_accent", Color3.fromRGB(60, 180, 255)),
-    chatMineText = themeColor("chat_mine_text", Color3.fromRGB(180, 100, 255)),
-    chatOtherText = themeColor("chat_other_text", Color3.fromRGB(60, 200, 255)),
-    creditAvatarBg = themeColor("credit_avatar_bg", Color3.fromRGB(8, 22, 34)),
-    creditRowBg = themeColor("credit_row_bg", Color3.fromRGB(12, 21, 34)),
-    creditRowStroke = themeColor("credit_row_stroke", Color3.fromRGB(32, 76, 98)),
-    creditDonateBg = themeColor("credit_donate_bg", Color3.fromRGB(10, 26, 40)),
-    smallBtnBg = themeColor("small_btn_bg", Color3.fromRGB(0, 0, 0)),
-    smallBtnHoverBg = themeColor("small_btn_hover_bg", Color3.fromRGB(24, 28, 28)),
-}
-THEME.fxDigit = themeColor("fx_digit", THEME.fxCyan)
-THEME.fxDigitStroke = themeColor("fx_digit_stroke", THEME.fxDigit)
-THEME.fxFlame = themeColor("fx_flame", THEME.fxCyan)
-THEME.fxFlameHighlight = themeColor("fx_flame_highlight", THEME.fxWhite)
-THEME.fxSweepGlow = themeColor("fx_sweep_glow", THEME.fxCyan)
-THEME.fxSweepCore = themeColor("fx_sweep_core", THEME.fxSoft)
-THEME.fxSweepHighlight = themeColor("fx_sweep_highlight", THEME.fxWhite)
-THEME.collapsedText = themeColor("collapsed_text", THEME.fxWhite)
-THEME.collapsedTextStroke = themeColor("collapsed_text_stroke", C.DARK)
+local THEME_MENU_STROKE = themeColor("menu_stroke", Color3.fromRGB(56, 92, 148))
+local THEME_MENU_SHADE = themeColor("menu_shade", Color3.fromRGB(6, 12, 20))
+local THEME_FX_CYAN = themeColor("fx_cyan", C.ACC)
+local THEME_FX_SOFT = themeColor("fx_soft", Color3.fromRGB(110, 245, 255))
+local THEME_FX_DEEP = themeColor("fx_deep", Color3.fromRGB(0, 140, 165))
+local THEME_SMALL_BTN_BG = themeColor("small_btn_bg", Color3.fromRGB(0, 0, 0))
+local THEME_SMALL_BTN_HOVER_BG = themeColor("small_btn_hover_bg", Color3.fromRGB(24, 28, 28))
 if STATE.language ~= "en" and STATE.language ~= "vi" and STATE.language ~= "jp" then
     STATE.language = "vi"
 end
@@ -4478,7 +4377,7 @@ STATE._LANG_TEXT_JP = {
     ["Dot Thickness"] = "ドット太さ",
     ["Dot X"] = "ドット X",
     ["Dot Y"] = "ドット Y",
-["Donate ID"] = "Discord DM",
+    ["Donate ID"] = "支援ID",
     ["Enable ESP"] = "ESPを有効化",
     ["Features"] = "機能",
     ["Field of View"] = "視野角",
@@ -4568,7 +4467,7 @@ STATE._LANG_TEXT_JP = {
     ["Reset Camera"] = "カメラをリセット",
     ["Reset FOV"] = "FOVをリセット",
     ["Restore All Parts"] = "すべてのパーツを復元",
-    ["Script Owner: CuongOutLook"] = "スクリプト所有者: CuongOutLook",
+    ["RobloxUserName: CuongOutLook"] = "Robloxユーザー名: CuongOutLook",
     ["Screen Effects"] = "画面効果",
     ["Send"] = "送信",
     ["Server Hop"] = "サーバー移動",
@@ -4838,7 +4737,7 @@ STATE._LANG_TEXT_VI = {
     ["Dot Thickness"] = "Độ dày chấm",
     ["Dot X"] = "Độ lệch X chấm",
     ["Dot Y"] = "Độ lệch Y chấm",
-["Donate ID"] = "Discord DM",
+    ["Donate ID"] = "ID ủng hộ",
     ["Enable ESP"] = "Bật ESP",
     ["Features"] = "Tính năng",
     ["Field of View"] = "Góc nhìn",
@@ -4889,7 +4788,7 @@ STATE._LANG_TEXT_VI = {
     ["Reset Camera"] = "Đặt lại camera",
     ["Reset FOV"] = "Đặt lại FOV",
     ["Restore All Parts"] = "Khôi phục mọi phần",
-    ["Script Owner: CuongOutLook"] = "Chủ Script: CuongOutLook",
+    ["RobloxUserName: CuongOutLook"] = "Tên Roblox: CuongOutLook",
     ["Screen Effects"] = "Hiệu ứng màn hình",
     ["Send"] = "Gửi",
     ["Server Hop"] = "Chuyển server",
@@ -5178,7 +5077,7 @@ STATE._window.ClipsDescendants = true
 local MENU_CORNER_RADIUS = 18
 Instance.new("UICorner", STATE._window).CornerRadius = UDim.new(0, MENU_CORNER_RADIUS)
 STATE._menuBaseStroke = Instance.new("UIStroke", STATE._window)
-STATE._menuBaseStroke.Color = THEME.menuStroke; STATE._menuBaseStroke.Thickness = 1.6
+STATE._menuBaseStroke.Color = THEME_MENU_STROKE; STATE._menuBaseStroke.Thickness = 1.6
 
 STATE._menuBackground = Instance.new("ImageLabel", STATE._window)
 STATE._menuBackground.Name = "MenuBackground"
@@ -5195,7 +5094,7 @@ Instance.new("UICorner", STATE._menuBackground).CornerRadius = UDim.new(0, MENU_
 STATE._menuBackgroundShade = Instance.new("Frame", STATE._window)
 STATE._menuBackgroundShade.Name = "MenuBackgroundShade"
 STATE._menuBackgroundShade.Size = UDim2.new(1, 0, 1, 0)
-STATE._menuBackgroundShade.BackgroundColor3 = THEME.menuShade
+STATE._menuBackgroundShade.BackgroundColor3 = THEME_MENU_SHADE
 STATE._menuBackgroundShade.BackgroundTransparency = MENU_BACKGROUND_ASSET and MENU_SHADE_TRANSPARENCY or 1
 STATE._menuBackgroundShade.BorderSizePixel = 0
 STATE._menuBackgroundShade.ZIndex = 0
@@ -5218,7 +5117,7 @@ STATE._menuFlameLayer.ClipsDescendants = true
 Instance.new("UICorner", STATE._menuFlameLayer).CornerRadius = UDim.new(0, MENU_CORNER_RADIUS)
 
 STATE._menuFlameStroke = Instance.new("UIStroke", STATE._window)
-STATE._menuFlameStroke.Color = THEME.fxFlame
+STATE._menuFlameStroke.Color = THEME_FX_CYAN
 STATE._menuFlameStroke.Thickness = 2.6
 STATE._menuFlameStroke.Transparency = 0.22
 STATE._menuFlameStroke.Enabled = false
@@ -5249,7 +5148,7 @@ STATE._menuSweepGlow.Name = "Glow"
 STATE._menuSweepGlow.AnchorPoint = Vector2.new(0.5, 0.5)
 STATE._menuSweepGlow.Size = UDim2.fromOffset(120, 360)
 STATE._menuSweepGlow.Position = UDim2.fromOffset(-220, 0)
-STATE._menuSweepGlow.BackgroundColor3 = THEME.fxSweepGlow
+STATE._menuSweepGlow.BackgroundColor3 = THEME_FX_CYAN
 STATE._menuSweepGlow.BackgroundTransparency = 1
 STATE._menuSweepGlow.BorderSizePixel = 0
 STATE._menuSweepGlow.Rotation = -24
@@ -5257,9 +5156,9 @@ STATE._menuSweepGlow.Visible = false
 Instance.new("UICorner", STATE._menuSweepGlow).CornerRadius = UDim.new(1, 0)
 STATE._menuSweepGlowGradient = Instance.new("UIGradient", STATE._menuSweepGlow)
 STATE._menuSweepGlowGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.fxSweepGlow),
-    ColorSequenceKeypoint.new(0.5, THEME.fxSweepHighlight),
-    ColorSequenceKeypoint.new(1, THEME.fxSweepGlow),
+    ColorSequenceKeypoint.new(0, THEME_FX_CYAN),
+    ColorSequenceKeypoint.new(0.5, C.WHT),
+    ColorSequenceKeypoint.new(1, THEME_FX_CYAN),
 })
 STATE._menuSweepGlowGradient.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(0, 1),
@@ -5274,7 +5173,7 @@ STATE._menuSweepCore.Name = "Core"
 STATE._menuSweepCore.AnchorPoint = Vector2.new(0.5, 0.5)
 STATE._menuSweepCore.Size = UDim2.fromOffset(44, 340)
 STATE._menuSweepCore.Position = UDim2.fromOffset(-220, 0)
-STATE._menuSweepCore.BackgroundColor3 = THEME.fxSweepCore
+STATE._menuSweepCore.BackgroundColor3 = THEME_FX_SOFT
 STATE._menuSweepCore.BackgroundTransparency = 1
 STATE._menuSweepCore.BorderSizePixel = 0
 STATE._menuSweepCore.Rotation = -24
@@ -5282,9 +5181,9 @@ STATE._menuSweepCore.Visible = false
 Instance.new("UICorner", STATE._menuSweepCore).CornerRadius = UDim.new(1, 0)
 STATE._menuSweepCoreGradient = Instance.new("UIGradient", STATE._menuSweepCore)
 STATE._menuSweepCoreGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, THEME.fxSweepCore),
-    ColorSequenceKeypoint.new(0.5, THEME.fxSweepHighlight),
-    ColorSequenceKeypoint.new(1, THEME.fxSweepCore),
+    ColorSequenceKeypoint.new(0, THEME_FX_CYAN),
+    ColorSequenceKeypoint.new(0.5, C.WHT),
+    ColorSequenceKeypoint.new(1, THEME_FX_CYAN),
 })
 STATE._menuSweepCoreGradient.Transparency = NumberSequence.new({
     NumberSequenceKeypoint.new(0, 1),
@@ -5375,7 +5274,7 @@ function STATE._respawnMenuFlameParticle(part)
     part.Size = UDim2.fromOffset(baseSize, math.floor(baseSize * 1.4))
     part.Position = UDim2.fromScale(x, y)
     part.Rotation = math.random(-18, 18)
-    part.BackgroundColor3 = THEME.fxFlame
+    part.BackgroundColor3 = THEME_FX_CYAN
     part.BackgroundTransparency = baseTransparency
     part.Visible = true
 
@@ -5447,7 +5346,7 @@ function STATE._startMenuFlameFx()
         local now = tick()
         local pulse = 0.5 + math.sin(now * 4.6) * 0.5
         if STATE._menuFlameStroke then
-            STATE._menuFlameStroke.Color = THEME.fxFlame:Lerp(THEME.fxFlameHighlight, pulse * 0.14)
+            STATE._menuFlameStroke.Color = THEME_FX_CYAN:Lerp(C.WHT, pulse * 0.14)
             STATE._menuFlameStroke.Transparency = 0.1 + pulse * 0.18
             STATE._menuFlameStroke.Thickness = 2.4 + pulse * 1.8
         end
@@ -5471,7 +5370,7 @@ function STATE._startMenuFlameFx()
                     part.Size = UDim2.fromOffset(nextSize, math.max(6, math.floor(nextSize * 1.35)))
                     part.Rotation = part.Rotation + st.spin * dt
                     part.BackgroundTransparency = math.clamp(st.baseTransparency + lifeRatio * 0.5, 0, 0.92)
-                    part.BackgroundColor3 = THEME.fxFlame:Lerp(THEME.fxFlameHighlight, (math.sin(now * 5 + index) * 0.5 + 0.5) * 0.22)
+                    part.BackgroundColor3 = THEME_FX_CYAN:Lerp(C.WHT, (math.sin(now * 5 + index) * 0.5 + 0.5) * 0.22)
                     if st.y < -0.08 or st.x < -0.08 or st.x > 1.08 then
                         STATE._respawnMenuFlameParticle(part)
                     end
@@ -5533,10 +5432,10 @@ function STATE._respawnMenuDigit(lbl, fromTop)
     lbl.Text = tostring(math.random(0, 9))
     lbl.Font = Enum.Font.Code
     lbl.TextSize = s
-    lbl.TextColor3 = THEME.fxDigit:Lerp(THEME.fxWhite, math.random() * 0.22)
+    lbl.TextColor3 = THEME_FX_CYAN:Lerp(C.WHT, math.random() * 0.22)
     lbl.TextTransparency = math.random(15, 55) / 100
     lbl.TextStrokeTransparency = 0.82
-    lbl.TextStrokeColor3 = THEME.fxDigitStroke
+    lbl.TextStrokeColor3 = THEME_FX_CYAN
     lbl.Size = UDim2.new(0, s + 8, 0, s + 8)
     lbl.Position = UDim2.fromScale(
         math.random() * 1.2 - 0.1,
@@ -5659,7 +5558,7 @@ STATE._closeBtn.Text             = "X"
 STATE._closeBtn.AutoButtonColor  = false
 Instance.new("UICorner", STATE._closeBtn).CornerRadius = UDim.new(0, 10)
 STATE._closeBtn.MouseEnter:Connect(function()
-    STATE._closeBtn.BackgroundColor3 = THEME.btnDanger
+    STATE._closeBtn.BackgroundColor3 = Color3.fromRGB(230, 60, 60)
 end)
 STATE._closeBtn.MouseLeave:Connect(function()
     STATE._closeBtn.BackgroundColor3 = C.RED
@@ -5668,37 +5567,37 @@ STATE._refreshLanguageUI = nil
 STATE._langBtn = Instance.new("TextButton", STATE._window)
 STATE._langBtn.Size             = UDim2.new(0, 132, 0, 28)
 STATE._langBtn.Position         = UDim2.new(1, -18 - 34 - 8 - 132, 0, 18)
-STATE._langBtn.BackgroundColor3 = THEME.langBtnBg
+STATE._langBtn.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
 STATE._langBtn.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
 STATE._langBtn.BorderSizePixel  = 0
 STATE._langBtn.Font             = Enum.Font.GothamSemibold
 STATE._langBtn.TextSize         = 10
-STATE._langBtn.TextColor3       = THEME.langBtnText
+STATE._langBtn.TextColor3       = Color3.fromRGB(240, 243, 247)
 STATE._langBtn.Text             = STATE._getLanguageButtonText()
 STATE._langBtn.AutoButtonColor  = false
 Instance.new("UICorner", STATE._langBtn).CornerRadius = UDim.new(0, 10)
 local _lbs = Instance.new("UIStroke", STATE._langBtn)
-_lbs.Color = THEME.fxCyan
+_lbs.Color = THEME_FX_CYAN
 _lbs.Thickness = 1
 STATE._langBtn.MouseEnter:Connect(function()
-    STATE._langBtn.BackgroundColor3 = THEME.langBtnHoverBg
+    STATE._langBtn.BackgroundColor3 = Color3.fromRGB(18, 62, 78)
     STATE._langBtn.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
 end)
 STATE._langBtn.MouseLeave:Connect(function()
-    STATE._langBtn.BackgroundColor3 = THEME.langBtnBg
+    STATE._langBtn.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
     STATE._langBtn.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
 end)
 function STATE._initLanguageMenu()
     STATE._langMenu = Instance.new("Frame", STATE._window)
     STATE._langMenu.Size = UDim2.new(0, 132, 0, 96)
     STATE._langMenu.Position = UDim2.new(1, -18 - 34 - 8 - 132, 0, 50)
-    STATE._langMenu.BackgroundColor3 = THEME.langMenuBg
+    STATE._langMenu.BackgroundColor3 = Color3.fromRGB(10, 18, 28)
     STATE._langMenu.BorderSizePixel = 0
     STATE._langMenu.Visible = false
     STATE._langMenu.ZIndex = 20
     Instance.new("UICorner", STATE._langMenu).CornerRadius = UDim.new(0, 10)
     local langMenuStroke = Instance.new("UIStroke", STATE._langMenu)
-    langMenuStroke.Color = THEME.fxCyan
+    langMenuStroke.Color = THEME_FX_CYAN
     langMenuStroke.Transparency = 0.15
     langMenuStroke.Thickness = 1
     local langMenuPad = Instance.new("UIPadding", STATE._langMenu)
@@ -5714,28 +5613,28 @@ function STATE._initLanguageMenu()
         local opt = Instance.new("TextButton", STATE._langMenu)
         opt.Name = "Lang_" .. code
         opt.Size = UDim2.new(1, 0, 0, 24)
-        opt.BackgroundColor3 = THEME.langOptionBg
+        opt.BackgroundColor3 = Color3.fromRGB(16, 28, 42)
         opt.BorderSizePixel = 0
         opt.LayoutOrder = order
         opt.Font = Enum.Font.Gotham
         opt.TextSize = 11
-        opt.TextColor3 = THEME.langOptionText
+        opt.TextColor3 = Color3.fromRGB(205, 210, 218)
         opt.Text = STATE._LANGUAGE_NAMES[code] or code
         opt.AutoButtonColor = false
         opt.ZIndex = 21
         Instance.new("UICorner", opt).CornerRadius = UDim.new(0, 8)
         local optStroke = Instance.new("UIStroke", opt)
-        optStroke.Color = THEME.langOptionStroke
+        optStroke.Color = Color3.fromRGB(42, 70, 98)
         optStroke.Transparency = 0.2
         optStroke.Thickness = 1
         opt.MouseEnter:Connect(function()
             if STATE.language ~= code then
-                opt.BackgroundColor3 = THEME.langOptionHoverBg
+                opt.BackgroundColor3 = Color3.fromRGB(24, 42, 60)
             end
         end)
         opt.MouseLeave:Connect(function()
             if STATE.language ~= code then
-                opt.BackgroundColor3 = THEME.langOptionBg
+                opt.BackgroundColor3 = Color3.fromRGB(16, 28, 42)
             end
         end)
         opt.MouseButton1Click:Connect(function()
@@ -5757,10 +5656,10 @@ STATE._initLanguageMenu()
 STATE._collapsedBtn = Instance.new("TextButton", sg)
 STATE._collapsedBtn.Size             = UDim2.new(0, 50, 0, 50)
 STATE._collapsedBtn.Position         = UDim2.new(0, 20, 0, 20)
-STATE._collapsedBtn.BackgroundColor3 = THEME.smallBtnBg
+STATE._collapsedBtn.BackgroundColor3 = THEME_SMALL_BTN_BG
 STATE._collapsedBtn.BackgroundTransparency = MENU_DARK_TRANSPARENCY
 STATE._collapsedBtn.BorderSizePixel  = 0
-STATE._collapsedBtn.TextColor3       = THEME.fxCyan
+STATE._collapsedBtn.TextColor3       = THEME_FX_CYAN
 STATE._collapsedBtn.Text             = ""
 STATE._collapsedBtn.AutoButtonColor  = false
 STATE._collapsedBtn.Visible          = false
@@ -5768,7 +5667,7 @@ STATE._collapsedBtn.Active           = true
 STATE._collapsedBtn.Draggable        = true
 Instance.new("UICorner", STATE._collapsedBtn).CornerRadius = UDim.new(0, 10)
 STATE._collapsedStroke = Instance.new("UIStroke", STATE._collapsedBtn)
-STATE._collapsedStroke.Color = THEME.fxCyan
+STATE._collapsedStroke.Color = THEME_FX_CYAN
 STATE._collapsedStroke.Thickness = 5
 STATE._collapsedFxLabel = Instance.new("TextLabel", STATE._collapsedBtn)
 STATE._collapsedFxLabel.Name = "FxLabel"
@@ -5778,12 +5677,12 @@ STATE._collapsedFxLabel.BackgroundTransparency = 1
 STATE._collapsedFxLabel.Font = Enum.Font.GothamBold
 STATE._collapsedFxLabel.Text = "COL"
 STATE._collapsedFxLabel.TextSize = 14
-STATE._collapsedFxLabel.TextColor3 = THEME.collapsedText
-STATE._collapsedFxLabel.TextStrokeColor3 = THEME.collapsedTextStroke
+STATE._collapsedFxLabel.TextColor3 = C.WHT
+STATE._collapsedFxLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 STATE._collapsedFxLabel.TextStrokeTransparency = 0.3
 STATE._collapsedFxLabel.ZIndex = STATE._collapsedBtn.ZIndex + 2
 STATE._collapsedFxStroke = Instance.new("UIStroke", STATE._collapsedFxLabel)
-STATE._collapsedFxStroke.Color = THEME.fxCyan
+STATE._collapsedFxStroke.Color = THEME_FX_CYAN
 STATE._collapsedFxStroke.Thickness = 1.4
 STATE._collapsedFxStroke.Transparency = 0.22
 STATE._collapsedGlitchPool = STATE._collapsedGlitchPool or "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@$%#&*"
@@ -5811,8 +5710,8 @@ function STATE._startCollapsedButtonFx()
         STATE._collapsedFxConn:Disconnect()
         STATE._collapsedFxConn = nil
     end
-    local normal = THEME.collapsedText
-    local accent = THEME.fxCyan
+    local normal = C.WHT
+    local accent = THEME_FX_CYAN
     STATE._collapsedFxAccum = 0
     STATE._collapsedFxConn = RunService.RenderStepped:Connect(function(dt)
         if not STATE._collapsedBtn.Parent or not STATE._collapsedFxLabel.Parent then
@@ -5832,10 +5731,10 @@ function STATE._startCollapsedButtonFx()
         local t = tick() * 3.1
         local revealRatio = 0.58 + math.sin(t) * 0.26
         local glowAlpha = 0.4 + math.sin(t * 1.7) * 0.2
-        local bgBase = STATE._collapsedHovering and THEME.smallBtnHoverBg or THEME.smallBtnBg
-        STATE._collapsedBtn.BackgroundColor3 = bgBase:Lerp(THEME.fxDeep, math.clamp(glowAlpha, 0.12, 0.7))
+        local bgBase = STATE._collapsedHovering and THEME_SMALL_BTN_HOVER_BG or THEME_SMALL_BTN_BG
+        STATE._collapsedBtn.BackgroundColor3 = bgBase:Lerp(THEME_FX_DEEP, math.clamp(glowAlpha, 0.12, 0.7))
         STATE._collapsedBtn.BackgroundTransparency = MENU_DARK_TRANSPARENCY
-        STATE._collapsedStroke.Color = THEME.fxSoft:Lerp(THEME.fxDeep, 0.5 + math.sin(t * 2.2) * 0.2)
+        STATE._collapsedStroke.Color = THEME_FX_SOFT:Lerp(THEME_FX_DEEP, 0.5 + math.sin(t * 2.2) * 0.2)
         STATE._collapsedStroke.Thickness = 4.8 + math.sin(t * 2.8) * 0.7
         STATE._collapsedFxLabel.Visible = true
         STATE._collapsedFxLabel.Text = STATE._buildCollapsedGlitchText("COL", revealRatio)
@@ -5861,13 +5760,13 @@ function STATE._stopCollapsedButtonFx()
         STATE._collapsedFxConn:Disconnect()
         STATE._collapsedFxConn = nil
     end
-    STATE._collapsedBtn.BackgroundColor3 = STATE._collapsedHovering and THEME.smallBtnHoverBg or THEME.smallBtnBg
+    STATE._collapsedBtn.BackgroundColor3 = STATE._collapsedHovering and THEME_SMALL_BTN_HOVER_BG or THEME_SMALL_BTN_BG
     STATE._collapsedBtn.BackgroundTransparency = MENU_DARK_TRANSPARENCY
-    STATE._collapsedStroke.Color = THEME.fxCyan
+    STATE._collapsedStroke.Color = THEME_FX_CYAN
     STATE._collapsedStroke.Thickness = 5
     STATE._collapsedFxLabel.Visible = true
     STATE._collapsedFxLabel.Text = "COL"
-    STATE._collapsedFxLabel.TextColor3 = THEME.collapsedText
+    STATE._collapsedFxLabel.TextColor3 = C.WHT
     STATE._collapsedFxStroke.Transparency = 0.22
     STATE._collapsedFxLabel.Position = STATE._collapsedFxBasePos
     STATE._collapsedBtn.Size = STATE._collapsedBtnBaseSize
@@ -5984,7 +5883,7 @@ function STATE._buildMenuPanels(parent)
     Instance.new("UICorner", content).CornerRadius = UDim.new(0, 16)
 
     local contentStroke = Instance.new("UIStroke", content)
-    contentStroke.Color = THEME.contentStroke
+    contentStroke.Color = Color3.fromRGB(39, 58, 92)
     contentStroke.Thickness = 1.2
 
     local scrollFrame = Instance.new("ScrollingFrame", content)
@@ -6014,13 +5913,13 @@ function STATE._createTabScrollHints(parent)
     local leftHint = Instance.new("TextLabel", parent)
     leftHint.Size = UDim2.new(0, 18, 0, 24)
     leftHint.Position = UDim2.new(0, 14, 0, 64)
-    leftHint.BackgroundColor3 = THEME.tabHintBg
+    leftHint.BackgroundColor3 = Color3.fromRGB(8, 18, 28)
     leftHint.BackgroundTransparency = MENU_DARK_TRANSPARENCY
     leftHint.BorderSizePixel = 0
     leftHint.Font = Enum.Font.GothamBold
     leftHint.Text = "<"
     leftHint.TextSize = 13
-    leftHint.TextColor3 = THEME.tabHintText
+    leftHint.TextColor3 = C.ACC
     leftHint.Visible = false
     leftHint.ZIndex = 3
     Instance.new("UICorner", leftHint).CornerRadius = UDim.new(0, 8)
@@ -6028,13 +5927,13 @@ function STATE._createTabScrollHints(parent)
     local rightHint = Instance.new("TextLabel", parent)
     rightHint.Size = UDim2.new(0, 18, 0, 24)
     rightHint.Position = UDim2.new(1, -32, 0, 64)
-    rightHint.BackgroundColor3 = THEME.tabHintBg
+    rightHint.BackgroundColor3 = Color3.fromRGB(8, 18, 28)
     rightHint.BackgroundTransparency = MENU_DARK_TRANSPARENCY
     rightHint.BorderSizePixel = 0
     rightHint.Font = Enum.Font.GothamBold
     rightHint.Text = ">"
     rightHint.TextSize = 13
-    rightHint.TextColor3 = THEME.tabHintText
+    rightHint.TextColor3 = C.ACC
     rightHint.Visible = false
     rightHint.ZIndex = 3
     Instance.new("UICorner", rightHint).CornerRadius = UDim.new(0, 8)
@@ -6145,8 +6044,8 @@ function STATE._showTabCore(name)
     end
     for _, b in pairs(STATE._tabBtns) do
         local on = (b.Name == name)
-        b.BackgroundColor3 = on and C.ACC or THEME.tabBg
-        b.TextColor3       = on and C.WHT or THEME.tabText
+        b.BackgroundColor3 = on and C.ACC or Color3.fromRGB(12, 42, 54)
+        b.TextColor3       = on and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(205, 210, 218)
     end
 end
 function STATE._buildTabButtons()
@@ -6154,7 +6053,7 @@ function STATE._buildTabButtons()
         local button = Instance.new("TextButton", STATE._tabBar)
         button.Name             = t
         button.Size             = UDim2.new(0, STATE._tabButtonWidth, 0, 30)
-        button.BackgroundColor3 = THEME.tabBg
+        button.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
         button.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
         button.BorderSizePixel  = 0
         button.Text             = _tabLabel(t)
@@ -6162,7 +6061,7 @@ function STATE._buildTabButtons()
         button.TextSize         = 10
         button.TextScaled       = true
         button.TextWrapped      = false
-        button.TextColor3       = THEME.tabText
+        button.TextColor3       = Color3.fromRGB(205, 210, 218)
         button.LayoutOrder      = i
         button.AutoButtonColor  = false
         local buttonTextLimit = Instance.new("UITextSizeConstraint", button)
@@ -6170,7 +6069,7 @@ function STATE._buildTabButtons()
         buttonTextLimit.MinTextSize = 8
         Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
         local buttonStroke = Instance.new("UIStroke", button)
-        buttonStroke.Color = THEME.tabStroke
+        buttonStroke.Color = Color3.fromRGB(0, 140, 165)
         buttonStroke.Thickness = 1
         STATE._tabBtns[t] = button
         STATE._bindTabBarDrag(button)
@@ -6189,8 +6088,8 @@ STATE._refreshLanguageUI = function()
     for code, btn in pairs(STATE._langOptionBtns or {}) do
         local selected = (STATE.language == code)
         btn.Text = STATE._LANGUAGE_NAMES[code] or code
-        btn.BackgroundColor3 = selected and C.ACC or THEME.langOptionBg
-        btn.TextColor3 = selected and C.WHT or THEME.langOptionText
+        btn.BackgroundColor3 = selected and C.ACC or Color3.fromRGB(16, 28, 42)
+        btn.TextColor3 = selected and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(205, 210, 218)
     end
     for tabName, btn in pairs(STATE._tabBtns) do
         btn.Text = _tabLabel(tabName)
@@ -6206,7 +6105,7 @@ function STATE._createAdminCreditTabButton()
     adminCredit.Name             = "Credit Admin"
     adminCredit.Size             = UDim2.new(0, STATE._tabButtonWidth, 0, 30)
     adminCredit.LayoutOrder      = #STATE._tabs + 1
-    adminCredit.BackgroundColor3 = THEME.tabBg
+    adminCredit.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
     adminCredit.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
     adminCredit.BorderSizePixel  = 0
     adminCredit.Text             = _tr("Credit Admin")
@@ -6214,7 +6113,7 @@ function STATE._createAdminCreditTabButton()
     adminCredit.TextSize         = 10
     adminCredit.TextScaled       = true
     adminCredit.TextWrapped      = false
-    adminCredit.TextColor3       = THEME.tabText
+    adminCredit.TextColor3       = Color3.fromRGB(205, 210, 218)
     adminCredit.TextXAlignment   = Enum.TextXAlignment.Center
     adminCredit.AutoButtonColor  = false
     adminCredit.ZIndex           = 2
@@ -6223,13 +6122,13 @@ function STATE._createAdminCreditTabButton()
     adminTextLimit.MinTextSize = 8
     Instance.new("UICorner", adminCredit).CornerRadius = UDim.new(0, 10)
     local stroke = Instance.new("UIStroke", adminCredit)
-    stroke.Color = THEME.tabStroke
+    stroke.Color = Color3.fromRGB(0, 200, 230)
     stroke.Thickness = 1
     STATE._tabBtns["Credit Admin"] = adminCredit
     STATE._bindTabBarDrag(adminCredit)
     adminCredit.MouseEnter:Connect(function()
         if STATE._activeTab ~= "Credit Admin" then
-            adminCredit.BackgroundColor3 = THEME.tabHoverBg
+            adminCredit.BackgroundColor3 = Color3.fromRGB(18, 62, 78)
             adminCredit.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
         end
     end)
@@ -6239,9 +6138,9 @@ function STATE._createAdminCreditTabButton()
             adminCredit.BackgroundTransparency = MENU_ACCENT_TRANSPARENCY
             adminCredit.TextColor3 = C.WHT
         else
-            adminCredit.BackgroundColor3 = THEME.tabBg
+            adminCredit.BackgroundColor3 = Color3.fromRGB(12, 42, 54)
             adminCredit.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
-            adminCredit.TextColor3 = THEME.tabText
+            adminCredit.TextColor3 = Color3.fromRGB(205, 210, 218)
         end
     end)
     adminCredit.MouseButton1Click:Connect(function()
@@ -6314,7 +6213,7 @@ function STATE._Tog(tab, label, getS, setS, extra)
     row.Visible          = false
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
     local rowStroke = Instance.new("UIStroke", row)
-    rowStroke.Color = THEME.functionRowStroke
+    rowStroke.Color = Color3.fromRGB(35, 50, 78)
     rowStroke.Transparency = 0.35
     local lb = Instance.new("TextLabel", row)
     lb.Size               = UDim2.new(1, -68, 1, 0)
@@ -6359,7 +6258,7 @@ function STATE._Sli(tab, label, getV, setV, mn, mx)
     row.Visible          = false
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
     local rowStroke = Instance.new("UIStroke", row)
-    rowStroke.Color = THEME.functionRowStroke
+    rowStroke.Color = Color3.fromRGB(35, 50, 78)
     rowStroke.Transparency = 0.35
     local lb = Instance.new("TextLabel", row)
     lb.Size               = UDim2.new(1, -10, 0, 18)
@@ -6372,7 +6271,7 @@ function STATE._Sli(tab, label, getV, setV, mn, mx)
     local track = Instance.new("Frame", row)
     track.Size             = UDim2.new(1, -24, 0, 8)
     track.Position         = UDim2.new(0, 12, 0, 34)
-    track.BackgroundColor3 = THEME.sliderTrack
+    track.BackgroundColor3 = Color3.fromRGB(29, 40, 62)
     track.BackgroundTransparency = MENU_DARK_TRANSPARENCY
     track.BorderSizePixel  = 0
     track.Active           = true
@@ -6454,7 +6353,7 @@ function STATE._Drop(tab, label, onSel)
     row.Visible          = false
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
     local rowStroke = Instance.new("UIStroke", row)
-    rowStroke.Color = THEME.functionRowStroke
+    rowStroke.Color = Color3.fromRGB(35, 50, 78)
     rowStroke.Transparency = 0.35
     local lb = Instance.new("TextLabel", row)
     lb.Size               = UDim2.new(0, 76, 1, 0)
@@ -6514,7 +6413,7 @@ function STATE._Input(tab, label, placeholder, initialText)
     Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
 
     local rowStroke = Instance.new("UIStroke", row)
-    rowStroke.Color = THEME.functionRowStroke
+    rowStroke.Color = Color3.fromRGB(35, 50, 78)
     rowStroke.Transparency = 0.35
 
     local lb = Instance.new("TextLabel", row)
@@ -6615,7 +6514,7 @@ function STATE._buildSoundTab()
             end
             pcall(saveStateIfEnabled)
         end)
-    STATE._mp3PlayPauseBtn = STATE._Act("Sound", "Phát MP3", THEME.btnPrimary, function()
+    STATE._mp3PlayPauseBtn = STATE._Act("Sound", "Phát MP3", Color3.fromRGB(0, 170, 255), function()
         STATE._toggleMp3PlayPause()
     end)
     function STATE._refreshMp3PlayPauseButton()
@@ -6623,16 +6522,16 @@ function STATE._buildSoundTab()
         local sound = STATE._mp3Sound
         if sound and sound.Parent and sound.IsPlaying then
             STATE._mp3PlayPauseBtn.Text = _tr("Tạm dừng MP3")
-            STATE._mp3PlayPauseBtn.BackgroundColor3 = THEME.btnWarning
+            STATE._mp3PlayPauseBtn.BackgroundColor3 = Color3.fromRGB(210, 140, 40)
             return
         end
         if sound and sound.Parent and sound.SoundId ~= "" and sound.TimePosition > 0 then
             STATE._mp3PlayPauseBtn.Text = _tr("Tiếp tục MP3")
-            STATE._mp3PlayPauseBtn.BackgroundColor3 = THEME.btnPrimarySoft
+            STATE._mp3PlayPauseBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 210)
             return
         end
         STATE._mp3PlayPauseBtn.Text = _tr("Phát MP3")
-        STATE._mp3PlayPauseBtn.BackgroundColor3 = THEME.btnPrimary
+        STATE._mp3PlayPauseBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     end
     _bindLangRefresh(STATE._refreshMp3PlayPauseButton, STATE._mp3PlayPauseBtn)
     STATE._refreshMp3PlayPauseButton()
@@ -6640,7 +6539,7 @@ function STATE._buildSoundTab()
     local mp3CatalogUrl = "https://bloxodes.com/catalog/roblox-music-ids"
 
     STATE._Sec("Sound", "Thêm ID nhạc")
-    STATE._Act("Sound", "Lấy link ID nhạc", THEME.btnSecondary, function()
+    STATE._Act("Sound", "Lấy link ID nhạc", Color3.fromRGB(85, 145, 220), function()
         STATE._copyToClipboard(mp3CatalogUrl, "Link ID nhạc bloxodes")
     end)
     STATE._Info("Sound", "  Sao chép link bloxodes để tìm Roblox Sound ID nhanh.")
@@ -6653,7 +6552,7 @@ function STATE._buildSoundTab()
     addRow.Visible = false
     Instance.new("UICorner", addRow).CornerRadius = UDim.new(0, 12)
     local addRowStroke = Instance.new("UIStroke", addRow)
-    addRowStroke.Color = THEME.functionRowStroke
+    addRowStroke.Color = Color3.fromRGB(35, 50, 78)
     addRowStroke.Transparency = 0.35
     table.insert(STATE._tabPages["Sound"], addRow)
 
@@ -6690,7 +6589,7 @@ function STATE._buildSoundTab()
     local addBtn = Instance.new("TextButton", addRow)
     addBtn.Size = UDim2.new(0, 86, 0, 24)
     addBtn.Position = UDim2.new(1, -98, 0, 42)
-    addBtn.BackgroundColor3 = THEME.btnPrimary
+    addBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
     addBtn.BorderSizePixel = 0
     addBtn.Font = Enum.Font.GothamSemibold
     addBtn.TextSize = 11
@@ -6757,7 +6656,7 @@ function STATE._buildSoundTab()
             row.BorderSizePixel = 0
             Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
             local rowStroke = Instance.new("UIStroke", row)
-            rowStroke.Color = THEME.functionRowStroke
+            rowStroke.Color = Color3.fromRGB(35, 50, 78)
             rowStroke.Transparency = 0.35
 
             local title = Instance.new("TextLabel", row)
@@ -6783,7 +6682,7 @@ function STATE._buildSoundTab()
             local playBtn = Instance.new("TextButton", row)
             playBtn.Size = UDim2.new(0, 50, 0, 24)
             playBtn.Position = UDim2.new(1, -108, 0.5, -12)
-            playBtn.BackgroundColor3 = THEME.btnPrimary
+            playBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
             playBtn.BorderSizePixel = 0
             playBtn.Font = Enum.Font.GothamSemibold
             playBtn.TextSize = 10
@@ -6798,7 +6697,7 @@ function STATE._buildSoundTab()
             local delBtn = Instance.new("TextButton", row)
             delBtn.Size = UDim2.new(0, 50, 0, 24)
             delBtn.Position = UDim2.new(1, -54, 0.5, -12)
-            delBtn.BackgroundColor3 = THEME.btnDangerSoft
+            delBtn.BackgroundColor3 = Color3.fromRGB(130, 45, 45)
             delBtn.BorderSizePixel = 0
             delBtn.Font = Enum.Font.GothamSemibold
             delBtn.TextSize = 10
@@ -6994,7 +6893,7 @@ pcall(function()
     Instance.new("UICorner", mobileBtn).CornerRadius = UDim.new(0, 8)
     local function refreshMobileBtn()
         mobileBtn.Text = _tr(STATE.camlockMobile and "Mobile ON" or "Mobile")
-        mobileBtn.BackgroundColor3 = STATE.camlockMobile and C.ON or THEME.btnPrimary
+        mobileBtn.BackgroundColor3 = STATE.camlockMobile and C.ON or Color3.fromRGB(0, 170, 255)
     end
     local function setCamlockMobile(on, skipNotify)
         local nextValue = (on == true)
@@ -7022,7 +6921,7 @@ pcall(function()
     end)
     mobileBtn.MouseEnter:Connect(function()
         if not STATE.camlockMobile then
-            mobileBtn.BackgroundColor3 = THEME.btnPrimaryHover
+            mobileBtn.BackgroundColor3 = Color3.fromRGB(35, 190, 255)
         end
     end)
     mobileBtn.MouseLeave:Connect(function()
@@ -7093,7 +6992,7 @@ STATE._Sli("Aimbot", "Aimbot FOV",
 STATE._Sli("Aimbot", "Aim Smoothness",
     function() return STATE.aimSmooth end,
     function(v) STATE.aimSmooth = v end, 0, 40)
-STATE._aimBoneBtn = STATE._Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head"), THEME.btnPrimary, function()
+STATE._aimBoneBtn = STATE._Act("Aimbot", "Aim Bone: " .. (STATE.aimBone or "Head"), Color3.fromRGB(0, 170, 255), function()
     local bones = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
     local idx = 1
     for i, b in ipairs(bones) do
@@ -7156,7 +7055,7 @@ STATE._Tog("Aimbot", "Mobile Aim Prediction",
     function() return STATE.camlockMobilePrediction end,
     function(v) STATE.camlockMobilePrediction = v end)
 STATE._Info("Aimbot", "  Predicts enemy movement")
-STATE._camlockMobileTargetBtn = STATE._Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), THEME.btnPrimary, function()
+STATE._camlockMobileTargetBtn = STATE._Act("Aimbot", "Mobile Target: " .. (STATE.camlockMobileTarget or "Head"), Color3.fromRGB(0, 170, 255), function()
     local targets = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
     local idx = 1
     for i, targetName in ipairs(targets) do
@@ -7501,7 +7400,7 @@ function STATE._buildAutoChatBindRow()
     Instance.new("UICorner", bindRow).CornerRadius = UDim.new(0, 12)
 
     local bindRowStroke = Instance.new("UIStroke", bindRow)
-    bindRowStroke.Color = THEME.functionRowStroke
+    bindRowStroke.Color = Color3.fromRGB(35, 50, 78)
     bindRowStroke.Transparency = 0.35
 
     local bindLabel = Instance.new("TextLabel", bindRow)
@@ -7588,18 +7487,6 @@ function STATE._buildAutoChatBindRow()
     end)
 
     table.insert(STATE._tabPages["Auto Chat"], bindRow)
-end
-function STATE._setupAutoChatInput()
-    local _, inputBox = STATE._Input("Auto Chat", "Auto Chat Message", "Type multiple lines, one message per line...", STATE.autoChatMessage or "")
-    STATE._autoChatInputBox = inputBox
-    inputBox.FocusLost:Connect(function()
-        local txt = (inputBox.Text and inputBox.Text:match("^%s*(.-)%s*$")) or ""
-        STATE.autoChatMessage = txt
-        if inputBox.Text ~= txt then
-            inputBox.Text = txt
-        end
-        pcall(saveStateIfEnabled)
-    end)
 end
 bindTracked(UserInputService.InputBegan, function(inp, gameProcessed)
     if gameProcessed then return end
@@ -7748,7 +7635,7 @@ do
         sendBtn.BorderSizePixel  = 0
         sendBtn.Font             = Enum.Font.GothamBold
         sendBtn.TextSize         = 11
-        sendBtn.TextColor3       = C.WHT
+        sendBtn.TextColor3       = Color3.new(1,1,1)
         sendBtn.Text             = _tr("Send")
         sendBtn.AutoButtonColor  = false
         Instance.new("UICorner", sendBtn).CornerRadius = UDim.new(0,6)
@@ -7814,7 +7701,7 @@ STATE._Drop("Chat", "Whisper To", function(p)
     STATE._chatTarget = p
     notify(_tr("Chat"), _tr("Target: ") .. p.Name, 2)
 end)
-STATE._Act("Chat", "Set Target: ALL", THEME.btnChatTarget, function()
+STATE._Act("Chat", "Set Target: ALL", Color3.fromRGB(45, 96, 120), function()
     STATE._chatTarget = nil
     notify(_tr("Chat"), _tr("Set Target: ALL"), 2)
 end)
@@ -7840,13 +7727,13 @@ STATE._refreshChat = function()
             if b then b.Text = entry.msg end
             if ac then
                 ac.BackgroundColor3 = entry.mine
-                    and THEME.chatMineAccent
-                    or  THEME.chatOtherAccent
+                    and Color3.fromRGB(110,22,230)
+                    or  Color3.fromRGB(60,180,255)
             end
             if h then
                 h.TextColor3 = entry.mine
-                    and THEME.chatMineText
-                    or  THEME.chatOtherText
+                    and Color3.fromRGB(180,100,255)
+                    or  Color3.fromRGB(60,200,255)
             end
             row.Visible = true
         else
@@ -7862,7 +7749,16 @@ end
 -- ============================
 STATE._Sec("Auto Chat", "Auto Chat")
 STATE._Info("Auto Chat", "  Each line is one message. The system sends a random line at the chosen interval.")
-STATE._setupAutoChatInput()
+local _, autoChatBox = STATE._Input("Auto Chat", "Auto Chat Message", "Type multiple lines, one message per line...", STATE.autoChatMessage or "")
+STATE._autoChatInputBox = autoChatBox
+autoChatBox.FocusLost:Connect(function()
+    local txt = (autoChatBox.Text and autoChatBox.Text:match("^%s*(.-)%s*$")) or ""
+    STATE.autoChatMessage = txt
+    if autoChatBox.Text ~= txt then
+        autoChatBox.Text = txt
+    end
+    pcall(saveStateIfEnabled)
+end)
 STATE._Sli("Auto Chat", "Auto Chat Interval", function()
     return STATE.autoChatInterval
 end, function(v)
@@ -7898,48 +7794,6 @@ STATE._itemList = STATE._itemList or {}       -- { name, path, tool } - ALL tool
 STATE._itemSlotFrames = STATE._itemSlotFrames or {}
 STATE._itemPage = STATE._itemPage or 1
 STATE._itemPageSize = STATE._itemPageSize or 24
-function STATE._pruneItemTabPages()
-    local kept = {}
-    for _, frame in ipairs(STATE._tabPages["Items"] or {}) do
-        if frame and frame.Parent then
-            table.insert(kept, frame)
-        end
-    end
-    STATE._tabPages["Items"] = kept
-end
-function STATE._clearItemSlotFrames()
-    for _, frame in ipairs(STATE._itemSlotFrames) do
-        pcall(function() frame:Destroy() end)
-    end
-    STATE._itemSlotFrames = {}
-    STATE._pruneItemTabPages()
-end
-function STATE._getItemPageBounds()
-    local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
-    local totalItems = #STATE._itemList
-    local totalPages = math.max(1, math.ceil(totalItems / pageSize))
-    local page = math.clamp(tonumber(STATE._itemPage) or 1, 1, totalPages)
-    local startIndex = ((page - 1) * pageSize) + 1
-    local endIndex = math.min(totalItems, startIndex + pageSize - 1)
-    STATE._itemPage = page
-    return page, totalPages, totalItems, startIndex, endIndex
-end
-function STATE._syncItemsPager()
-    local page, totalPages = STATE._getItemPageBounds()
-    if STATE._itemPageLabel and STATE._itemPageLabel.Parent then
-        STATE._itemPageLabel.Text = _tr("Page") .. " " .. page .. "/" .. totalPages
-    end
-    if STATE._itemPrevBtn then
-        local canPrev = page > 1
-        STATE._itemPrevBtn.BackgroundColor3 = canPrev and THEME.btnPurple or THEME.btnDisabled
-        STATE._itemPrevBtn.TextColor3 = canPrev and C.WHT or C.TXTM
-    end
-    if STATE._itemNextBtn then
-        local canNext = page < totalPages
-        STATE._itemNextBtn.BackgroundColor3 = canNext and C.ACC or THEME.btnDisabled
-        STATE._itemNextBtn.TextColor3 = canNext and C.WHT or C.TXTM
-    end
-end
 -- Every container a LocalScript can actually read.
 -- ServerStorage is server-only and always empty on client - excluded.
 function STATE._getRoots()
@@ -7950,18 +7804,47 @@ function STATE._getRoots()
         "Lighting","SoundService",
     }
     for _, svc in ipairs(services) do
-        local okService, service = pcall(game.GetService, game, svc)
-        if okService and service then
-            table.insert(roots, service)
+        local function pruneItemTabPages()
+            local kept = {}
+            for _, frame in ipairs(STATE._tabPages["Items"]) do
+                if frame and frame.Parent then
+                    table.insert(kept, frame)
+                end
+            end
+            STATE._tabPages["Items"] = kept
         end
-    end
-    table.insert(roots, Workspace)
+        for _, f in ipairs(STATE._itemSlotFrames) do
+            pcall(function() f:Destroy() end)
+        end
+        STATE._itemSlotFrames = {}
+        pruneItemTabPages()
 
-    local p = Players.LocalPlayer
-    if p then
-        local bp = p:FindFirstChild("Backpack")
-        if bp then table.insert(roots, bp) end
-        if p.Character then table.insert(roots, p.Character) end
+        local pageSize = math.max(1, tonumber(STATE._itemPageSize) or 24)
+        local totalItems = #STATE._itemList
+        local totalPages = math.max(1, math.ceil(totalItems / pageSize))
+        STATE._itemPage = math.clamp(tonumber(STATE._itemPage) or 1, 1, totalPages)
+        local startIndex = ((STATE._itemPage - 1) * pageSize) + 1
+        local endIndex = math.min(totalItems, startIndex + pageSize - 1)
+
+        if STATE._itemPageLabel and STATE._itemPageLabel.Parent then
+            STATE._itemPageLabel.Text = _tr("Page") .. " " .. STATE._itemPage .. "/" .. totalPages
+        end
+        if STATE._itemPrevBtn then
+            local canPrev = STATE._itemPage > 1
+            STATE._itemPrevBtn.BackgroundColor3 = canPrev and Color3.fromRGB(55, 35, 90) or Color3.fromRGB(45, 45, 55)
+            STATE._itemPrevBtn.TextColor3 = canPrev and C.WHT or C.TXTM
+        end
+        if STATE._itemNextBtn then
+            local canNext = STATE._itemPage < totalPages
+            STATE._itemNextBtn.BackgroundColor3 = canNext and C.ACC or Color3.fromRGB(45, 45, 55)
+            STATE._itemNextBtn.TextColor3 = canNext and C.WHT or C.TXTM
+        end
+
+        for i = startIndex, endIndex do
+            local entry = STATE._itemList[i]
+            if bp then table.insert(roots, bp) end
+            if p.Character then table.insert(roots, p.Character) end
+        end
     end
     return roots
 end
@@ -8053,92 +7936,72 @@ function STATE._giveItem(toolObj)
     end
     notify(_tr("Items"), _tr("Could not give: ") .. name .. _tr(" (server-locked)"), 3)
 end
-function STATE._createItemSlotRow(entry)
-    local row = Instance.new("Frame", STATE._menuScrollFrame)
-    row.Size = UDim2.new(1, 0, 0, 30)
-    row.BackgroundColor3 = C.DARK
-    row.BackgroundTransparency = MENU_DARK_TRANSPARENCY
-    row.BorderSizePixel = 0
-    row.LayoutOrder = STATE._nxt()
-    row.Visible = (STATE._activeTab == "Items")
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
-
-    local displayName = entry.name
-    if entry.path and entry.path ~= entry.name then
-        displayName = entry.name .. "  -  " .. entry.path
-    end
-
-    local nameLbl = Instance.new("TextLabel", row)
-    nameLbl.Size = UDim2.new(1, -70, 1, 0)
-    nameLbl.Position = UDim2.new(0, 10, 0, 0)
-    nameLbl.BackgroundTransparency = 1
-    nameLbl.Text = displayName
-    nameLbl.Font = Enum.Font.Gotham
-    nameLbl.TextSize = 11
-    nameLbl.TextColor3 = C.TXT
-    nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-    nameLbl.TextTruncate = Enum.TextTruncate.AtEnd
-
-    local giveBtn = Instance.new("TextButton", row)
-    giveBtn.Size = UDim2.new(0, 56, 0, 22)
-    giveBtn.Position = UDim2.new(1, -60, 0.5, -11)
-    giveBtn.BackgroundColor3 = C.ACC
-    giveBtn.BorderSizePixel = 0
-    giveBtn.Font = Enum.Font.GothamBold
-    giveBtn.TextSize = 11
-    giveBtn.TextColor3 = C.WHT
-    giveBtn.AutoButtonColor = false
-    _bindLangText(giveBtn, "Give")
-    Instance.new("UICorner", giveBtn).CornerRadius = UDim.new(0, 6)
-
-    local toolObj = entry.tool
-    giveBtn.MouseButton1Click:Connect(function()
-        STATE._giveItem(toolObj)
-    end)
-
-    return row
-end
-function STATE._createEmptyItemSlotRow()
-    local row = Instance.new("Frame", STATE._menuScrollFrame)
-    row.Size = UDim2.new(1, 0, 0, 32)
-    row.BackgroundColor3 = C.PANEL
-    row.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
-    row.BorderSizePixel = 0
-    row.LayoutOrder = STATE._nxt()
-    row.Visible = (STATE._activeTab == "Items")
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 7)
-
-    local label = Instance.new("TextLabel", row)
-    label.Size = UDim2.new(1, -16, 1, 0)
-    label.Position = UDim2.new(0, 8, 0, 0)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 11
-    label.TextColor3 = C.TXTM
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    _bindLangText(label, "No tools found in this game")
-
-    return row
-end
 -- Item slot builder - creates one row per tool
 function STATE._buildItemSlots()
-    STATE._clearItemSlotFrames()
-    local _, _, totalItems, startIndex, endIndex = STATE._getItemPageBounds()
-    STATE._syncItemsPager()
-
-    for i = startIndex, endIndex do
-        local entry = STATE._itemList[i]
-        if entry then
-            local row = STATE._createItemSlotRow(entry)
-            table.insert(STATE._itemSlotFrames, row)
-            table.insert(STATE._tabPages["Items"], row)
-        end
+    -- Destroy old slots
+    for _, f in ipairs(STATE._itemSlotFrames) do
+        pcall(function() f:Destroy() end)
     end
-
-    if totalItems == 0 then
-        local row = STATE._createEmptyItemSlotRow()
+    STATE._itemSlotFrames = {}
+    for _, entry in ipairs(STATE._itemList) do
+        local row = Instance.new("Frame", STATE._menuScrollFrame)
+        row.Size             = UDim2.new(1,0,0,30)
+        row.BackgroundColor3 = C.DARK
+        row.BackgroundTransparency = MENU_DARK_TRANSPARENCY
+        row.BorderSizePixel  = 0
+        row.LayoutOrder      = STATE._nxt()
+        row.Visible          = (STATE._activeTab == "Items")
+        Instance.new("UICorner",row).CornerRadius = UDim.new(0,7)
+        -- Show path (Parent/Name) only when two items share the same name
+        local displayName = entry.name
+        if entry.path and entry.path ~= entry.name then
+            displayName = entry.name .. "  -  " .. entry.path
+        end
+        local nameLbl = Instance.new("TextLabel",row)
+        nameLbl.Size               = UDim2.new(1,-70,1,0)
+        nameLbl.Position           = UDim2.new(0,10,0,0)
+        nameLbl.BackgroundTransparency = 1
+        nameLbl.Text               = displayName
+        nameLbl.Font               = Enum.Font.Gotham
+        nameLbl.TextSize           = 11
+        nameLbl.TextColor3         = C.TXT
+        nameLbl.TextXAlignment     = Enum.TextXAlignment.Left
+        nameLbl.TextTruncate       = Enum.TextTruncate.AtEnd
+        local giveBtn = Instance.new("TextButton",row)
+        giveBtn.Size             = UDim2.new(0,56,0,22)
+        giveBtn.Position         = UDim2.new(1,-60,0.5,-11)
+        giveBtn.BackgroundColor3 = C.ACC
+        giveBtn.BorderSizePixel  = 0
+        giveBtn.Font             = Enum.Font.GothamBold
+        giveBtn.TextSize         = 11
+        giveBtn.TextColor3       = Color3.new(1,1,1)
+        giveBtn.AutoButtonColor  = false
+        _bindLangText(giveBtn, "Give")
+        Instance.new("UICorner",giveBtn).CornerRadius = UDim.new(0,6)
+        local captured = entry.tool
+        giveBtn.MouseButton1Click:Connect(function()
+            STATE._giveItem(captured)
+        end)
         table.insert(STATE._itemSlotFrames, row)
         table.insert(STATE._tabPages["Items"], row)
+    end
+    -- Empty label if nothing found
+    if totalItems == 0 then
+        local eRow = Instance.new("Frame", STATE._menuScrollFrame)
+        eRow.Size             = UDim2.new(1,0,0,32)
+        eRow.BackgroundColor3 = C.PANEL
+        eRow.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
+        eRow.BorderSizePixel  = 0
+        eRow.LayoutOrder      = STATE._nxt()
+        eRow.Visible          = (STATE._activeTab == "Items")
+        Instance.new("UICorner",eRow).CornerRadius = UDim.new(0,7)
+        local eLbl = Instance.new("TextLabel",eRow)
+        eLbl.Size=UDim2.new(1,-16,1,0); eLbl.Position = UDim2.new(0,8,0,0); eLbl.BackgroundTransparency=1
+        eLbl.Font=Enum.Font.Gotham; eLbl.TextSize=11
+        eLbl.TextColor3=C.TXTM; eLbl.TextXAlignment=Enum.TextXAlignment.Left
+        _bindLangText(eLbl, "No tools found in this game")
+        table.insert(STATE._itemSlotFrames, eRow)
+        table.insert(STATE._tabPages["Items"], eRow)
     end
 end
 STATE._Sec("Items", "Game Items")
@@ -8176,7 +8039,7 @@ function STATE._setupItemsPager()
         pagerRow,
         "Prev Page",
         UDim2.new(0, 0, 0.5, -14),
-        THEME.btnPurple
+        Color3.fromRGB(55, 35, 90)
     )
     local nextBtn = STATE._itemCreatePagerButton(
         pagerRow,
@@ -8597,7 +8460,7 @@ STATE._Tog("World", "Remove Unanchored Parts",
     function() return STATE.removeUnanchored end,
     function(v) STATE.removeUnanchored = v; applyWorldEdits() end)
 STATE._Info("World", "  Hides all Anchored=false collidable parts.")
-STATE._Act("World", "Restore All Parts", THEME.btnPurple, function()
+STATE._Act("World", "Restore All Parts", Color3.fromRGB(55, 35, 90), function()
     STATE.removeWalls      = false
     STATE.removeAnchored   = false
     STATE.removeUnanchored = false
@@ -8636,7 +8499,7 @@ STATE._Tog("World", "Remove Screen Effects",
 STATE._Info("World", "  Removes blur, bloom, sun rays, color grade,")
 STATE._Info("World", "  depth of field. Cleaner visuals + FPS boost.")
 STATE._Sec("World", "Menu")
-STATE._Act("World", "Kick Yourself", THEME.btnDanger, function()
+STATE._Act("World", "Kick Yourself", Color3.fromRGB(200, 55, 55), function()
     notify(_tr("World"), _tr("Disconnecting..."), 2)
     task.delay(0.15, function()
         plr:Kick("Kicked by CuongOutLook Admin System.")
@@ -8712,7 +8575,7 @@ STATE._Act("World", "Rejoin Server", C.ACC, function()
     STATE._rejoinCurrentServer()
 end)
 STATE._Info("World", "  Rejoins your current game/server.")
-STATE._Act("World", "Server Hop", THEME.btnPrimary, function()
+STATE._Act("World", "Server Hop", Color3.fromRGB(0, 170, 255), function()
     notify(_tr("World"), _tr("Searching least-populated server..."), 2)
     task.spawn(function()
         local placeId = game.PlaceId
@@ -8763,7 +8626,7 @@ STATE._Act("World", "Server Hop", THEME.btnPrimary, function()
     end)
 end)
 STATE._Info("World", "  Jumps to another public server in this game.")
-STATE._Act("World", "Destroy Menu", THEME.btnDangerDark, function()
+STATE._Act("World", "Destroy Menu", Color3.fromRGB(150, 35, 35), function()
     if STATE._menuFxConn then
         STATE._menuFxConn:Disconnect()
         STATE._menuFxConn = nil
@@ -8781,20 +8644,20 @@ STATE._Info("World", "  Closes the UI completely.")
 STATE._Sec("Players", "Hất văng người chơi (risk)")
 STATE._flingTgt = nil
 STATE._Drop("Players", "Target", function(p) STATE._flingTgt = p end)
-STATE._Act("Players", "Fling Once", THEME.btnDangerDark, function()
+STATE._Act("Players", "Fling Once", Color3.fromRGB(150, 28, 28), function()
     if not STATE._flingTgt then notify(_tr("Fling"), _tr("Select a target first"), 2); return end
     flingPlayer(STATE._flingTgt)
 end)
-STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", THEME.btnChainOff, function()
+STATE._chainBtn = STATE._Act("Players", "Chain Fling (OFF)", Color3.fromRGB(90, 18, 18), function()
     if chainFlingActive then
         stopChainFling()
         STATE._chainBtn.Text             = _tr("Chain Fling (OFF)")
-        STATE._chainBtn.BackgroundColor3 = THEME.btnChainOff
+        STATE._chainBtn.BackgroundColor3 = Color3.fromRGB(90,18,18)
         notify(_tr("Fling"), _tr("Chain fling stopped"), 2)
     else
         startChainFling(STATE._flingTgt)
         STATE._chainBtn.Text             = _tr("Chain Fling (ON)")
-        STATE._chainBtn.BackgroundColor3 = THEME.btnChainOn
+        STATE._chainBtn.BackgroundColor3 = Color3.fromRGB(200,20,20)
         notify(_tr("Fling"), _tr("Chain fling started - spins then launches, auto-switches!"), 3)
     end
 end)
@@ -8802,7 +8665,7 @@ STATE._Info("Players", "  Spins target ULTRA fast, launches them,")
 STATE._Info("Players", "  then auto-switches to next nearest player.")
 STATE._Sec("Players", "Chế độ xem")
 STATE._Drop("Players", "Watch", function(p) spectate(p) end)
-STATE._Act("Players", "Stop Spectate", THEME.btnPurpleDark, stopSpectate)
+STATE._Act("Players", "Stop Spectate", Color3.fromRGB(45, 35, 75), stopSpectate)
 STATE._Sec("Players", "Dịch chuyển (risk)")
 STATE._tpTgt = nil
 STATE._Drop("Players", "TP to", function(p) STATE._tpTgt = p end)
@@ -8859,7 +8722,7 @@ STATE._Tog("Setting", "Voice Chat",
     end)
 STATE._Info("Setting", "  Manual mute/unmute microphone when the default voice button is missing.")
 STATE._Info("Setting", "  Useful on Xbox or Microsoft Store Roblox clients.")
-STATE._Act("Setting", "Logout Key", THEME.btnLogout, function()
+STATE._Act("Setting", "Logout Key", Color3.fromRGB(220, 120, 30), function()
     STATE._clearSavedLoaderKey()
     STATE._rejoinCurrentServer(STATE._queuedColReloadSource)
 end)
@@ -8867,12 +8730,12 @@ STATE._Info("Setting", "  Rejoin and auto-load COL.lua once after teleport.")
 
 pcall(function()
     local CREDIT_USER_ID = 9930783751
-    local DISCORD_DM_LINK = "https://discord.com/users/535824717785858059"
+    local DONATE_ID = tostring(CREDIT_USER_ID)
     local FACEBOOK_LINK = "https://facebook.com/adcuong3vien/"
     local YOUTUBE_LINK = "https://www.youtube.com/@kieran_vietnam"
 
     local card = Instance.new("Frame", STATE._menuScrollFrame)
-    card.Size = UDim2.new(1, 0, 0, 248)
+    card.Size = UDim2.new(1, 0, 0, 236)
     card.BackgroundColor3 = C.PANEL
     card.BackgroundTransparency = MENU_PANEL_TRANSPARENCY
     card.BorderSizePixel = 0
@@ -8888,7 +8751,7 @@ pcall(function()
     local avatarWrap = Instance.new("Frame", card)
     avatarWrap.Size = UDim2.new(0, 124, 0, 124)
     avatarWrap.Position = UDim2.new(0, 16, 0, 16)
-    avatarWrap.BackgroundColor3 = THEME.creditAvatarBg
+    avatarWrap.BackgroundColor3 = Color3.fromRGB(8, 22, 34)
     avatarWrap.BorderSizePixel = 0
     Instance.new("UICorner", avatarWrap).CornerRadius = UDim.new(0, 18)
     local avatarStroke = Instance.new("UIStroke", avatarWrap)
@@ -8900,7 +8763,7 @@ pcall(function()
     avatar.Position = UDim2.new(0, 5, 0, 5)
     avatar.BackgroundTransparency = 1
     avatar.ScaleType = Enum.ScaleType.Crop
-    avatar.Image = CREDIT_AVATAR_ASSET or ""
+    avatar.Image = string.format("rbxthumb://type=AvatarHeadShot&id=%d&w=420&h=420", CREDIT_USER_ID)
     local avatarCorner = Instance.new("UICorner", avatar)
     avatarCorner.CornerRadius = UDim.new(0, 14)
 
@@ -8919,7 +8782,7 @@ pcall(function()
     subtitle.Position = UDim2.new(0, 152, 0, 44)
     subtitle.BackgroundTransparency = 1
     subtitle.Font = Enum.Font.Gotham
-    _bindLangText(subtitle, "Script Owner: CuongOutLook")
+    _bindLangText(subtitle, "RobloxUserName: CuongOutLook")
     subtitle.TextSize = 12
     subtitle.TextColor3 = C.WHT
     subtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -8928,12 +8791,12 @@ pcall(function()
         local row = Instance.new("Frame", card)
         row.Size = UDim2.new(1, -164, 0, 40)
         row.Position = UDim2.new(0, 152, 0, y)
-        row.BackgroundColor3 = THEME.creditRowBg
+        row.BackgroundColor3 = Color3.fromRGB(12, 21, 34)
         row.BackgroundTransparency = MENU_DARK_TRANSPARENCY
         row.BorderSizePixel = 0
         Instance.new("UICorner", row).CornerRadius = UDim.new(0, 12)
         local rowStroke = Instance.new("UIStroke", row)
-        rowStroke.Color = THEME.creditRowStroke
+        rowStroke.Color = Color3.fromRGB(32, 76, 98)
         rowStroke.Transparency = 0.3
 
         local textLabel = Instance.new("TextLabel", row)
@@ -8970,9 +8833,9 @@ pcall(function()
     addCreditRow(126, "YouTube", "AD McKieran", YOUTUBE_LINK, "YouTube link")
 
     local donateBox = Instance.new("Frame", card)
-    donateBox.Size = UDim2.new(1, -32, 0, 58)
+    donateBox.Size = UDim2.new(1, -32, 0, 46)
     donateBox.Position = UDim2.new(0, 16, 0, 182)
-    donateBox.BackgroundColor3 = THEME.creditDonateBg
+    donateBox.BackgroundColor3 = Color3.fromRGB(10, 26, 40)
     donateBox.BackgroundTransparency = MENU_DARK_TRANSPARENCY
     donateBox.BorderSizePixel = 0
     Instance.new("UICorner", donateBox).CornerRadius = UDim.new(0, 14)
@@ -8982,18 +8845,17 @@ pcall(function()
     donateStroke.Thickness = 1.2
 
     local donateLabel = Instance.new("TextLabel", donateBox)
-    donateLabel.Size = UDim2.new(1, -128, 1, -8)
-    donateLabel.Position = UDim2.new(0, 14, 0, 4)
+    donateLabel.Size = UDim2.new(1, -128, 1, 0)
+    donateLabel.Position = UDim2.new(0, 14, 0, 0)
     donateLabel.BackgroundTransparency = 1
     donateLabel.Font = Enum.Font.GothamSemibold
-    donateLabel.Text = _tr("Donate ID") .. ": " .. DISCORD_DM_LINK
+    donateLabel.Text = _tr("Donate ID") .. ": " .. DONATE_ID
     donateLabel.TextSize = 12
     donateLabel.TextColor3 = C.TXT
     donateLabel.TextXAlignment = Enum.TextXAlignment.Left
-    donateLabel.TextWrapped = true
     _bindLangRefresh(function()
         if donateLabel and donateLabel.Parent then
-            donateLabel.Text = _tr("Donate ID") .. ": " .. DISCORD_DM_LINK
+            donateLabel.Text = _tr("Donate ID") .. ": " .. DONATE_ID
         end
     end)
 
@@ -9003,13 +8865,13 @@ pcall(function()
     donateBtn.BackgroundColor3 = C.ACC
     donateBtn.BorderSizePixel = 0
     donateBtn.Font = Enum.Font.GothamSemibold
-    _bindLangText(donateBtn, "COPY LINK")
+    _bindLangText(donateBtn, "COPY ID")
     donateBtn.TextSize = 11
     donateBtn.TextColor3 = C.BG
     donateBtn.AutoButtonColor = false
     Instance.new("UICorner", donateBtn).CornerRadius = UDim.new(0, 10)
     donateBtn.MouseButton1Click:Connect(function()
-        STATE._copyToClipboard(DISCORD_DM_LINK, "Discord DM")
+        STATE._copyToClipboard(DONATE_ID, "Donate ID")
     end)
 end)
 -- ============================
