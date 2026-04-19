@@ -1,6 +1,19 @@
 return {
     updateHistory = {
-        vi = [[v4.2.2
+                vi = [[v4.3.0
+
+- CuongOutLook đã được thêm vào Mobile
+- Thêm tab Thực tế: FPS Only, Recoil (PC)
+- Đã xóa tab Chat riêng tư vì dự án thất bại
+- Sửa logic lấy vật phẩm thật trong tab Items
+- Thêm AutoChat dành cho Mobile
+- Cải thiện giao diện rõ ràng hơn, tránh bị rối khi thăm dò các chức năng
+- Sửa các ngôn ngữ chưa được dịch
+- Di chuyển menu chọn ngôn ngữ xuống trong tab Setting
+- Đổi cơ chế Save Config từ bật/tắt sang nút bấm để tránh lỗi chạy COL Menu trên các executor Roblox không hỗ trợ
+- Sửa lag cấp Ultra lần 3
+
+v4.2.2
 
 - Script này hiện chỉ hỗ trợ trên PC. Phiên bản Mobile đang được bảo trì. Vui lòng chờ thông báo mới. (Lỗi chạy Menu trên Mobile cực kỳ nghiêm trọng)
 - Fix gây lag khi tắt chế độ đồ họa thấp trong Menu
@@ -83,7 +96,20 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v4.2.2
+        en = [[v4.3.0
+
+- CuongOutLook has been added to Mobile
+- Added Real tab: FPS Only, Recoil (PC)
+- Removed the Private Chat tab because the project failed
+- Fixed the logic for getting real items in the Items tab
+- Added AutoChat for Mobile
+- Improved the interface to make features clearer and less cluttered when exploring
+- Fixed untranslated language entries
+- Moved the language selection menu lower in the Setting tab
+- Changed Save Config from a toggle to a button to avoid COL Menu execution issues on unsupported Roblox executors
+- Fixed Ultra-level lag for the third time
+
+v4.2.2
 
 - This script is currently supported on PC only. The Mobile version is under maintenance. Please wait for a new announcement. (The Menu issue on Mobile is extremely serious)
 - Fixed lag when disabling Low Graphics mode in the Menu
@@ -166,7 +192,20 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v4.2.2
+        jp = [[v4.3.0
+
+- CuongOutLook を Mobile に追加
+- 実用タブを追加: FPS Only、Recoil（PC）
+- プロジェクト失敗のため、Private Chat タブを削除
+- Items タブで実際のアイテムを取得するロジックを修正
+- Mobile 向け AutoChat を追加
+- 機能を探しやすくするため、UI をより分かりやすく整理
+- 未翻訳だった言語項目を修正
+- 言語選択メニューを Setting タブの下側へ移動
+- Save Config の仕組みをオン/オフ式からボタン式に変更し、未対応の Roblox Executor で COL Menu が動作しない問題を回避
+- 3回目の Ultra レベルのラグを修正
+
+v4.2.2
 
 - このスクリプトは現在PCのみ対応しています。Mobile版はメンテナンス中です。新しいお知らせをお待ちください。（MobileでMenuが動作しない問題は非常に深刻です）
 - Menuで低グラフィックモードをオフにした際に発生するラグを修正
