@@ -1,6 +1,17 @@
 return {
     updateHistory = {
-                vi = [[v4.3.0
+                vi = [[v5.0.0
+
+- Giao diện hoàn toàn mới
+- Game map đã bị cấm khỏi COL: Flick (Banned trước khi mở menu COL)
+- Đã sửa nút AutoChat dành cho Mobile bị kẹt cứng
+- Bật công tắt để dừng tự động quét Items
+- Thiết kế lại nút Menu khó nhìn thấy
+- Đã thay đổi font chữ
+- Đã thêm Tab Macro PC (đang thử nghiệm)
+- Đã sửa các bug mà người chơi đã feedback
+
+v4.3.0
 
 - CuongOutLook đã được thêm vào Mobile
 - Thêm tab Thực tế: FPS Only, Recoil (PC)
@@ -96,7 +107,18 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v4.3.0
+        en = [[v5.0.0
+
+- Completely redesigned interface
+- The game map has been banned from COL: Flick (Banned before opening the COL menu)
+- Fixed the AutoChat button on Mobile getting stuck
+- Added a toggle to stop automatic item scanning
+- Redesigned the hard-to-see Menu button
+- Changed the font
+- Added the PC Macro tab (experimental)
+- Fixed bugs reported by players
+
+v4.3.0
 
 - CuongOutLook has been added to Mobile
 - Added Real tab: FPS Only, Recoil (PC)
@@ -137,7 +159,7 @@ v4.1.0
 - Fixed Magic Bullet not working
 - Fixed incorrect/misaligned language translations
 - Fixed hard-to-read text in Menu Tabs
-- Fixed logic so reopening Menu (2nd–3rd time) no longer causes lag
+- Fixed logic so reopening Menu (2nd-3rd time) no longer causes lag
 - Fixed random music playback not working in MP3 Player
 
 v4.0.1
@@ -192,7 +214,18 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v4.3.0
+        jp = [[v5.0.0
+
+- UIを全面的に刷新
+- ゲームマップ Flick を COL から禁止に変更（COLメニューを開く前に Banned）
+- Mobile版の AutoChat ボタンが固まる問題を修正
+- Items の自動スキャンを停止できるトグルを追加
+- 見えにくかった Menu ボタンを再設計
+- フォントを変更
+- PC Macro タブを追加（試験運用中）
+- プレイヤーから報告された不具合を修正
+
+v4.3.0
 
 - CuongOutLook を Mobile に追加
 - 実用タブを追加: FPS Only、Recoil（PC）
