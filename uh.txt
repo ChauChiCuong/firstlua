@@ -1,6 +1,19 @@
 return {
     updateHistory = {
-                vi = [[v5.0.0
+                vi = [[v5.0.2
+
+- Tăng kích thước chữ để dễ nhìn hơn, khắc phục một số thiết bị có thể không thấy vì chữ quá nhỏ
+- Làm rộng kích thước Header và Cre Phiên bản
+- Đã xóa nút Mobile trên chức năng Aimbot PC
+- Đã sửa một số lỗi bug tự động gây lag khi đang có cấu hình mạnh
+
+v5.0.1
+
+- Bảo vệ cấp 2 mã nguồn mở của COL bằng cách dựng tệp COL Obfucating Generator
+(COG)
+- Đã sửa các bug cho một số Excutor mới ra không thể chạy script
+
+v5.0.0
 
 - Giao diện hoàn toàn mới
 - Game map đã bị cấm khỏi COL: Flick (Banned trước khi mở menu COL)
@@ -107,7 +120,19 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v5.0.0
+        en = [[v5.0.2
+
+- Increased font size for better readability, fixing issues where some devices might not see the text due to it being too small
+- Enlarged the Header and Version Credits
+- Removed the Mobile button from the Aimbot PC function
+- Fixed several bugs that caused lag even with powerful configurations
+
+v5.0.1
+
+- Added Level 2 protection to open-source COL code by creating a COL Obfucating Generator (COG) file
+- Fixed bugs where some newly released Executor couldn't run scripts
+                
+v5.0.0
 
 - Completely redesigned interface
 - The game map has been banned from COL: Flick (Banned before opening the COL menu)
@@ -214,7 +239,19 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v5.0.0
+        jp = [[v5.0.2
+
+- 読みやすさを向上させるため、フォントサイズを大きくしました。一部のデバイスで文字が小さすぎて表示されない問題を修正しました
+- ヘッダーとバージョンクレジットを拡大しました
+- Aimbot PC機能からモバイルボタンを削除しました
+- 高性能な設定でも動作が遅くなるバグをいくつか修正しました
+
+v5.0.1
+
+- COL難読化ジェネレーター（COG）ファイルを作成することで、オープンソースのCOLコードにレベル2の保護を追加しました。
+- 新しくリリースされた一部のエグゼキューターでスクリプトが実行できないバグを修正しました。
+
+v5.0.0
 
 - UIを全面的に刷新
 - ゲームマップ Flick を COL から禁止に変更（COLメニューを開く前に Banned）
