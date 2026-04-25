@@ -9,8 +9,7 @@ return {
 
 v5.0.1
 
-- Bảo vệ cấp 2 mã nguồn mở của COL bằng cách dựng tệp COL Obfucating Generator
-(COG)
+- Bảo vệ cấp 2 mã nguồn mở của COL bằng cách dựng tệp COL Obfucating Generator (COG)
 - Đã sửa các bug cho một số Excutor mới ra không thể chạy script
 
 v5.0.0
