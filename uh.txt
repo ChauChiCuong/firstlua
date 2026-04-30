@@ -1,6 +1,10 @@
 return {
     updateHistory = {
-                vi = [[v6.0.0
+                vi = [[v6.0.1
+
+- Đã thay đổi CuongOutLook Logo
+
+v6.0.0
 
 - Giao diện COL Menu hoàn toàn mới
 - Giao diện COL Loader hoàn toàn mới
@@ -133,7 +137,11 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.0.0
+        en = [[v6.0.1
+
+- Changed CuongOutLook logo
+
+v6.0.0
 
 - Completely redesigned COL Menu interface
 - Completely redesigned COL Loader interface
@@ -266,7 +274,11 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.0.0
+        jp = [[v6.0.1
+
+- CuongOutLook のロゴを更新
+
+v6.0.0
 
 - COL Menu のUIを全面リニューアル
 - COL Loader のUIを全面リニューアル
