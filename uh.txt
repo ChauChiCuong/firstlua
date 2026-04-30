@@ -1,6 +1,20 @@
 return {
     updateHistory = {
-                vi = [[v5.0.2
+                vi = [[v6.0.0
+
+- Giao diện COL Menu hoàn toàn mới
+- Giao diện COL Loader hoàn toàn mới
+- Thêm Card bên trái: Ảnh BG + Key Sự Kiện miễn phí
+- Thêm Key Sự Kiện trong COL Loader
+- Thêm Cận chiến Phép thuật
+- Thêm Tab Macro: Auto chuyển đổi vũ khí
+- Thêm chức năng Chuyển đổi thiết bị
+- Tăng hiệu ứng menu lên 120fps
+- Thêm ESP Chams riêng biệt dành cho Script Owner khi xuất hiện trong map trải nghiệm
+- Đã chỉnh sửa gây lag khi tắt chức năng
+- Đã fix cho một số Excutor không thể chạy script
+
+v5.0.2
 
 - Tăng kích thước chữ để dễ nhìn hơn, khắc phục một số thiết bị có thể không thấy vì chữ quá nhỏ
 - Làm rộng kích thước Header và Cre Phiên bản
@@ -119,7 +133,21 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v5.0.2
+        en = [[v6.0.0
+
+- Completely redesigned COL Menu interface
+- Completely redesigned COL Loader interface
+- Added left card: BG image + free Event Key
+- Added Event Key in COL Loader
+- Added Magic Melee
+- Added Macro tab: Auto weapon switch
+- Added Device switching function
+- Increased menu effects to 120fps
+- Added separate ESP Chams for Script Owner when appearing in the experience map
+- Adjusted lag issues when toggling functions off
+- Fixed issues where some Executors could not run the script
+
+v5.0.2
 
 - Increased font size for better readability, fixing issues where some devices might not see the text due to it being too small
 - Enlarged the Header and Version Credits
@@ -238,7 +266,21 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v5.0.2
+        jp = [[v6.0.0
+
+- COL Menu のUIを全面リニューアル
+- COL Loader のUIを全面リニューアル
+- 左カードを追加: BG画像 + 無料イベントキー
+- COL Loader にイベントキーを追加
+- 魔法近接を追加
+- Macro タブを追加: 武器の自動切り替え
+- デバイス切り替え機能を追加
+- メニュー演出を 120fps に強化
+- Script Owner が体験マップに出現した際の専用 ESP Chams を追加
+- 機能オフ時に発生するラグを調整
+- 一部 Executor でスクリプトを実行できない問題を修正
+
+v5.0.2
 
 - 読みやすさを向上させるため、フォントサイズを大きくしました。一部のデバイスで文字が小さすぎて表示されない問題を修正しました
 - ヘッダーとバージョンクレジットを拡大しました
