@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-                vi = [[v6.0.1
+                vi = [[v6.1.0
+
+- Đã thêm CuongOutLook Nhắn Riêng tư
+- Đã thêm COL User ESP khi có người dùng chung script
+
+v6.0.1
 
 - Đã thay đổi CuongOutLook Logo
 
@@ -137,7 +142,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.0.1
+        en = [[v6.1.0
+
+- Added CuongOutLook Private Chat
+- Added COL User ESP when another user is using the same script
+
+v6.0.1
 
 - Changed CuongOutLook logo
 
@@ -274,7 +284,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.0.1
+        jp = [[v6.1.0
+
+- CuongOutLookのプライベートメッセージ機能を追加
+- 同じスクリプトを使用しているユーザーがいる場合のCOL User ESPを追加
+
+v6.0.1
 
 - CuongOutLook のロゴを更新
 
