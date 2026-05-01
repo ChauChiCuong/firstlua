@@ -1,9 +1,9 @@
 return {
     updateHistory = {
-                vi = [[v6.1.0
+                vi = [[v6.1.0 (Bảo trì)
 
-- Đã thêm CuongOutLook Nhắn Riêng tư
-- Đã thêm COL User ESP khi có người dùng chung script
+- Private Chat tạm thời đóng và bảo trì
+- COL Server đang tạm ngưng, sử dụng Script local (offline)
 
 v6.0.1
 
@@ -142,10 +142,10 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.1.0
+        en = [[v6.1.0 (Maintenance)
 
-- Added CuongOutLook Private Chat
-- Added COL User ESP when another user is using the same script
+- Private Chat is temporarily closed for maintenance
+- COL Server is temporarily suspended; use the local script (offline)
 
 v6.0.1
 
@@ -284,10 +284,10 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.1.0
+        jp = [[v6.1.0（メンテナンス）
 
-- CuongOutLookのプライベートメッセージ機能を追加
-- 同じスクリプトを使用しているユーザーがいる場合のCOL User ESPを追加
+- プライベートチャットはメンテナンスのため一時的に利用停止です
+- COL サーバーは一時停止中です。ローカルスクリプト（オフライン）をご利用ください
 
 v6.0.1
 
