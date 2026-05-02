@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-                vi = [[v6.1.0 (Bảo trì)
+                vi = [[v6.1.1
+
+- Đã cải tiến COL Loader: Thời gian, ngày tháng năm, chào mừng (username)
+- Thêm Hộp thư đến từ CuongOutLook
+
+v6.1.0 (Bảo trì)
 
 - Private Chat tạm thời đóng và bảo trì
 - COL Server đang tạm ngưng, sử dụng Script local (offline)
@@ -142,7 +147,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.1.0 (Maintenance)
+        en = [[v6.1.1
+
+- Improved COL Loader: time, date, and welcome message (username)
+- Added Inbox from CuongOutLook
+
+v6.1.0 (Maintenance)
 
 - Private Chat is temporarily closed for maintenance
 - COL Server is temporarily suspended; use the local script (offline)
@@ -284,7 +294,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.1.0（メンテナンス）
+        jp = [[v6.1.1
+
+- COL Loader を改善: 時刻、日付、ウェルカムメッセージ（username）
+- CuongOutLook からの受信箱を追加
+
+v6.1.0（メンテナンス）
 
 - プライベートチャットはメンテナンスのため一時的に利用停止です
 - COL サーバーは一時停止中です。ローカルスクリプト（オフライン）をご利用ください
