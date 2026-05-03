@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-                vi = [[v6.1.1
+                vi = [[v6.2.0
+
+- Đã thêm CuongOutLook Aimbot Lite, bản script nhẹ dành cho các thiết bị yếu và sẽ không nâng cấp bản script này
+- Cải thiện các nút trong CuongOutLook Menu bị quá sáng
+
+v6.1.1
 
 - Đã cải tiến COL Loader: Thời gian, ngày tháng năm, chào mừng (username)
 - Thêm Hộp thư đến từ CuongOutLook
@@ -147,7 +152,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.1.1
+        en = [[v6.2.0
+
+- Added CuongOutLook Aimbot Lite, a lightweight script for lower-end devices; this script version will not receive future upgrades
+- Adjusted CuongOutLook Menu buttons that were overly bright
+
+v6.1.1
 
 - Improved COL Loader: time, date, and welcome message (username)
 - Added Inbox from CuongOutLook
@@ -294,7 +304,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.1.1
+        jp = [[v6.2.0
+
+- CuongOutLook Aimbot Lite を追加。低スペック端末向けの軽量スクリプトで、この版は今後アップグレードされません
+- CuongOutLook Menu のボタンが明るすぎる問題を改善
+
+v6.1.1
 
 - COL Loader を改善: 時刻、日付、ウェルカムメッセージ（username）
 - CuongOutLook からの受信箱を追加
