@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-                vi = [[v6.2.0
+        vi = [[v6.3.0
+
+- Đã thêm tab Triggerbot Nâng cao 
+- Đã thêm chức năng Fake Username (W.I.P): Cài đặt -> Fake Username
+
+v6.2.0
 
 - Đã thêm CuongOutLook Aimbot Lite, bản script nhẹ dành cho các thiết bị yếu và sẽ không nâng cấp bản script này
 - Cải thiện các nút trong CuongOutLook Menu bị quá sáng
@@ -152,7 +157,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.2.0
+        en = [[v6.3.0
+
+- Added Advanced Triggerbot tab
+- Added Fake Username function (W.I.P): Settings -> Fake Username
+
+v6.2.0
 
 - Added CuongOutLook Aimbot Lite, a lightweight script for lower-end devices; this script version will not receive future upgrades
 - Adjusted CuongOutLook Menu buttons that were overly bright
@@ -304,7 +314,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.2.0
+        jp = [[v6.3.0
+
+- 高度な Triggerbot タブを追加
+- フェイクユーザー名機能 (W.I.P) を追加: 設定 -> フェイクユーザー名
+
+v6.2.0
 
 - CuongOutLook Aimbot Lite を追加。低スペック端末向けの軽量スクリプトで、この版は今後アップグレードされません
 - CuongOutLook Menu のボタンが明るすぎる問題を改善
@@ -425,7 +440,7 @@ v4.0.0
 
 v3.2.0
 
-- 音声タブを追加: MP3 Player、Click Sound
+- 音声タブを追加: MP3 Player, Click Sound
 - Big Head OP のロジックを Magic Bullet に変更
 - メニュー使用時のラグを減らすよう最適化
 - メニュータブのサイズを均一に調整
