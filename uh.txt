@@ -1,6 +1,11 @@
 return {
     updateHistory = {
-        vi = [[v6.3.0
+        vi = [[v6.4.0
+
+- Đã mở lại CuongOutLook Chat riêng tư (Có giới hạn trong ngày)
+- Fix các bug gây lag quá nặng
+
+v6.3.0
 
 - Đã thêm tab Triggerbot Nâng cao 
 - Đã thêm chức năng Fake Username (W.I.P): Cài đặt -> Fake Username
@@ -157,7 +162,12 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.3.0
+        en = [[v6.4.0
+
+- Re-opened CuongOutLook private Chat (daily limit applies)
+- Fixed bugs that caused severe lag
+
+v6.3.0
 
 - Added Advanced Triggerbot tab
 - Added Fake Username function (W.I.P): Settings -> Fake Username
@@ -314,7 +324,12 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.3.0
+        jp = [[v6.4.0
+
+- CuongOutLook プライベートチャットを再開（1日あたりの利用制限あり）
+- 深刻なラグを引き起こしていたバグを修正
+
+v6.3.0
 
 - 高度な Triggerbot タブを追加
 - フェイクユーザー名機能 (W.I.P) を追加: 設定 -> フェイクユーザー名
