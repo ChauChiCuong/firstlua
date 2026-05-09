@@ -1,6 +1,17 @@
 return {
     updateHistory = {
-        vi = [[v6.4.0
+        vi = [[v7.0.0
+
+- COL Chat - "Roblox chat thứ hai" đã được xuất bản chính thức
+- Đã nâng cấp COL Chat Server
+- Đã thêm hệ thống Ban Chat (spam, kí tự dài)
+- Đã thêm Popup Chat giống Roblox
+- Đã thêm phương thức thanh toán Key Vĩnh viễn: Giao dịch súng bắn tỉa (Sniper Arena)
+- Thay logic Aimbot PC/Mobile giảm lag khi vào server đông người
+- Đã sửa Hất văng người chơi không hoạt động
+- Đã sửa các bug gây lag khi chưa bật chức năng
+
+v6.4.0
 
 - Đã mở lại CuongOutLook Chat riêng tư (Có giới hạn trong ngày)
 - Fix các bug gây lag quá nặng
@@ -162,7 +173,18 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v6.4.0
+        en = [[v7.0.0
+
+- COL Chat — "second Roblox chat" has been officially released
+- Upgraded COL Chat Server
+- Added Chat Ban system (spam, long messages)
+- Added Roblox-style Chat Popup
+- Added Permanent Key payment method: Sniper Arena trade
+- Revised PC/Mobile Aimbot logic to reduce lag on crowded servers
+- Fixed player knockback not working
+- Fixed bugs that caused lag when features were disabled
+
+v6.4.0
 
 - Re-opened CuongOutLook private Chat (daily limit applies)
 - Fixed bugs that caused severe lag
@@ -324,7 +346,18 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v6.4.0
+        jp = [[v7.0.0
+
+- COL Chat — 「Roblox のもう一つのチャット」として正式リリース
+- COL Chat Server をアップグレード
+- チャット BAN システムを追加（スパム、長文）
+- Roblox 風のチャットポップアップを追加
+- 永久キーの支払い方法を追加: Sniper Arena での取引
+- PC/Mobile Aimbot のロジックを変更し、プレイヤーが多いサーバーでのラグを軽減
+- プレイヤーをはじき飛ばす機能が動作しない問題を修正
+- 機能がオフのときに発生するラグのバグを修正
+
+v6.4.0
 
 - CuongOutLook プライベートチャットを再開（1日あたりの利用制限あり）
 - 深刻なラグを引き起こしていたバグを修正
