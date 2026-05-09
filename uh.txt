@@ -2,6 +2,7 @@ return {
     updateHistory = {
         vi = [[v7.0.0
 
+- Tin nhắn mới từ CuongOutLook. Nhấn để xem
 - COL Chat - "Roblox chat thứ hai" đã được xuất bản chính thức
 - Đã nâng cấp COL Chat Server
 - Đã thêm hệ thống Ban Chat (spam, kí tự dài)
@@ -175,6 +176,7 @@ v3.0.0
 
         en = [[v7.0.0
 
+- New message from CuongOutLook. Tap to view.
 - COL Chat — "second Roblox chat" has been officially released
 - Upgraded COL Chat Server
 - Added Chat Ban system (spam, long messages)
@@ -348,6 +350,7 @@ v3.0.0
 
         jp = [[v7.0.0
 
+- CuongOutLook からの新しいメッセージ。タップして表示。
 - COL Chat — 「Roblox のもう一つのチャット」として正式リリース
 - COL Chat Server をアップグレード
 - チャット BAN システムを追加（スパム、長文）
