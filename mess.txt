@@ -1,39 +1,48 @@
 return {
     updateHistory = {
-                vi = [[
-Chào bạn đang sử dụng script của mình. Mình là Cường đây, chủ sở hữu của CuongOutLook Script, Server và Chat Server. Hôm nay mình viết những dòng này không chỉ để giới thiệu, mà còn để gửi đến bạn một lời cảm ơn chân thành nhất từ tận đáy lòng. Có thể đối với nhiều người, việc lấy key mỗi ngày chỉ là một thao tác nhỏ, một thói quen bình thường khi sử dụng script. Nhưng đối với mình, đó lại là một sự ủng hộ vô cùng lớn lao, là nguồn động lực giúp mình có thêm niềm tin để tiếp tục phát triển và duy trì dự án này từng ngày.
+        vi = [[
+Chào bạn, cảm ơn vì đã sử dụng script của mình. Mình là Cường, người tạo ra CuongOutLook Script, server và chat server.
 
-Trên hành trình xây dựng và phát triển CuongOutLook Script, mình đã phải trải qua rất nhiều khó khăn, áp lực và cả những khoảng thời gian tưởng chừng như muốn bỏ cuộc. Có những đêm mình thức trắng để fix lỗi, cập nhật hệ thống, tối ưu server hay cố gắng mang đến trải nghiệm tốt hơn cho mọi người. Dù mệt mỏi thế nào, chỉ cần nhìn thấy vẫn còn nhiều bạn đồng hành, vẫn còn nhiều người tin tưởng và sử dụng sản phẩm của mình mỗi ngày, mình lại có thêm sức mạnh để tiếp tục cố gắng.
+Mình viết những dòng này chỉ đơn giản là muốn nói lời cảm ơn thật lòng đến bạn. Có thể với nhiều người, việc lấy key mỗi ngày chỉ là một thao tác rất bình thường. Nhưng với mình, đó lại là sự ủng hộ rất lớn để mình có động lực tiếp tục phát triển dự án này mỗi ngày.
 
-Mình thật sự biết ơn vì trong suốt chặng đường đầy nghẹt thở ấy, bạn đã luôn ở đây, âm thầm đồng hành và góp phần giúp mình tiến gần hơn đến con đường thành công. Sự ủng hộ của bạn không chỉ giúp dự án phát triển hơn mà còn khiến mình cảm nhận được giá trị của những gì mình đang làm. Đối với mình, cộng đồng người dùng không đơn giản chỉ là người sử dụng script, mà còn là những người anh em, những người đã cùng mình xây dựng nên một hành trình đáng nhớ.
+Trong suốt thời gian làm script, đã có rất nhiều lúc mình áp lực, mệt mỏi và gần như muốn bỏ cuộc. Có những đêm mình thức trắng để sửa lỗi, cập nhật hệ thống, tối ưu server và cố gắng mang lại trải nghiệm tốt hơn cho mọi người. Nhưng chỉ cần thấy vẫn còn người tin tưởng và tiếp tục sử dụng script của mình, mình lại có thêm động lực để tiếp tục cố gắng.
 
-Một lần nữa, cảm ơn bạn rất nhiều vì đã luôn tin tưởng, ủng hộ và đồng hành cùng mình trong suốt thời gian qua. Mình sẽ tiếp tục cố gắng để phát triển CuongOutLook Script ngày càng tốt hơn, ổn định hơn và mang lại nhiều trải nghiệm tuyệt vời hơn cho tất cả mọi người. Hy vọng rằng trong tương lai, bạn vẫn sẽ tiếp tục sát cánh cùng mình trên hành trình phía trước.
+Mình thật sự biết ơn vì bạn đã đồng hành cùng mình suốt thời gian qua. Sự ủng hộ của bạn không chỉ giúp dự án phát triển hơn mà còn khiến mình cảm thấy những gì mình làm là xứng đáng. Với mình, cộng đồng này không đơn giản chỉ là người dùng script mà giống như những người anh em đã cùng nhau đi qua rất nhiều thứ.
 
--- Chủ sở hữu CuongOutLook Script --
-                ]],
+Cảm ơn bạn rất nhiều vì đã luôn tin tưởng và ở lại cùng CuongOutLook Script. Mình sẽ tiếp tục cố gắng để làm cho script ngày càng ổn định, tốt hơn và mang lại trải nghiệm tuyệt vời hơn cho mọi người.
+
+Chúc bạn luôn vui vẻ và thành công.
+CuongOutLook Script Owner
+        ]],
 
         en = [[
-Hello — thank you for using my script. I'm Cuong, the owner of CuongOutLook Script, its server, and the chat server. I'm writing these lines today not only to introduce myself, but to send you my most sincere thanks from the bottom of my heart. For many people, getting a key every day may be a small step, a routine part of using a script. For me, though, it is enormous support — the motivation that helps me keep believing in this project and keep developing and maintaining it day after day.
+Hello, and thank you for using my script. I'm Cuong, the creator of CuongOutLook Script, the server, and the chat server.
 
-Building and growing CuongOutLook Script has meant a lot of hardship, pressure, and moments when I almost wanted to give up. Some nights I stayed up fixing bugs, updating systems, tuning the server, or trying to give everyone a better experience. However tired I felt, seeing so many of you still here — still trusting and using what I make every day — gave me the strength to keep going.
+I wrote these lines simply because I wanted to sincerely thank you. For many people, getting a key every day may seem like a small and normal action. But for me, it means a lot and gives me the motivation to keep developing this project every single day.
 
-I'm truly grateful that, through that intense journey, you have been here, quietly walking beside me and helping me move closer to what success means for this work. Your support doesn't only help the project grow; it helps me feel the value in what I do. To me, the community isn't just "people who run a script" — you're friends and partners who helped shape a journey I'll always remember.
+During the journey of building this script, there were many moments when I felt pressured, exhausted, and almost wanted to give up. Some nights I stayed awake fixing bugs, updating systems, optimizing servers, and trying to create a better experience for everyone. But whenever I saw that people still trusted and continued using my script, it gave me the strength to keep moving forward.
 
-Thank you again, deeply, for trusting, supporting, and staying with me all this time. I will keep working to make CuongOutLook Script better, more stable, and more rewarding for everyone. I hope you'll still be with me on the road ahead.
+I am truly grateful that you have stayed with me throughout this journey. Your support not only helps the project grow, but also makes me feel that everything I do is meaningful. To me, this community is not just users of a script, but people who have shared an unforgettable journey together.
 
--- Owner, CuongOutLook Script --
+Thank you so much for always trusting and supporting CuongOutLook Script. I will continue doing my best to make the script more stable, better, and more enjoyable for everyone.
+
+Wishing you happiness and success.
+CuongOutLook Script Owner
         ]],
 
         jp = [[
-こんにちは。私のスクリプトをご利用いただき、ありがとうございます。私はクオンです。CuongOutLook Script、サーバー、チャットサーバーのオーナーです。今日、これらの文章を書くのは自己紹介だけでなく、心の底からの感謝をお伝えするためでもあります。多くの方にとって毎日キーを取得することは、スクリプト利用の小さな手間や当たり前の習慣かもしれません。しかし私にとってそれは計り知れない応援であり、このプロジェクトを毎日開発し続け、維持していくための大きな原動力です。
+こんにちは。私のスクリプトをご利用いただき、本当にありがとうございます。私はCuongOutLook Script、サーバー、そしてチャットサーバーを作ったクオンです。
 
-CuongOutLook Scriptを築き育てる道のりでは、数えきれないほどの困難やプレッシャー、投げ出したくなる時間もありました。バグ修正、システム更新、サーバー最適化、そして皆さんにより良い体験を届けようと徹夜した夜もあります。どれだけ疲れても、まだ多くの仲間がいて、毎日私のプロダクトを信じて使ってくださるのを見ると、また前に進む力が湧いてきます。
+今日は、ただ心からの感謝を伝えたくてこの文章を書いています。多くの人にとって、毎日キーを取得することは小さく普通のことかもしれません。でも私にとっては、それが大きな支えであり、このプロジェクトを続けていくための原動力になっています。
 
-息苦しいほどのその道のりで、いつもそばにいて、静かに支え、成功へ一歩近づける手助けをしてくださったことに、心から感謝しています。皆さんの応援はプロジェクトの成長に繋がるだけでなく、私がしていることの価値を実感させてくれます。私にとってコミュニティは単なる「スクリプト利用者」ではなく、共に忘れられない旅を築いてくれた仲間たちです。
+このスクリプトを作り続ける中で、プレッシャーや疲れで諦めそうになったことも何度もありました。バグ修正やシステム更新、サーバー最適化のために徹夜した夜もあります。それでも、今も変わらず信じて使ってくれる人がいることを見るたびに、また頑張ろうと思うことができました。
 
-改めて、これまで信じ、支え、共に歩いてくださったことに深くお礼申し上げます。CuongOutLook Scriptをより良く、安定させ、皆により素晴らしい体験を届けていきます。これから先も、同じ道を歩んでいただけることを願っています。
+ここまで一緒にいてくれたことに、本当に感謝しています。皆さんの応援はプロジェクトを成長させてくれるだけでなく、自分のやっていることに価値を感じさせてくれます。私にとってこのコミュニティは、ただの利用者ではなく、一緒に特別な時間を歩んできた仲間です。
 
--- CuongOutLook Script オーナー --
+いつもCuongOutLook Scriptを信じて支えてくれて、本当にありがとうございます。これからも、もっと安定して、もっと良い体験を届けられるよう頑張り続けます。
+
+皆さんの幸せと成功を願っています。
+CuongOutLook Script Owner
         ]]
     }
 }
