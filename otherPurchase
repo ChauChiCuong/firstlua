@@ -1,0 +1,27 @@
+return {
+    updateHistory = {
+        vi = [[
+Các giao dịch khi mua COL Premium/VIP:
+- Thanh toán qua PayPal hoặc thẻ tín dụng
+- Giao dịch cây súng bắn tỉa bản [SCRT]/[LTD] trong Sniper Arena: Premium (2 súng), VIP (5 súng)
+- Một lần ủng hộ 1000 Robux: Chỉ áp dụng cho loại VIP duy nhất
+- Đối với người Việt Nam có thể chuyển khoản qua QR: Premium (100.000VND), VIP (250.000VND)
+				]],
+
+        en = [[
+Transactions when purchasing COL Premium/VIP:
+- Payment via PayPal or credit card
+- Trade [SCRT]/[LTD] sniper rifles in Sniper Arena: Premium (2 rifles), VIP (5 rifles)
+- One-time 1000 Robux donation: Applies to VIP only
+- For Vietnamese users, QR bank transfer is available: Premium (100,000 VND), VIP (250,000 VND)
+		]],
+
+        jp = [[
+COL Premium/VIP購入時の取引:
+- PayPalまたはクレジットカードによる支払い
+- Sniper Arena内の[SCRT]/[LTD]スナイパーライフル取引: Premium（2丁）、VIP（5丁）
+- 1000 Robuxの1回限りの支援: VIPのみ適用
+- ベトナム在住ユーザー向けにQR送金対応: Premium（100,000VND）、VIP（250,000VND）
+		]]
+    }
+}
