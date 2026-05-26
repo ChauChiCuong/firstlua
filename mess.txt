@@ -1,48 +1,33 @@
 return {
     updateHistory = {
         vi = [[
-Chào bạn, cảm ơn vì đã sử dụng script của mình. Mình là Cường, người tạo ra CuongOutLook Script, server và chat server.
-
-Mình viết những dòng này chỉ đơn giản là muốn nói lời cảm ơn thật lòng đến bạn. Có thể với nhiều người, việc lấy key mỗi ngày chỉ là một thao tác rất bình thường. Nhưng với mình, đó lại là sự ủng hộ rất lớn để mình có động lực tiếp tục phát triển dự án này mỗi ngày.
-
-Trong suốt thời gian làm script, đã có rất nhiều lúc mình áp lực, mệt mỏi và gần như muốn bỏ cuộc. Có những đêm mình thức trắng để sửa lỗi, cập nhật hệ thống, tối ưu server và cố gắng mang lại trải nghiệm tốt hơn cho mọi người. Nhưng chỉ cần thấy vẫn còn người tin tưởng và tiếp tục sử dụng script của mình, mình lại có thêm động lực để tiếp tục cố gắng.
-
-Mình thật sự biết ơn vì bạn đã đồng hành cùng mình suốt thời gian qua. Sự ủng hộ của bạn không chỉ giúp dự án phát triển hơn mà còn khiến mình cảm thấy những gì mình làm là xứng đáng. Với mình, cộng đồng này không đơn giản chỉ là người dùng script mà giống như những người anh em đã cùng nhau đi qua rất nhiều thứ.
-
-Cảm ơn bạn rất nhiều vì đã luôn tin tưởng và ở lại cùng CuongOutLook Script. Mình sẽ tiếp tục cố gắng để làm cho script ngày càng ổn định, tốt hơn và mang lại trải nghiệm tuyệt vời hơn cho mọi người.
-
-Chúc bạn luôn vui vẻ và thành công.
-CuongOutLook Script Owner
+CuongOutLook Script – Phiên Bản Cuối
+Xin chào mọi người,
+Sau một khoảng thời gian phát triển, chỉnh sửa và hoàn thiện, mình xin thông báo rằng đây sẽ là phiên bản cuối cùng của CuongOutLook Script.
+Dự án này không chỉ là một script đơn thuần, mà còn là nơi mình học hỏi, thử nghiệm và dành rất nhiều thời gian để phát triển theo phong cách riêng của mình. Từ những phiên bản đầu tiên cho đến hiện tại, mọi sự ủng hộ, góp ý và đồng hành của mọi người đều là động lực rất lớn đối với mình.
+Phiên bản cuối này sẽ là bản ổn định và hoàn thiện nhất mà mình từng thực hiện cho CuongOutLook Script. Trong tương lai có thể sẽ không còn những bản cập nhật lớn nữa, nhưng mình hy vọng nó vẫn sẽ là một dấu ấn đẹp đối với những ai đã từng sử dụng và theo dõi dự án.
+Cảm ơn tất cả mọi người đã luôn ủng hộ CuongOutLook.
+— CuongOutLook
         ]],
 
         en = [[
-Hello, and thank you for using my script. I'm Cuong, the creator of CuongOutLook Script, the server, and the chat server.
-
-I wrote these lines simply because I wanted to sincerely thank you. For many people, getting a key every day may seem like a small and normal action. But for me, it means a lot and gives me the motivation to keep developing this project every single day.
-
-During the journey of building this script, there were many moments when I felt pressured, exhausted, and almost wanted to give up. Some nights I stayed awake fixing bugs, updating systems, optimizing servers, and trying to create a better experience for everyone. But whenever I saw that people still trusted and continued using my script, it gave me the strength to keep moving forward.
-
-I am truly grateful that you have stayed with me throughout this journey. Your support not only helps the project grow, but also makes me feel that everything I do is meaningful. To me, this community is not just users of a script, but people who have shared an unforgettable journey together.
-
-Thank you so much for always trusting and supporting CuongOutLook Script. I will continue doing my best to make the script more stable, better, and more enjoyable for everyone.
-
-Wishing you happiness and success.
-CuongOutLook Script Owner
+CuongOutLook Script – Final Version
+Hello everyone,
+After a period of development, refining, and perfecting, I would like to announce that this will be the final version of CuongOutLook Script.
+This project is not just a simple script, but a place where I have learned, experimented, and dedicated a vast amount of time to develop it in my own unique style. From the very first versions to the present, all of your support, feedback, and companionship have been a massive source of motivation for me.
+This final version is the most stable and polished release I have ever created for CuongOutLook Script. While there may be no more major updates in the future, I hope it leaves a wonderful and lasting impression on everyone who has used and followed this project.
+Thank you all so much for always supporting CuongOutLook.
+— CuongOutLook
         ]],
 
         jp = [[
-こんにちは。私のスクリプトをご利用いただき、本当にありがとうございます。私はCuongOutLook Script、サーバー、そしてチャットサーバーを作ったクオンです。
-
-今日は、ただ心からの感謝を伝えたくてこの文章を書いています。多くの人にとって、毎日キーを取得することは小さく普通のことかもしれません。でも私にとっては、それが大きな支えであり、このプロジェクトを続けていくための原動力になっています。
-
-このスクリプトを作り続ける中で、プレッシャーや疲れで諦めそうになったことも何度もありました。バグ修正やシステム更新、サーバー最適化のために徹夜した夜もあります。それでも、今も変わらず信じて使ってくれる人がいることを見るたびに、また頑張ろうと思うことができました。
-
-ここまで一緒にいてくれたことに、本当に感謝しています。皆さんの応援はプロジェクトを成長させてくれるだけでなく、自分のやっていることに価値を感じさせてくれます。私にとってこのコミュニティは、ただの利用者ではなく、一緒に特別な時間を歩んできた仲間です。
-
-いつもCuongOutLook Scriptを信じて支えてくれて、本当にありがとうございます。これからも、もっと安定して、もっと良い体験を届けられるよう頑張り続けます。
-
-皆さんの幸せと成功を願っています。
-CuongOutLook Script Owner
+CuongOutLook Script – 最終バージョン
+皆さん、こんにちは。
+開発、修正、そして度重なるブラッシュアップを経て、これがCuongOutLook Scriptの最終バージョンとなることをお知らせいたします。
+このプロジェクトは単なるスクリプトにとどまらず、私自身が学び、実験し、独自のスタイルで開発するために多くの時間を捧げてきた場所でもあります。初期のバージョンから現在に至るまで、皆さんからの応援、フィードバック、そして共に歩んでくれた日々は、私にとって非常に大きな原動力となりました。
+この最終バージョンは、CuongOutLook Scriptとしてこれまでに制作した中で、最も安定し、完成されたものとなっています。今後、大きなアップデートはないかもしれませんが、このプロジェクトを使い、見守ってくださったすべての人の心に、素敵な足跡として残り続けることを願っています。
+いつもCuongOutLookを応援していただき、本当にありがとうございました。
+— CuongOutLook
         ]]
     }
 }
