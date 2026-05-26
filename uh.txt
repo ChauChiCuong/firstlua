@@ -1,6 +1,16 @@
 return {
     updateHistory = {
-        vi = [[v7.0.0
+        vi = [[v8.0.0
+
+- Cập nhật cuối (8.0.0)
+- Tin nhắn mới từ CuongOutLook. Nhấn để xem
+- Phiên bản này sẽ dừng cập nhật hoàn toàn. Đây là phiên bản mới nhất và cũng là cuối cùng.
+- Áp dụng cho cả member-plan
+- Thay thế logic Aimbot PC/Mobile, Magic Bullet/Melee
+- Fix các chức năng gây lag ngay cả khi không bật nó
+- Cheese....
+
+v7.0.0
 
 - Tin nhắn mới từ CuongOutLook. Nhấn để xem
 - COL Chat - "Roblox chat thứ hai" đã được xuất bản chính thức
@@ -174,7 +184,17 @@ v3.0.0
 - Tối ưu hóa ESP làm giảm fps, gây lag
 - Đã xóa ESP: Tracer, Name, Health, Distance]],
 
-        en = [[v7.0.0
+        en = [[v8.0.0
+
+- Final update (8.0.0)
+- New message from CuongOutLook. Tap to view.
+- This version will stop receiving updates completely. This is the newest version and also the final one.
+- Applies to member-plan as well
+- Replaced the logic for PC/Mobile Aimbot and Magic Bullet/Melee
+- Fixed features that caused lag even when they were not enabled
+- Cheese....
+
+v7.0.0
 
 - New message from CuongOutLook. Tap to view.
 - COL Chat — "second Roblox chat" has been officially released
@@ -348,7 +368,17 @@ v3.0.0
 - Optimized ESP to reduce FPS drops and lag
 - Removed ESP: Tracer, Name, Health, Distance]],
 
-        jp = [[v7.0.0
+        jp = [[v8.0.0
+
+- 最終アップデート（8.0.0）
+- CuongOutLook からの新しいメッセージ。タップして表示。
+- このバージョンで更新は完全に終了します。これは最新版であり、同時に最終版です。
+- member-plan にも適用
+- PC/Mobile Aimbot と Magic Bullet/Melee のロジックを置き換え
+- 有効化していない場合でもラグを引き起こす機能を修正
+- Cheese....
+
+v7.0.0
 
 - CuongOutLook からの新しいメッセージ。タップして表示。
 - COL Chat — 「Roblox のもう一つのチャット」として正式リリース
